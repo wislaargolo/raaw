@@ -62,11 +62,11 @@ O resultado da análise será salvo no arquivo `out.txt`.
 
 ```
 .
-├── lex.l                 # Regras léxicas definidas em Flex
-├── lex.yy.c             # Código C gerado automaticamente pelo Flex
-├── lex                  # Executável compilado com GCC
 ├── exemplos/            # Arquivos de exemplo da linguagem Raaw
 │   ├── exemplo1.raaw
 │   └── exemplo2.raaw
+├── lex                  # Executável compilado com GCC
+├── lex.l                # Regras léxicas definidas em Flex
+├── lex.yy.c             # Código C gerado automaticamente pelo Flex
 └── out.txt              # Arquivo de saída da análise léxica
 ```
