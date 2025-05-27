@@ -54,13 +54,6 @@ void main() {
     st.b = 3.14;
     st.c = "Olá";
     st.d = "Mundo";
-    print("Struct st = { a=");
-    print(st.a);
-    print(", b=");
-    print(st.b);
-    print(", c=");
-    print(st.c);
-    printLine(", d=" + st.d + " }");
 
 
     // Exemplo de heap explícita
@@ -105,41 +98,41 @@ void main() {
 
     // Exemplo com leitura e saída
     print("Digite uma palavra: ");
-    string palavra = in.next();
+    string palavra = next();
     print("Digite uma linha: ");
-    string linha = in.nextLine();
+    string linha = nextLine();
     print("Digite um char: ");
-    char ch = in.nextChar();
+    char ch = nextChar();
     print("Digite um int: ");
-    int valorInt = in.nextInt();
+    int valorInt = nextInt();
     print("Digite um long: ");
-    long valorLong = in.nextLong();
+    long valorLong = nextLong();
     print("Digite um float: ");
-    float valorFloat = in.nextFloat();
+    float valorFloat = nextFloat();
     print("Digite um double: ");
-    double valorDouble = in.nextDouble();
+    double valorDouble = nextDouble();
     print("Digite um boolean: ");
-    boolean valorBoolean  = in.nextBoolean();
+    boolean valorBoolean  = nextBoolean();
 
     // Exemplo de switch
     int valor = valorInt % 4;
     switch (valor) {
         case 0:
-            out.printLine("Resto 0");
+            printLine("Resto 0");
             break;
         case 1:
-            out.printLine("Resto 1");
+            printLine("Resto 1");
         case 2:
-            out.printLine("Resto 2");
+            printLine("Resto 2");
             break;
         default:
-            out.printLine("Resto 3 ou maior");
+            printLine("Resto 3 ou maior");
     }
 
     // Exemplo while
     int x = 1;
     while (x <= MAX_ITEMS) {
-        out.printLine(x);
+        printLine(x);
         x = x * 2;
     }
 
