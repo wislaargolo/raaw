@@ -8,7 +8,7 @@
 
 "if"                                { printf("IF\n"); }
 "else"                              { printf("ELSE\n"); }
-"else if"                           { printf("ELSEIF\n"); }
+else +if                            { printf("ELSEIF\n"); }
 "switch"                            { printf("SWITCH\n"); }
 "case"                              { printf("CASE\n"); }
 "default"                           { printf("DEFAULT\n"); }
