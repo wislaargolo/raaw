@@ -1,0 +1,147 @@
+const int MAX_ITEMS = 5;
+
+type Color = enum {
+    red,
+    green,
+    blue,
+};
+
+type Node = struct {
+    int value;
+    ptr<Node> left;
+    ptr<Node> right;
+};
+
+type Struct = struct {
+    int a;
+    float b;
+    string c, d;
+};
+
+type Inteiro = int;
+
+void main() {
+    printLine("=== Código exemplo ===");
+
+    // Exemplo enum local declarado/definido
+    enum { apple, orange, banana } fruits;
+    fruits = orange;
+    print("Fruta selecionada (enum local): ");
+    printLine(fruits);
+   
+    // Exemplo enum externo
+    Color corFavorita = blue;
+    Inteiro numero = 7;
+    print("Cor favorita (Color): ");
+    printLine(corFavorita);
+    print("Numero (Inteiro): ");
+    printLine(numero);
+
+    // Exemplo struct pequena árvore
+    ptr<Node> root = new Node;
+    root.value = numero;
+    root.left = new Node;
+    root.left.value = numero - 1;
+    root.right = new Node;
+    root.right.value = numero + 1;
+
+    delete root.left;
+    delete root.right;
+
+    // Exemplo struct sem ponteiro
+    Struct st;
+    st.a = 10;
+    st.b = 3.14;
+    st.c = "Olá";
+    st.d = "Mundo";
+    print("Struct st = { a=");
+    print(st.a);
+    print(", b=");
+    print(st.b);
+    print(", c=");
+    print(st.c);
+    printLine(", d=" + st.d + " }");
+
+
+    // Exemplo de heap explícita
+    ptr<int> arr = new int[20];
+    ptr<ptr<int>> mat = new ptr<int>[3];
+    for (int i = 0; i < 3; i = i + 1) {
+        mat[i] = new int[5];
+    }
+
+    // Exemplo com listas e mapas
+    list<int> listaInt;
+    list<list<int>> listaDeListas;
+    map<string, int> dicionario;
+    dicionario["maçã"]    = 5;
+    dicionario["laranja"] = 3;
+    int qtdMaca = dicionario["maçã"];
+
+    delete arr;
+    delete mat[0];
+    delete mat;
+
+    // Exemplo com operações básicas
+    int a = 20, b = 5;
+    double c = 2.5, d = 2.0;
+    int    somaInt    = (a + b);
+    double somaDouble = (c + d);
+    string saudacao   = ("Olá, " + "mundo!");
+    printLine("somaInt    = " + somaInt);
+    printLine("somaDouble = " + somaDouble);
+    printLine(saudacao);
+
+ 
+    boolean igualDouble     = (c == (double)(d + 0.5));
+    boolean diferenteInt    = (a != b);
+    boolean maiorOuIgualInt = (a >= b);
+    print("igualDouble?     ");
+    printLine(igualDouble);
+    print("diferenteInt?    ");
+    printLine(diferenteInt);
+    print("maiorOuIgualInt? ");
+    printLine(maiorOuIgualInt);
+
+    // Exemplo com leitura e saída
+    print("Digite uma palavra: ");
+    string palavra = in.next();
+    print("Digite uma linha: ");
+    string linha = in.nextLine();
+    print("Digite um char: ");
+    char ch = in.nextChar();
+    print("Digite um int: ");
+    int valorInt = in.nextInt();
+    print("Digite um long: ");
+    long valorLong = in.nextLong();
+    print("Digite um float: ");
+    float valorFloat = in.nextFloat();
+    print("Digite um double: ");
+    double valorDouble = in.nextDouble();
+    print("Digite um boolean: ");
+    boolean valorBoolean  = in.nextBoolean();
+
+    // Exemplo de switch
+    int valor = valorInt % 4;
+    switch (valor) {
+        case 0:
+            out.printLine("Resto 0");
+            break;
+        case 1:
+            out.printLine("Resto 1");
+        case 2:
+            out.printLine("Resto 2");
+            break;
+        default:
+            out.printLine("Resto 3 ou maior");
+    }
+
+    // Exemplo while
+    int x = 1;
+    while (x <= MAX_ITEMS) {
+        out.printLine(x);
+        x = x * 2;
+    }
+
+    return;
+}

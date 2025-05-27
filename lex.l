@@ -46,6 +46,7 @@ int|long|float|double|boolean|char|string { printf("PRIM_TYPE(%s)\n", yytext); }
 "["                   { printf("LBRACKET\n"); }
 "]"                   { printf("RBRACKET\n"); }
 ";"                   { printf("SEMICOLON\n"); }
+":"                   { printf("COLON\n"); }
 ","                   { printf("COMMA\n"); }
 "."                   { printf("DOT\n"); }
 
@@ -73,6 +74,7 @@ int|long|float|double|boolean|char|string { printf("PRIM_TYPE(%s)\n", yytext); }
 "-"                   { printf("MINUS\n"); }
 "*"                   { printf("STAR\n"); }
 "/"                   { printf("SLASH\n"); }
+"%"                   { printf("MOD\n"); }
 
 true|false                  { printf("BOOL(%s)\n", yytext); }
 [0-9]+\.[0-9]+              { printf("REAL(%s)\n", yytext); }
