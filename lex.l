@@ -6,11 +6,6 @@
 
 [ \r?\n\t]            ;
 
-"in"                  { printf("IN\n"); }
-"out"                 { printf("OUT\n"); }
-nextInt|nextLong|nextFloat|nextDouble|nextChar|nextString|nextBoolean { printf("IN_FUNCTION(%s)\n", yytext); }
-print|printLine       { printf("OUT_FUNCTION(%s)\n", yytext); }
-
 "if"                  { printf("IF\n"); }
 "else"                { printf("ELSE\n"); }
 "switch"              { printf("SWITCH\n"); }
@@ -29,13 +24,13 @@ print|printLine       { printf("OUT_FUNCTION(%s)\n", yytext); }
 "ref"                 { printf("REF\n"); }
 "val"                 { printf("VAL\n"); }
 
-int|long|float|double|boolean|char|string { printf("PRIM_TYPE(%s)\n", yytext); }
+int|long|float|double|boolean|char|string|file { printf("PRIM_TYPE(%s)\n", yytext); }
 "const"               { printf("CONST\n"); }
 "void"                { printf("VOID\n"); }
 "struct"              { printf("STRUCT_TYPE\n"); }
 "enum"                { printf("ENUM_TYPE\n"); }
 "ptr"                 { printf("PTR_TYPE\n"); }
-"list"                { printf("LIST_TYPE\n"); } 
+"list"                { printf("LIST_TYPE\n"); }
 "map"                 { printf("MAP_TYPE\n"); }
 "type"                { printf("TYPE\n"); }
 
@@ -48,7 +43,6 @@ int|long|float|double|boolean|char|string { printf("PRIM_TYPE(%s)\n", yytext); }
 ";"                   { printf("SEMICOLON\n"); }
 ":"                   { printf("COLON\n"); }
 ","                   { printf("COMMA\n"); }
-"."                   { printf("DOT\n"); }
 
 "=="                  { printf("EQUALITY\n"); }
 "!="                  { printf("DIFFERENCE\n"); }
@@ -57,16 +51,16 @@ int|long|float|double|boolean|char|string { printf("PRIM_TYPE(%s)\n", yytext); }
 "<="                  { printf("LESS_THAN_EQUALS\n"); }
 ">="                  { printf("MORE_THAN_EQUALS\n"); }
 
-"="                   { printf("ASSIGNMENT\n"); } 
-"*="                  { printf("ASSIGNMENT_MUL\n"); } 
+"="                   { printf("ASSIGNMENT\n"); }
+"*="                  { printf("ASSIGNMENT_MUL\n"); }
 "/="                  { printf("ASSIGNMENT_DIV\n"); }
 "%="                  { printf("ASSIGNMENT_MOD\n"); }
 "+="                  { printf("ASSIGNMENT_ADD\n"); }
 "-="                  { printf("ASSIGNMENT_SUB\n"); }
 
-"&&"                  { printf("AND\n"); }    
-"and"                 { printf("ANDC\n"); }  
-"||"                  { printf("OR\n"); }    
+"&&"                  { printf("AND\n"); }
+"and"                 { printf("ANDC\n"); }
+"||"                  { printf("OR\n"); }
 "or"                  { printf("ORC\n"); }
 "!"                   { printf("NOT\n"); }
 
@@ -81,7 +75,7 @@ true|false                  { printf("BOOL(%s)\n", yytext); }
 [0-9]+                      { printf("INTEGER(%s)\n", yytext); }
 \'.\'                       { printf("CHAR(%s)\n", yytext); }
 \"(?:(?:[^"\\\n\r]|\\.)*[^\\])?\"  { printf("STRING(%s)\n", yytext); }
- 
+
 [a-zA-Z][a-zA-Z0-9\_]*	      { printf("ID(%s)\n",yytext); }
 "//".*                        { /* ignora comentário de linha */ }
 "/*"([^*]|\*+[^*/])*\*+"/"    { /* ignora comentário de bloco */ }
