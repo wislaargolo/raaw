@@ -1,25 +1,21 @@
 %{
   #include <stdio.h>
-  #include "y.tab.h"
-
-  extern int yyerror (char *msg);  
 %}
 
 %%
 
 [ \r?\n\t]                          ;
 
-
-"if"                                { return(IF); }
-"else"                              { return(ELSE); }
-else[ \r?\n\t]+if                   { return(ELSEIF); }
-"switch"                            { return(SWITCH); }
-"case"                              { return(CASE); }
-"default"                           { return(DEFAULT); }
+"if"                                { printf("IF\n"); }
+"else"                              { printf("ELSE\n"); }
+"else if"                           { printf("ELSEIF\n"); }
+"switch"                            { printf("SWITCH\n"); }
+"case"                              { printf("CASE\n"); }
+"default"                           { printf("DEFAULT\n"); }
 
 "do"                                { printf("DO\n"); }
-"while"                             { return(WHILE); }
-"for"                               { return(FOR); }
+"while"                             { printf("WHILE\n"); }
+"for"                               { printf("FOR\n"); }
 "break"                             { printf("BREAK\n");}
 "continue"                          { printf("CONTINUE\n"); }
 "return"                            { printf("RETURN\n"); }
@@ -29,27 +25,27 @@ else[ \r?\n\t]+if                   { return(ELSEIF); }
 "ref"                               { printf("REF\n"); }
 "val"                               { printf("VAL\n"); }
 
-int|long|float|double|boolean|char|string|file { yylval.sValue = yytext; return (PRIM_TYPE); }
+int|long|float|double|boolean|char|string|file { printf("PRIM_TYPE(%s)\n", yytext); }
 
-"const"                             { return(CONST); }
+"const"                             { printf("CONST\n"); }
 "void"                              { printf("VOID\n"); }
 "struct"                            { printf("STRUCT_TYPE\n"); }
 "enum"                              { printf("ENUM_TYPE\n"); }
 "ptr"                               { printf("PTR_TYPE\n"); }
 "list"                              { printf("LIST_TYPE\n"); }
 "map"                               { printf("MAP_TYPE\n"); }
-"type"                              { return(TYPE); }
+"type"                              { printf("TYPE\n"); }
 
-"("                                 { return(LPAREN); }
-")"                                 { return(RPAREN); }
-"{"                                 { return(LBRACE); }
-"}"                                 { return(RBRACE); }
-"["                                 { return(LBRACKET); }
-"]"                                 { return(RBRACKET); }
-";"                                 { return(SEMICOLON); }
-":"                                 { return(COLON); }
-","                                 { return(COMMA); }
-"."                                 { return(DOT); }
+"("                                 { printf("LPAREN\n"); }
+")"                                 { printf("RPAREN\n"); }
+"{"                                 { printf("LBRACE\n"); }
+"}"                                 { printf("RBRACE\n"); }
+"["                                 { printf("LBRACKET\n"); }
+"]"                                 { printf("RBRACKET\n"); }
+";"                                 { printf("SEMICOLON\n"); }
+":"                                 { printf("COLON\n"); }
+","                                 { printf("COMMA\n"); }
+"."                                 { printf("DOT\n"); }
 
 "=="                                { printf("EQUALITY\n"); }
 "!="                                { printf("DIFFERENCE\n"); }
@@ -58,7 +54,7 @@ int|long|float|double|boolean|char|string|file { yylval.sValue = yytext; return 
 "<="                                { printf("LESS_THAN_EQUALS\n"); }
 ">="                                { printf("MORE_THAN_EQUALS\n"); }
 
-"="                                 { return(ASSIGNMENT); }
+"="                                 { printf("ASSIGNMENT\n"); }
 "*="                                { printf("ASSIGNMENT_MUL\n"); }
 "/="                                { printf("ASSIGNMENT_DIV\n"); }
 "%="                                { printf("ASSIGNMENT_MOD\n"); }
@@ -71,7 +67,7 @@ int|long|float|double|boolean|char|string|file { yylval.sValue = yytext; return 
 "or"                                { printf("ORC\n"); }
 "!"                                 { printf("NOT\n"); }
 
-"+"                                 { return(PLUS); }
+"+"                                 { printf("PLUS\n"); }
 "-"                                 { printf("MINUS\n"); }
 "*"                                 { printf("TIMES\n"); }
 "/"                                 { printf("SLASH\n"); }
@@ -79,11 +75,11 @@ int|long|float|double|boolean|char|string|file { yylval.sValue = yytext; return 
 
 true|false                          { printf("BOOL(%s)\n", yytext); }
 [0-9]+\.[0-9]+                      { printf("REAL(%s)\n", yytext); }
-[0-9]+                              { yylval.iValue = atoi(yytext); return (INTEGER); }
+[0-9]+                              { printf("INTEGER(%s)\n", yytext); }
 \'.\'                               { printf("CHAR(%s)\n", yytext); }
 \"(?:(?:[^"\\\n\r]|\\.)*[^\\])?\"   { printf("STRING(%s)\n", yytext); }
 
-[a-zA-Z][a-zA-Z0-9\_]*	            { yylval.sValue = yytext; return (ID); }
+[a-zA-Z][a-zA-Z0-9\_]*	            { printf("ID(%s)\n",yytext); }
 "//".*                              { /* ignora comentário de linha */ }
 "/*"([^*]|\*+[^*/])*\*+"/"          { /* ignora comentário de bloco */ }
 
@@ -94,3 +90,9 @@ true|false                          { printf("BOOL(%s)\n", yytext); }
 #ifndef yywrap
    int yywrap (void) {return 1;}
 #endif
+
+int main(void)
+{
+  yylex();
+  return 0;
+}

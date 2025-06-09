@@ -1,0 +1,272 @@
+Terminals unused in grammar
+
+    INTEGER
+    IF
+    ELSE
+    ELSEIF
+    SWITCH
+    CASE
+    DEFAULT
+    WHILE
+    FOR
+    VOID
+    LPAREN
+    RPAREN
+    LBRACE
+    RBRACE
+    LBRACKET
+    RBRACKET
+    COLON
+    COMMA
+    DOT
+    PLUS
+    MINUS
+
+
+Grammar
+
+    0 $accept: program $end
+
+    1 program: declarations
+
+    2 declarations: declaration
+    3             | declarations declaration
+
+    4 declaration: var_declaration
+    5            | type_declaration
+
+    6 var_declaration: var_specifier type ID SEMICOLON
+
+    7 var_specifier: ε
+    8              | CONST
+
+    9 type_declaration: TYPE ID ASSIGNMENT type SEMICOLON
+
+   10 type: PRIM_TYPE
+   11     | ID
+
+
+Terminals, with rules where they appear
+
+    $end (0) 0
+    error (256)
+    ID <sValue> (258) 6 9 11
+    PRIM_TYPE <sValue> (259) 10
+    INTEGER <iValue> (260)
+    CONST (261) 8
+    IF (262)
+    ELSE (263)
+    ELSEIF (264)
+    SWITCH (265)
+    CASE (266)
+    DEFAULT (267)
+    WHILE (268)
+    FOR (269)
+    ASSIGNMENT (270) 9
+    VOID (271)
+    LPAREN (272)
+    RPAREN (273)
+    LBRACE (274)
+    RBRACE (275)
+    LBRACKET (276)
+    RBRACKET (277)
+    SEMICOLON (278) 6 9
+    COLON (279)
+    COMMA (280)
+    DOT (281)
+    PLUS (282)
+    MINUS (283)
+    TYPE (284) 9
+
+
+Nonterminals, with rules where they appear
+
+    $accept (30)
+        on left: 0
+    program (31)
+        on left: 1
+        on right: 0
+    declarations (32)
+        on left: 2 3
+        on right: 1 3
+    declaration (33)
+        on left: 4 5
+        on right: 2 3
+    var_declaration (34)
+        on left: 6
+        on right: 4
+    var_specifier (35)
+        on left: 7 8
+        on right: 6
+    type_declaration (36)
+        on left: 9
+        on right: 5
+    type (37)
+        on left: 10 11
+        on right: 6 9
+
+
+State 0
+
+    0 $accept: • program $end
+
+    CONST  shift, and go to state 1
+    TYPE   shift, and go to state 2
+
+    $default  reduce using rule 7 (var_specifier)
+
+    program           go to state 3
+    declarations      go to state 4
+    declaration       go to state 5
+    var_declaration   go to state 6
+    var_specifier     go to state 7
+    type_declaration  go to state 8
+
+
+State 1
+
+    8 var_specifier: CONST •
+
+    $default  reduce using rule 8 (var_specifier)
+
+
+State 2
+
+    9 type_declaration: TYPE • ID ASSIGNMENT type SEMICOLON
+
+    ID  shift, and go to state 9
+
+
+State 3
+
+    0 $accept: program • $end
+
+    $end  shift, and go to state 10
+
+
+State 4
+
+    1 program: declarations •
+    3 declarations: declarations • declaration
+
+    CONST  shift, and go to state 1
+    TYPE   shift, and go to state 2
+
+    $end      reduce using rule 1 (program)
+    $default  reduce using rule 7 (var_specifier)
+
+    declaration       go to state 11
+    var_declaration   go to state 6
+    var_specifier     go to state 7
+    type_declaration  go to state 8
+
+
+State 5
+
+    2 declarations: declaration •
+
+    $default  reduce using rule 2 (declarations)
+
+
+State 6
+
+    4 declaration: var_declaration •
+
+    $default  reduce using rule 4 (declaration)
+
+
+State 7
+
+    6 var_declaration: var_specifier • type ID SEMICOLON
+
+    ID         shift, and go to state 12
+    PRIM_TYPE  shift, and go to state 13
+
+    type  go to state 14
+
+
+State 8
+
+    5 declaration: type_declaration •
+
+    $default  reduce using rule 5 (declaration)
+
+
+State 9
+
+    9 type_declaration: TYPE ID • ASSIGNMENT type SEMICOLON
+
+    ASSIGNMENT  shift, and go to state 15
+
+
+State 10
+
+    0 $accept: program $end •
+
+    $default  accept
+
+
+State 11
+
+    3 declarations: declarations declaration •
+
+    $default  reduce using rule 3 (declarations)
+
+
+State 12
+
+   11 type: ID •
+
+    $default  reduce using rule 11 (type)
+
+
+State 13
+
+   10 type: PRIM_TYPE •
+
+    $default  reduce using rule 10 (type)
+
+
+State 14
+
+    6 var_declaration: var_specifier type • ID SEMICOLON
+
+    ID  shift, and go to state 16
+
+
+State 15
+
+    9 type_declaration: TYPE ID ASSIGNMENT • type SEMICOLON
+
+    ID         shift, and go to state 12
+    PRIM_TYPE  shift, and go to state 13
+
+    type  go to state 17
+
+
+State 16
+
+    6 var_declaration: var_specifier type ID • SEMICOLON
+
+    SEMICOLON  shift, and go to state 18
+
+
+State 17
+
+    9 type_declaration: TYPE ID ASSIGNMENT type • SEMICOLON
+
+    SEMICOLON  shift, and go to state 19
+
+
+State 18
+
+    6 var_declaration: var_specifier type ID SEMICOLON •
+
+    $default  reduce using rule 6 (var_declaration)
+
+
+State 19
+
+    9 type_declaration: TYPE ID ASSIGNMENT type SEMICOLON •
+
+    $default  reduce using rule 9 (type_declaration)
