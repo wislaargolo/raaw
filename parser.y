@@ -23,7 +23,6 @@ extern char * yytext;
        EQUALITY DIFFERENCE ABRACKET_OPEN ABRACKET_CLOSE LESS_THAN_EQUALS MORE_THAN_EQUALS 
        ASSIGNMENT ASSIGNMENT_MUL ASSIGNMENT_DIV ASSIGNMENT_MOD ASSIGNMENT_ADD ASSIGNMENT_SUB 
        AND ANDC OR ORC NOT PLUS MINUS TIMES SLASH MOD 
-%type <sValue> var_specifier
 %type <sValue> type
 
 %start program
@@ -38,15 +37,15 @@ declarations : declaration                                                      
              | declarations declaration                                                             {}
              ;
 
-declaration : var_declaration                                                                       {}  
+declaration : var_declaration                                                                       {}
+            | const_declaration                                                                     {}  
             | type_declaration                                                                      {} 
             ;
 
-var_declaration : var_specifier type declaration_line SEMICOLON                                     {}                
+var_declaration : type declaration_line SEMICOLON                                                   {}                
                ;
 
-var_specifier :                                                                                     {}   
-              | CONST                                                                               {} 
+const_declaration : CONST var_declaration                                                           {} 
               ;
 
 type_declaration : TYPE ID ASSIGNMENT type SEMICOLON                                                {}
@@ -131,6 +130,7 @@ statements : statement                                                          
            ;
 
 statement : var_declaration                                                                         {}
+          | const_declaration                                                                       {}
           | command                                                                                 {}
           ;
 
