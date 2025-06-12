@@ -15,14 +15,14 @@ extern char * yytext;
 
 %token <sValue> ID PRIM_TYPE INTEGER STRING BOOL REAL
 %token <cValue> CHAR
-%token IF ELSE ELSEIF SWITCH CASE DEFAULT 
-       DO WHILE FOR BREAK CONTINUE RETURN 
-       NEW DELETE REF VAL CONST VOID 
-       STRUCT ENUM PTR LIST MAP TYPE 
-       LPAREN RPAREN LBRACE RBRACE LBRACKET RBRACKET SEMICOLON COLON COMMA DOT 
-       EQUALITY DIFFERENCE ABRACKET_OPEN ABRACKET_CLOSE LESS_THAN_EQUALS MORE_THAN_EQUALS 
-       ASSIGNMENT ASSIGNMENT_MUL ASSIGNMENT_DIV ASSIGNMENT_MOD ASSIGNMENT_ADD ASSIGNMENT_SUB 
-       AND ANDC OR ORC NOT PLUS MINUS TIMES SLASH MOD 
+%token IF ELSE ELSEIF SWITCH CASE DEFAULT
+       DO WHILE FOR BREAK CONTINUE RETURN
+       NEW DELETE REF VAL CONST VOID
+       STRUCT ENUM PTR LIST MAP TYPE
+       LPAREN RPAREN LBRACE RBRACE LBRACKET RBRACKET SEMICOLON COLON COMMA DOT
+       EQUALITY DIFFERENCE ABRACKET_OPEN ABRACKET_CLOSE LESS_THAN_EQUALS MORE_THAN_EQUALS
+       ASSIGNMENT ASSIGNMENT_MUL ASSIGNMENT_DIV ASSIGNMENT_MOD ASSIGNMENT_ADD ASSIGNMENT_SUB
+       AND ANDC OR ORC NOT PLUS MINUS TIMES SLASH MOD
 %type <sValue> type
 
 %start program
@@ -31,25 +31,25 @@ extern char * yytext;
 %%
 program : declarations subprograms                                                                 {}
         ;
-	   
+
 
 declarations : declaration                                                                          {}
              | declarations declaration                                                             {}
              ;
 
 declaration : var_declaration                                                                       {}
-            | const_declaration                                                                     {}  
-            | type_declaration                                                                      {} 
+            | const_declaration                                                                     {}
+            | type_declaration                                                                      {}
             ;
 
-var_declaration : type declaration_line SEMICOLON                                                   {}                
+var_declaration : type declaration_line SEMICOLON                                                   {}
                ;
 
-const_declaration : CONST var_declaration                                                           {} 
+const_declaration : CONST var_declaration                                                           {}
               ;
 
 type_declaration : TYPE ID ASSIGNMENT type SEMICOLON                                                {}
-                 
+
 declaration_line : declaration_item                                                                 {}
                  | declaration_line COMMA declaration_item                                          {}
                  ;
@@ -60,7 +60,7 @@ declaration_item : declaration_term                                             
 
 declaration_term : ID                                                                               {}
                  | declaration_term LBRACKET expr RBRACKET                                          {}
-                 ; 
+                 ;
 
 initialization : expr                                                                               {}
                | LBRACE initialization_list RBRACE                                                  {}
@@ -75,7 +75,7 @@ allocation : NEW type LBRACKET expr RBRACKET                                    
            ;
 
 
-type : PRIM_TYPE 
+type : PRIM_TYPE
      | ptr_type                                                                                     {}
      | enum_type                                                                                    {}
      | struct_type                                                                                  {}
@@ -99,7 +99,7 @@ enum_type : ENUM LBRACE enum_list RBRACE                                        
 enum_list : ID                                                                                      {}
           | enum_list COMMA ID                                                                      {}
           ;
-          
+
 struct_type : STRUCT LBRACE struct_vars RBRACE                                                      {}
             ;
 
@@ -111,12 +111,9 @@ subprograms : subprogram                                                        
             | subprograms subprogram                                                                {}
             ;
 
-subprogram : return_type ID LPAREN parameters RPAREN LBRACE statements RBRACE                       {}
+subprogram : type ID LPAREN parameters RPAREN LBRACE statements RBRACE                              {}
+subprogram : VOID ID LPAREN parameters RPAREN LBRACE statements RBRACE                              {}
            ;
-
-return_type : type                                                                                  {}
-            | VOID                                                                                  {}
-            ;
 
 parameters : parameter                                                                              {}
            | parameters COMMA parameter                                                             {}
@@ -143,11 +140,11 @@ command : if                                                                    
         | jump SEMICOLON                                                                            {}
         | deletion                                                                                  {}
         ;
- 
+
 jump : CONTINUE                                                                                     {}
      | BREAK                                                                                        {}
      | return                                                                                       {}
-      ;                                                     
+      ;
 
 return : RETURN return_value                                                                        {}
        ;
@@ -162,7 +159,7 @@ if : IF LPAREN expr RPAREN LBRACE statement RBRACE else_ifs_opt else_opt        
 else_ifs_opt :                                                                                      {}
              | else_ifs                                                                             {}
              ;
-             
+
 else_ifs : else_if                                                                                  {}
          | else_ifs else_if                                                                         {}
          ;
@@ -171,7 +168,7 @@ else_if : ELSEIF LPAREN expr RPAREN LBRACE statements RBRACE                    
 
 else_opt :                                                                                          {}
          | else                                                                                     {}
-         ;                                                                                          
+         ;
 
 else : ELSE LBRACE statements RBRACE                                                                {}
      ;
@@ -192,14 +189,14 @@ for_initialization : assignment                                                 
 switch : SWITCH LPAREN expr RPAREN LBRACE cases RBRACE                                              {}
        | SWITCH LPAREN expr RPAREN LBRACE cases default RBRACE                                      {}
        ;
-       
+
 cases : case                                                                                        {}
       | cases case                                                                                  {}
-      ;             
+      ;
 
 case : CASE case_item                                                                               {}
      ;
-     
+
 default : DEFAULT case_item                                                                         {}
         ;
 
@@ -222,21 +219,21 @@ assignable : identifier_ref                                                     
             | VAL postfix_expr                                                                      {}
             ;
 
-assignment_operator : ASSIGNMENT                                                                    {} 
-                    | ASSIGNMENT_MUL                                                                {} 
-                    | ASSIGNMENT_DIV                                                                {} 
-                    | ASSIGNMENT_MOD                                                                {} 
-                    | ASSIGNMENT_ADD                                                                {} 
+assignment_operator : ASSIGNMENT                                                                    {}
+                    | ASSIGNMENT_MUL                                                                {}
+                    | ASSIGNMENT_DIV                                                                {}
+                    | ASSIGNMENT_MOD                                                                {}
+                    | ASSIGNMENT_ADD                                                                {}
                     | ASSIGNMENT_SUB                                                                {}
                     ;
-                    
+
 assignment_expr : expr                                                                              {}
                 | allocation                                                                        {}
                 ;
 
 deletion : DELETE identifier_ref SEMICOLON                                                          {}
          ;
-                
+
 identifier_ref : ID                                                                                 {}
                | identifier_ref LBRACKET expr RBRACKET                                              {}
                | identifier_ref DOT ID                                                              {}
@@ -268,7 +265,7 @@ eq_expr : relational_expr                                                       
 eq_operator : EQUALITY                                                                              {}
             | DIFFERENCE                                                                            {}
             ;
-             
+
 relational_expr : arithmetic_expr                                                                   {}
                 | relational_expr ineq_operator arithmetic_expr                                     {}
                 ;
@@ -312,7 +309,7 @@ postfix_expr : cast                                                             
              ;
 
 cast : element                                                                                      {}
-     | LPAREN type RPAREN element                                                                   {}
+     | LPAREN PRIM_TYPE RPAREN element                                                                   {}
      ;
 
 element : ID                                                                                        {}
