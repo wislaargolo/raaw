@@ -57,30 +57,66 @@ extern int yydebug;
     ID = 258,                      /* ID  */
     PRIM_TYPE = 259,               /* PRIM_TYPE  */
     INTEGER = 260,                 /* INTEGER  */
-    CONST = 261,                   /* CONST  */
-    IF = 262,                      /* IF  */
-    ELSE = 263,                    /* ELSE  */
-    ELSEIF = 264,                  /* ELSEIF  */
-    SWITCH = 265,                  /* SWITCH  */
-    CASE = 266,                    /* CASE  */
-    DEFAULT = 267,                 /* DEFAULT  */
-    WHILE = 268,                   /* WHILE  */
-    FOR = 269,                     /* FOR  */
-    ASSIGNMENT = 270,              /* ASSIGNMENT  */
-    VOID = 271,                    /* VOID  */
-    LPAREN = 272,                  /* LPAREN  */
-    RPAREN = 273,                  /* RPAREN  */
-    LBRACE = 274,                  /* LBRACE  */
-    RBRACE = 275,                  /* RBRACE  */
-    LBRACKET = 276,                /* LBRACKET  */
-    RBRACKET = 277,                /* RBRACKET  */
-    SEMICOLON = 278,               /* SEMICOLON  */
-    COLON = 279,                   /* COLON  */
-    COMMA = 280,                   /* COMMA  */
-    DOT = 281,                     /* DOT  */
-    PLUS = 282,                    /* PLUS  */
-    MINUS = 283,                   /* MINUS  */
-    TYPE = 284                     /* TYPE  */
+    STRING = 261,                  /* STRING  */
+    BOOL = 262,                    /* BOOL  */
+    REAL = 263,                    /* REAL  */
+    CHAR = 264,                    /* CHAR  */
+    IF = 265,                      /* IF  */
+    ELSE = 266,                    /* ELSE  */
+    ELSEIF = 267,                  /* ELSEIF  */
+    SWITCH = 268,                  /* SWITCH  */
+    CASE = 269,                    /* CASE  */
+    DEFAULT = 270,                 /* DEFAULT  */
+    DO = 271,                      /* DO  */
+    WHILE = 272,                   /* WHILE  */
+    FOR = 273,                     /* FOR  */
+    BREAK = 274,                   /* BREAK  */
+    CONTINUE = 275,                /* CONTINUE  */
+    RETURN = 276,                  /* RETURN  */
+    NEW = 277,                     /* NEW  */
+    DELETE = 278,                  /* DELETE  */
+    REF = 279,                     /* REF  */
+    VAL = 280,                     /* VAL  */
+    CONST = 281,                   /* CONST  */
+    VOID = 282,                    /* VOID  */
+    STRUCT = 283,                  /* STRUCT  */
+    ENUM = 284,                    /* ENUM  */
+    PTR = 285,                     /* PTR  */
+    LIST = 286,                    /* LIST  */
+    MAP = 287,                     /* MAP  */
+    TYPE = 288,                    /* TYPE  */
+    LPAREN = 289,                  /* LPAREN  */
+    RPAREN = 290,                  /* RPAREN  */
+    LBRACE = 291,                  /* LBRACE  */
+    RBRACE = 292,                  /* RBRACE  */
+    LBRACKET = 293,                /* LBRACKET  */
+    RBRACKET = 294,                /* RBRACKET  */
+    SEMICOLON = 295,               /* SEMICOLON  */
+    COLON = 296,                   /* COLON  */
+    COMMA = 297,                   /* COMMA  */
+    DOT = 298,                     /* DOT  */
+    EQUALITY = 299,                /* EQUALITY  */
+    DIFFERENCE = 300,              /* DIFFERENCE  */
+    ABRACKET_OPEN = 301,           /* ABRACKET_OPEN  */
+    ABRACKET_CLOSE = 302,          /* ABRACKET_CLOSE  */
+    LESS_THAN_EQUALS = 303,        /* LESS_THAN_EQUALS  */
+    MORE_THAN_EQUALS = 304,        /* MORE_THAN_EQUALS  */
+    ASSIGNMENT = 305,              /* ASSIGNMENT  */
+    ASSIGNMENT_MUL = 306,          /* ASSIGNMENT_MUL  */
+    ASSIGNMENT_DIV = 307,          /* ASSIGNMENT_DIV  */
+    ASSIGNMENT_MOD = 308,          /* ASSIGNMENT_MOD  */
+    ASSIGNMENT_ADD = 309,          /* ASSIGNMENT_ADD  */
+    ASSIGNMENT_SUB = 310,          /* ASSIGNMENT_SUB  */
+    AND = 311,                     /* AND  */
+    ANDC = 312,                    /* ANDC  */
+    OR = 313,                      /* OR  */
+    ORC = 314,                     /* ORC  */
+    NOT = 315,                     /* NOT  */
+    PLUS = 316,                    /* PLUS  */
+    MINUS = 317,                   /* MINUS  */
+    TIMES = 318,                   /* TIMES  */
+    SLASH = 319,                   /* SLASH  */
+    MOD = 320                      /* MOD  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -91,12 +127,11 @@ union YYSTYPE
 {
 #line 11 "parser.y"
 
-	int    iValue; 	/* integer value */
 	char   cValue; 	/* char value */
-	char * sValue;  /* string value */
+	char * sValue;      /* string value */
 	
 
-#line 100 "y.tab.h"
+#line 135 "y.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

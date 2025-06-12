@@ -1,33 +1,28 @@
-Terminals unused in grammar
-
-    INTEGER
-    IF
-    ELSE
-    ELSEIF
-    SWITCH
-    CASE
-    DEFAULT
-    WHILE
-    FOR
-    VOID
-    LPAREN
-    RPAREN
-    LBRACE
-    RBRACE
-    LBRACKET
-    RBRACKET
-    COLON
-    COMMA
-    DOT
-    PLUS
-    MINUS
+State 4 conflicts: 7 shift/reduce
+State 104 conflicts: 1 reduce/reduce
+State 134 conflicts: 1 shift/reduce
+State 161 conflicts: 1 shift/reduce
+State 182 conflicts: 1 shift/reduce
+State 184 conflicts: 1 shift/reduce
+State 197 conflicts: 1 shift/reduce
+State 223 conflicts: 1 shift/reduce
+State 226 conflicts: 1 shift/reduce
+State 237 conflicts: 1 shift/reduce
+State 254 conflicts: 1 shift/reduce
+State 264 conflicts: 1 shift/reduce
+State 265 conflicts: 1 shift/reduce
+State 267 conflicts: 1 shift/reduce
+State 268 conflicts: 1 shift/reduce
+State 270 conflicts: 1 shift/reduce
+State 272 conflicts: 1 shift/reduce
+State 274 conflicts: 1 shift/reduce
 
 
 Grammar
 
     0 $accept: program $end
 
-    1 program: declarations
+    1 program: declarations subprograms
 
     2 declarations: declaration
     3             | declarations declaration
@@ -35,75 +30,514 @@ Grammar
     4 declaration: var_declaration
     5            | type_declaration
 
-    6 var_declaration: var_specifier type ID SEMICOLON
+    6 var_declaration: var_specifier type declaration_line SEMICOLON
 
     7 var_specifier: ε
     8              | CONST
 
     9 type_declaration: TYPE ID ASSIGNMENT type SEMICOLON
 
-   10 type: PRIM_TYPE
-   11     | ID
+   10 declaration_line: declaration_item
+   11                 | declaration_line COMMA declaration_item
+
+   12 declaration_item: declaration_term
+   13                 | declaration_term ASSIGNMENT initialization
+
+   14 declaration_term: ID
+   15                 | declaration_term LBRACKET expr RBRACKET
+
+   16 initialization: expr
+   17               | LBRACE initialization_list RBRACE
+   18               | allocation
+
+   19 initialization_list: initialization
+   20                    | initialization_list COMMA initialization
+
+   21 allocation: NEW type LBRACKET expr RBRACKET
+
+   22 type: PRIM_TYPE
+   23     | ptr_type
+   24     | enum_type
+   25     | struct_type
+   26     | map_type
+   27     | list_type
+   28     | ID
+
+   29 ptr_type: PTR ABRACKET_OPEN type ABRACKET_CLOSE
+
+   30 map_type: MAP ABRACKET_OPEN type COMMA type ABRACKET_CLOSE
+
+   31 list_type: LIST ABRACKET_OPEN type ABRACKET_CLOSE
+
+   32 enum_type: ENUM LBRACE enum_list RBRACE
+
+   33 enum_list: ID
+   34          | enum_list COMMA ID
+
+   35 struct_type: STRUCT LBRACE struct_vars RBRACE
+
+   36 struct_vars: var_declaration
+   37            | struct_vars var_declaration
+
+   38 subprograms: subprogram
+   39            | subprograms subprogram
+
+   40 subprogram: return_type ID LPAREN parameters RPAREN LBRACE statements RBRACE
+
+   41 return_type: type
+   42            | VOID
+
+   43 parameters: parameter
+   44           | parameters COMMA parameter
+
+   45 parameter: type ID
+
+   46 statements: statement
+   47           | statements statement
+
+   48 statement: var_declaration
+   49          | command
+
+   50 command: if
+   51        | while
+   52        | do_while
+   53        | for
+   54        | switch
+   55        | function_call SEMICOLON
+   56        | jump SEMICOLON
+   57        | deletion
+
+   58 jump: CONTINUE
+   59     | BREAK
+   60     | return
+
+   61 return: RETURN return_value
+
+   62 return_value: ε
+   63             | expr
+
+   64 if: IF LPAREN expr RPAREN LBRACE statement RBRACE else_ifs_opt else_opt
+
+   65 else_ifs_opt: ε
+   66             | else_ifs
+
+   67 else_ifs: else_if
+   68         | else_ifs else_if
+
+   69 else_if: ELSEIF LPAREN expr RPAREN LBRACE statements RBRACE
+
+   70 else_opt: ε
+   71         | else
+
+   72 else: ELSE LBRACE statements RBRACE
+
+   73 while: WHILE LPAREN expr RPAREN LBRACE statements RBRACE
+
+   74 do_while: DO LBRACE statements RBRACE WHILE LPAREN expr RPAREN
+
+   75 for: FOR LPAREN for_initialization COMMA expr COMMA command RPAREN LBRACE statements RBRACE
+
+   76 for_initialization: assignment
+   77                   | var_declaration
+
+   78 switch: SWITCH LPAREN expr RPAREN LBRACE cases RBRACE
+   79       | SWITCH LPAREN expr RPAREN LBRACE cases default RBRACE
+
+   80 cases: case
+   81      | cases case
+
+   82 case: CASE case_item
+
+   83 default: DEFAULT case_item
+
+   84 case_item: expr COLON statements
+
+   85 function_call: ID LPAREN RPAREN
+   86              | ID LPAREN parameters_call RPAREN
+
+   87 parameters_call: expr
+   88                | parameters_call COMMA expr
+
+   89 assignment: assignable assignment_operator assignment_expr SEMICOLON
+
+   90 assignable: identifier_ref
+   91           | VAL postfix_expr
+
+   92 assignment_operator: ASSIGNMENT
+   93                    | ASSIGNMENT_MUL
+   94                    | ASSIGNMENT_DIV
+   95                    | ASSIGNMENT_MOD
+   96                    | ASSIGNMENT_ADD
+   97                    | ASSIGNMENT_SUB
+
+   98 assignment_expr: expr
+   99                | allocation
+
+  100 deletion: DELETE identifier_ref SEMICOLON
+
+  101 identifier_ref: ID
+  102               | identifier_ref LBRACKET expr RBRACKET
+  103               | identifier_ref DOT ID
+
+  104 expr: or_expr
+
+  105 or_expr: and_expr
+  106        | or_expr or_operator and_expr
+
+  107 or_operator: OR
+  108            | ORC
+
+  109 and_expr: eq_expr
+  110         | and_expr and_operator eq_expr
+
+  111 and_operator: AND
+  112             | ANDC
+
+  113 eq_expr: relational_expr
+  114        | eq_expr eq_operator relational_expr
+
+  115 eq_operator: EQUALITY
+  116            | DIFFERENCE
+
+  117 relational_expr: arithmetic_expr
+  118                | relational_expr ineq_operator arithmetic_expr
+
+  119 ineq_operator: ABRACKET_OPEN
+  120              | MORE_THAN_EQUALS
+  121              | ABRACKET_CLOSE
+  122              | LESS_THAN_EQUALS
+
+  123 arithmetic_expr: term
+  124                | arithmetic_expr add_operator term
+
+  125 add_operator: PLUS
+  126             | MINUS
+
+  127 term: prefix_expr
+  128     | term mult_operator prefix_expr
+
+  129 mult_operator: TIMES
+  130              | SLASH
+  131              | MOD
+
+  132 prefix_expr: postfix_expr
+  133            | unary_operator postfix_expr
+
+  134 unary_operator: PLUS
+  135               | MINUS
+  136               | REF
+  137               | VAL
+  138               | NOT
+
+  139 postfix_expr: cast
+  140             | function_call
+
+  141 cast: element
+  142     | LPAREN type RPAREN element
+
+  143 element: ID
+  144        | literal
+  145        | LPAREN expr RPAREN
+
+  146 literal: INTEGER
+  147        | CHAR
+  148        | STRING
+  149        | REAL
+  150        | BOOL
 
 
 Terminals, with rules where they appear
 
     $end (0) 0
     error (256)
-    ID <sValue> (258) 6 9 11
-    PRIM_TYPE <sValue> (259) 10
-    INTEGER <iValue> (260)
-    CONST (261) 8
-    IF (262)
-    ELSE (263)
-    ELSEIF (264)
-    SWITCH (265)
-    CASE (266)
-    DEFAULT (267)
-    WHILE (268)
-    FOR (269)
-    ASSIGNMENT (270) 9
-    VOID (271)
-    LPAREN (272)
-    RPAREN (273)
-    LBRACE (274)
-    RBRACE (275)
-    LBRACKET (276)
-    RBRACKET (277)
-    SEMICOLON (278) 6 9
-    COLON (279)
-    COMMA (280)
-    DOT (281)
-    PLUS (282)
-    MINUS (283)
-    TYPE (284) 9
+    ID <sValue> (258) 9 14 28 33 34 40 45 85 86 101 103 143
+    PRIM_TYPE <sValue> (259) 22
+    INTEGER <sValue> (260) 146
+    STRING <sValue> (261) 148
+    BOOL <sValue> (262) 150
+    REAL <sValue> (263) 149
+    CHAR <cValue> (264) 147
+    IF (265) 64
+    ELSE (266) 72
+    ELSEIF (267) 69
+    SWITCH (268) 78 79
+    CASE (269) 82
+    DEFAULT (270) 83
+    DO (271) 74
+    WHILE (272) 73 74
+    FOR (273) 75
+    BREAK (274) 59
+    CONTINUE (275) 58
+    RETURN (276) 61
+    NEW (277) 21
+    DELETE (278) 100
+    REF (279) 136
+    VAL (280) 91 137
+    CONST (281) 8
+    VOID (282) 42
+    STRUCT (283) 35
+    ENUM (284) 32
+    PTR (285) 29
+    LIST (286) 31
+    MAP (287) 30
+    TYPE (288) 9
+    LPAREN (289) 40 64 69 73 74 75 78 79 85 86 142 145
+    RPAREN (290) 40 64 69 73 74 75 78 79 85 86 142 145
+    LBRACE (291) 17 32 35 40 64 69 72 73 74 75 78 79
+    RBRACE (292) 17 32 35 40 64 69 72 73 74 75 78 79
+    LBRACKET (293) 15 21 102
+    RBRACKET (294) 15 21 102
+    SEMICOLON (295) 6 9 55 56 89 100
+    COLON (296) 84
+    COMMA (297) 11 20 30 34 44 75 88
+    DOT (298) 103
+    EQUALITY (299) 115
+    DIFFERENCE (300) 116
+    ABRACKET_OPEN (301) 29 30 31 119
+    ABRACKET_CLOSE (302) 29 30 31 121
+    LESS_THAN_EQUALS (303) 122
+    MORE_THAN_EQUALS (304) 120
+    ASSIGNMENT (305) 9 13 92
+    ASSIGNMENT_MUL (306) 93
+    ASSIGNMENT_DIV (307) 94
+    ASSIGNMENT_MOD (308) 95
+    ASSIGNMENT_ADD (309) 96
+    ASSIGNMENT_SUB (310) 97
+    AND (311) 111
+    ANDC (312) 112
+    OR (313) 107
+    ORC (314) 108
+    NOT (315) 138
+    PLUS (316) 125 134
+    MINUS (317) 126 135
+    TIMES (318) 129
+    SLASH (319) 130
+    MOD (320) 131
 
 
 Nonterminals, with rules where they appear
 
-    $accept (30)
+    $accept (66)
         on left: 0
-    program (31)
+    program (67)
         on left: 1
         on right: 0
-    declarations (32)
+    declarations (68)
         on left: 2 3
         on right: 1 3
-    declaration (33)
+    declaration (69)
         on left: 4 5
         on right: 2 3
-    var_declaration (34)
+    var_declaration (70)
         on left: 6
-        on right: 4
-    var_specifier (35)
+        on right: 4 36 37 48 77
+    var_specifier <sValue> (71)
         on left: 7 8
         on right: 6
-    type_declaration (36)
+    type_declaration (72)
         on left: 9
         on right: 5
-    type (37)
+    declaration_line (73)
         on left: 10 11
-        on right: 6 9
+        on right: 6 11
+    declaration_item (74)
+        on left: 12 13
+        on right: 10 11
+    declaration_term (75)
+        on left: 14 15
+        on right: 12 13 15
+    initialization (76)
+        on left: 16 17 18
+        on right: 13 19 20
+    initialization_list (77)
+        on left: 19 20
+        on right: 17 20
+    allocation (78)
+        on left: 21
+        on right: 18 99
+    type <sValue> (79)
+        on left: 22 23 24 25 26 27 28
+        on right: 6 9 21 29 30 31 41 45 142
+    ptr_type (80)
+        on left: 29
+        on right: 23
+    map_type (81)
+        on left: 30
+        on right: 26
+    list_type (82)
+        on left: 31
+        on right: 27
+    enum_type (83)
+        on left: 32
+        on right: 24
+    enum_list (84)
+        on left: 33 34
+        on right: 32 34
+    struct_type (85)
+        on left: 35
+        on right: 25
+    struct_vars (86)
+        on left: 36 37
+        on right: 35 37
+    subprograms (87)
+        on left: 38 39
+        on right: 1 39
+    subprogram (88)
+        on left: 40
+        on right: 38 39
+    return_type (89)
+        on left: 41 42
+        on right: 40
+    parameters (90)
+        on left: 43 44
+        on right: 40 44
+    parameter (91)
+        on left: 45
+        on right: 43 44
+    statements (92)
+        on left: 46 47
+        on right: 40 47 69 72 73 74 75 84
+    statement (93)
+        on left: 48 49
+        on right: 46 47 64
+    command (94)
+        on left: 50 51 52 53 54 55 56 57
+        on right: 49 75
+    jump (95)
+        on left: 58 59 60
+        on right: 56
+    return (96)
+        on left: 61
+        on right: 60
+    return_value (97)
+        on left: 62 63
+        on right: 61
+    if (98)
+        on left: 64
+        on right: 50
+    else_ifs_opt (99)
+        on left: 65 66
+        on right: 64
+    else_ifs (100)
+        on left: 67 68
+        on right: 66 68
+    else_if (101)
+        on left: 69
+        on right: 67 68
+    else_opt (102)
+        on left: 70 71
+        on right: 64
+    else (103)
+        on left: 72
+        on right: 71
+    while (104)
+        on left: 73
+        on right: 51
+    do_while (105)
+        on left: 74
+        on right: 52
+    for (106)
+        on left: 75
+        on right: 53
+    for_initialization (107)
+        on left: 76 77
+        on right: 75
+    switch (108)
+        on left: 78 79
+        on right: 54
+    cases (109)
+        on left: 80 81
+        on right: 78 79 81
+    case (110)
+        on left: 82
+        on right: 80 81
+    default (111)
+        on left: 83
+        on right: 79
+    case_item (112)
+        on left: 84
+        on right: 82 83
+    function_call (113)
+        on left: 85 86
+        on right: 55 140
+    parameters_call (114)
+        on left: 87 88
+        on right: 86 88
+    assignment (115)
+        on left: 89
+        on right: 76
+    assignable (116)
+        on left: 90 91
+        on right: 89
+    assignment_operator (117)
+        on left: 92 93 94 95 96 97
+        on right: 89
+    assignment_expr (118)
+        on left: 98 99
+        on right: 89
+    deletion (119)
+        on left: 100
+        on right: 57
+    identifier_ref (120)
+        on left: 101 102 103
+        on right: 90 100 102 103
+    expr (121)
+        on left: 104
+        on right: 15 16 21 63 64 69 73 74 75 78 79 84 87 88 98 102 145
+    or_expr (122)
+        on left: 105 106
+        on right: 104 106
+    or_operator (123)
+        on left: 107 108
+        on right: 106
+    and_expr (124)
+        on left: 109 110
+        on right: 105 106 110
+    and_operator (125)
+        on left: 111 112
+        on right: 110
+    eq_expr (126)
+        on left: 113 114
+        on right: 109 110 114
+    eq_operator (127)
+        on left: 115 116
+        on right: 114
+    relational_expr (128)
+        on left: 117 118
+        on right: 113 114 118
+    ineq_operator (129)
+        on left: 119 120 121 122
+        on right: 118
+    arithmetic_expr (130)
+        on left: 123 124
+        on right: 117 118 124
+    add_operator (131)
+        on left: 125 126
+        on right: 124
+    term (132)
+        on left: 127 128
+        on right: 123 124 128
+    mult_operator (133)
+        on left: 129 130 131
+        on right: 128
+    prefix_expr (134)
+        on left: 132 133
+        on right: 127 128
+    unary_operator (135)
+        on left: 134 135 136 137 138
+        on right: 133
+    postfix_expr (136)
+        on left: 139 140
+        on right: 91 132 133
+    cast (137)
+        on left: 141 142
+        on right: 139
+    element (138)
+        on left: 143 144 145
+        on right: 141 142
+    literal (139)
+        on left: 146 147 148 149 150
+        on right: 144
 
 
 State 0
@@ -146,19 +580,41 @@ State 3
 
 State 4
 
-    1 program: declarations •
+    1 program: declarations • subprograms
     3 declarations: declarations • declaration
 
-    CONST  shift, and go to state 1
-    TYPE   shift, and go to state 2
+    ID         shift, and go to state 11
+    PRIM_TYPE  shift, and go to state 12
+    CONST      shift, and go to state 1
+    VOID       shift, and go to state 13
+    STRUCT     shift, and go to state 14
+    ENUM       shift, and go to state 15
+    PTR        shift, and go to state 16
+    LIST       shift, and go to state 17
+    MAP        shift, and go to state 18
+    TYPE       shift, and go to state 2
 
-    $end      reduce using rule 1 (program)
-    $default  reduce using rule 7 (var_specifier)
+    ID         [reduce using rule 7 (var_specifier)]
+    PRIM_TYPE  [reduce using rule 7 (var_specifier)]
+    STRUCT     [reduce using rule 7 (var_specifier)]
+    ENUM       [reduce using rule 7 (var_specifier)]
+    PTR        [reduce using rule 7 (var_specifier)]
+    LIST       [reduce using rule 7 (var_specifier)]
+    MAP        [reduce using rule 7 (var_specifier)]
 
-    declaration       go to state 11
+    declaration       go to state 19
     var_declaration   go to state 6
     var_specifier     go to state 7
     type_declaration  go to state 8
+    type              go to state 20
+    ptr_type          go to state 21
+    map_type          go to state 22
+    list_type         go to state 23
+    enum_type         go to state 24
+    struct_type       go to state 25
+    subprograms       go to state 26
+    subprogram        go to state 27
+    return_type       go to state 28
 
 
 State 5
@@ -177,12 +633,22 @@ State 6
 
 State 7
 
-    6 var_declaration: var_specifier • type ID SEMICOLON
+    6 var_declaration: var_specifier • type declaration_line SEMICOLON
 
-    ID         shift, and go to state 12
-    PRIM_TYPE  shift, and go to state 13
+    ID         shift, and go to state 11
+    PRIM_TYPE  shift, and go to state 12
+    STRUCT     shift, and go to state 14
+    ENUM       shift, and go to state 15
+    PTR        shift, and go to state 16
+    LIST       shift, and go to state 17
+    MAP        shift, and go to state 18
 
-    type  go to state 14
+    type         go to state 29
+    ptr_type     go to state 21
+    map_type     go to state 22
+    list_type    go to state 23
+    enum_type    go to state 24
+    struct_type  go to state 25
 
 
 State 8
@@ -196,7 +662,7 @@ State 9
 
     9 type_declaration: TYPE ID • ASSIGNMENT type SEMICOLON
 
-    ASSIGNMENT  shift, and go to state 15
+    ASSIGNMENT  shift, and go to state 30
 
 
 State 10
@@ -208,65 +674,3329 @@ State 10
 
 State 11
 
+   28 type: ID •
+
+    $default  reduce using rule 28 (type)
+
+
+State 12
+
+   22 type: PRIM_TYPE •
+
+    $default  reduce using rule 22 (type)
+
+
+State 13
+
+   42 return_type: VOID •
+
+    $default  reduce using rule 42 (return_type)
+
+
+State 14
+
+   35 struct_type: STRUCT • LBRACE struct_vars RBRACE
+
+    LBRACE  shift, and go to state 31
+
+
+State 15
+
+   32 enum_type: ENUM • LBRACE enum_list RBRACE
+
+    LBRACE  shift, and go to state 32
+
+
+State 16
+
+   29 ptr_type: PTR • ABRACKET_OPEN type ABRACKET_CLOSE
+
+    ABRACKET_OPEN  shift, and go to state 33
+
+
+State 17
+
+   31 list_type: LIST • ABRACKET_OPEN type ABRACKET_CLOSE
+
+    ABRACKET_OPEN  shift, and go to state 34
+
+
+State 18
+
+   30 map_type: MAP • ABRACKET_OPEN type COMMA type ABRACKET_CLOSE
+
+    ABRACKET_OPEN  shift, and go to state 35
+
+
+State 19
+
     3 declarations: declarations declaration •
 
     $default  reduce using rule 3 (declarations)
 
 
-State 12
+State 20
 
-   11 type: ID •
+   41 return_type: type •
 
-    $default  reduce using rule 11 (type)
-
-
-State 13
-
-   10 type: PRIM_TYPE •
-
-    $default  reduce using rule 10 (type)
+    $default  reduce using rule 41 (return_type)
 
 
-State 14
+State 21
 
-    6 var_declaration: var_specifier type • ID SEMICOLON
+   23 type: ptr_type •
 
-    ID  shift, and go to state 16
+    $default  reduce using rule 23 (type)
 
 
-State 15
+State 22
+
+   26 type: map_type •
+
+    $default  reduce using rule 26 (type)
+
+
+State 23
+
+   27 type: list_type •
+
+    $default  reduce using rule 27 (type)
+
+
+State 24
+
+   24 type: enum_type •
+
+    $default  reduce using rule 24 (type)
+
+
+State 25
+
+   25 type: struct_type •
+
+    $default  reduce using rule 25 (type)
+
+
+State 26
+
+    1 program: declarations subprograms •
+   39 subprograms: subprograms • subprogram
+
+    ID         shift, and go to state 11
+    PRIM_TYPE  shift, and go to state 12
+    VOID       shift, and go to state 13
+    STRUCT     shift, and go to state 14
+    ENUM       shift, and go to state 15
+    PTR        shift, and go to state 16
+    LIST       shift, and go to state 17
+    MAP        shift, and go to state 18
+
+    $default  reduce using rule 1 (program)
+
+    type         go to state 20
+    ptr_type     go to state 21
+    map_type     go to state 22
+    list_type    go to state 23
+    enum_type    go to state 24
+    struct_type  go to state 25
+    subprogram   go to state 36
+    return_type  go to state 28
+
+
+State 27
+
+   38 subprograms: subprogram •
+
+    $default  reduce using rule 38 (subprograms)
+
+
+State 28
+
+   40 subprogram: return_type • ID LPAREN parameters RPAREN LBRACE statements RBRACE
+
+    ID  shift, and go to state 37
+
+
+State 29
+
+    6 var_declaration: var_specifier type • declaration_line SEMICOLON
+
+    ID  shift, and go to state 38
+
+    declaration_line  go to state 39
+    declaration_item  go to state 40
+    declaration_term  go to state 41
+
+
+State 30
 
     9 type_declaration: TYPE ID ASSIGNMENT • type SEMICOLON
 
-    ID         shift, and go to state 12
-    PRIM_TYPE  shift, and go to state 13
+    ID         shift, and go to state 11
+    PRIM_TYPE  shift, and go to state 12
+    STRUCT     shift, and go to state 14
+    ENUM       shift, and go to state 15
+    PTR        shift, and go to state 16
+    LIST       shift, and go to state 17
+    MAP        shift, and go to state 18
 
-    type  go to state 17
+    type         go to state 42
+    ptr_type     go to state 21
+    map_type     go to state 22
+    list_type    go to state 23
+    enum_type    go to state 24
+    struct_type  go to state 25
 
 
-State 16
+State 31
 
-    6 var_declaration: var_specifier type ID • SEMICOLON
+   35 struct_type: STRUCT LBRACE • struct_vars RBRACE
 
-    SEMICOLON  shift, and go to state 18
+    CONST  shift, and go to state 1
+
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 43
+    var_specifier    go to state 7
+    struct_vars      go to state 44
 
 
-State 17
+State 32
+
+   32 enum_type: ENUM LBRACE • enum_list RBRACE
+
+    ID  shift, and go to state 45
+
+    enum_list  go to state 46
+
+
+State 33
+
+   29 ptr_type: PTR ABRACKET_OPEN • type ABRACKET_CLOSE
+
+    ID         shift, and go to state 11
+    PRIM_TYPE  shift, and go to state 12
+    STRUCT     shift, and go to state 14
+    ENUM       shift, and go to state 15
+    PTR        shift, and go to state 16
+    LIST       shift, and go to state 17
+    MAP        shift, and go to state 18
+
+    type         go to state 47
+    ptr_type     go to state 21
+    map_type     go to state 22
+    list_type    go to state 23
+    enum_type    go to state 24
+    struct_type  go to state 25
+
+
+State 34
+
+   31 list_type: LIST ABRACKET_OPEN • type ABRACKET_CLOSE
+
+    ID         shift, and go to state 11
+    PRIM_TYPE  shift, and go to state 12
+    STRUCT     shift, and go to state 14
+    ENUM       shift, and go to state 15
+    PTR        shift, and go to state 16
+    LIST       shift, and go to state 17
+    MAP        shift, and go to state 18
+
+    type         go to state 48
+    ptr_type     go to state 21
+    map_type     go to state 22
+    list_type    go to state 23
+    enum_type    go to state 24
+    struct_type  go to state 25
+
+
+State 35
+
+   30 map_type: MAP ABRACKET_OPEN • type COMMA type ABRACKET_CLOSE
+
+    ID         shift, and go to state 11
+    PRIM_TYPE  shift, and go to state 12
+    STRUCT     shift, and go to state 14
+    ENUM       shift, and go to state 15
+    PTR        shift, and go to state 16
+    LIST       shift, and go to state 17
+    MAP        shift, and go to state 18
+
+    type         go to state 49
+    ptr_type     go to state 21
+    map_type     go to state 22
+    list_type    go to state 23
+    enum_type    go to state 24
+    struct_type  go to state 25
+
+
+State 36
+
+   39 subprograms: subprograms subprogram •
+
+    $default  reduce using rule 39 (subprograms)
+
+
+State 37
+
+   40 subprogram: return_type ID • LPAREN parameters RPAREN LBRACE statements RBRACE
+
+    LPAREN  shift, and go to state 50
+
+
+State 38
+
+   14 declaration_term: ID •
+
+    $default  reduce using rule 14 (declaration_term)
+
+
+State 39
+
+    6 var_declaration: var_specifier type declaration_line • SEMICOLON
+   11 declaration_line: declaration_line • COMMA declaration_item
+
+    SEMICOLON  shift, and go to state 51
+    COMMA      shift, and go to state 52
+
+
+State 40
+
+   10 declaration_line: declaration_item •
+
+    $default  reduce using rule 10 (declaration_line)
+
+
+State 41
+
+   12 declaration_item: declaration_term •
+   13                 | declaration_term • ASSIGNMENT initialization
+   15 declaration_term: declaration_term • LBRACKET expr RBRACKET
+
+    LBRACKET    shift, and go to state 53
+    ASSIGNMENT  shift, and go to state 54
+
+    $default  reduce using rule 12 (declaration_item)
+
+
+State 42
 
     9 type_declaration: TYPE ID ASSIGNMENT type • SEMICOLON
 
-    SEMICOLON  shift, and go to state 19
+    SEMICOLON  shift, and go to state 55
 
 
-State 18
+State 43
 
-    6 var_declaration: var_specifier type ID SEMICOLON •
+   36 struct_vars: var_declaration •
+
+    $default  reduce using rule 36 (struct_vars)
+
+
+State 44
+
+   35 struct_type: STRUCT LBRACE struct_vars • RBRACE
+   37 struct_vars: struct_vars • var_declaration
+
+    CONST   shift, and go to state 1
+    RBRACE  shift, and go to state 56
+
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 57
+    var_specifier    go to state 7
+
+
+State 45
+
+   33 enum_list: ID •
+
+    $default  reduce using rule 33 (enum_list)
+
+
+State 46
+
+   32 enum_type: ENUM LBRACE enum_list • RBRACE
+   34 enum_list: enum_list • COMMA ID
+
+    RBRACE  shift, and go to state 58
+    COMMA   shift, and go to state 59
+
+
+State 47
+
+   29 ptr_type: PTR ABRACKET_OPEN type • ABRACKET_CLOSE
+
+    ABRACKET_CLOSE  shift, and go to state 60
+
+
+State 48
+
+   31 list_type: LIST ABRACKET_OPEN type • ABRACKET_CLOSE
+
+    ABRACKET_CLOSE  shift, and go to state 61
+
+
+State 49
+
+   30 map_type: MAP ABRACKET_OPEN type • COMMA type ABRACKET_CLOSE
+
+    COMMA  shift, and go to state 62
+
+
+State 50
+
+   40 subprogram: return_type ID LPAREN • parameters RPAREN LBRACE statements RBRACE
+
+    ID         shift, and go to state 11
+    PRIM_TYPE  shift, and go to state 12
+    STRUCT     shift, and go to state 14
+    ENUM       shift, and go to state 15
+    PTR        shift, and go to state 16
+    LIST       shift, and go to state 17
+    MAP        shift, and go to state 18
+
+    type         go to state 63
+    ptr_type     go to state 21
+    map_type     go to state 22
+    list_type    go to state 23
+    enum_type    go to state 24
+    struct_type  go to state 25
+    parameters   go to state 64
+    parameter    go to state 65
+
+
+State 51
+
+    6 var_declaration: var_specifier type declaration_line SEMICOLON •
 
     $default  reduce using rule 6 (var_declaration)
 
 
-State 19
+State 52
+
+   11 declaration_line: declaration_line COMMA • declaration_item
+
+    ID  shift, and go to state 38
+
+    declaration_item  go to state 66
+    declaration_term  go to state 41
+
+
+State 53
+
+   15 declaration_term: declaration_term LBRACKET • expr RBRACKET
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    expr             go to state 80
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 54
+
+   13 declaration_item: declaration_term ASSIGNMENT • initialization
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    NEW      shift, and go to state 93
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    LBRACE   shift, and go to state 94
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    initialization   go to state 95
+    allocation       go to state 96
+    function_call    go to state 79
+    expr             go to state 97
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 55
 
     9 type_declaration: TYPE ID ASSIGNMENT type SEMICOLON •
 
     $default  reduce using rule 9 (type_declaration)
+
+
+State 56
+
+   35 struct_type: STRUCT LBRACE struct_vars RBRACE •
+
+    $default  reduce using rule 35 (struct_type)
+
+
+State 57
+
+   37 struct_vars: struct_vars var_declaration •
+
+    $default  reduce using rule 37 (struct_vars)
+
+
+State 58
+
+   32 enum_type: ENUM LBRACE enum_list RBRACE •
+
+    $default  reduce using rule 32 (enum_type)
+
+
+State 59
+
+   34 enum_list: enum_list COMMA • ID
+
+    ID  shift, and go to state 98
+
+
+State 60
+
+   29 ptr_type: PTR ABRACKET_OPEN type ABRACKET_CLOSE •
+
+    $default  reduce using rule 29 (ptr_type)
+
+
+State 61
+
+   31 list_type: LIST ABRACKET_OPEN type ABRACKET_CLOSE •
+
+    $default  reduce using rule 31 (list_type)
+
+
+State 62
+
+   30 map_type: MAP ABRACKET_OPEN type COMMA • type ABRACKET_CLOSE
+
+    ID         shift, and go to state 11
+    PRIM_TYPE  shift, and go to state 12
+    STRUCT     shift, and go to state 14
+    ENUM       shift, and go to state 15
+    PTR        shift, and go to state 16
+    LIST       shift, and go to state 17
+    MAP        shift, and go to state 18
+
+    type         go to state 99
+    ptr_type     go to state 21
+    map_type     go to state 22
+    list_type    go to state 23
+    enum_type    go to state 24
+    struct_type  go to state 25
+
+
+State 63
+
+   45 parameter: type • ID
+
+    ID  shift, and go to state 100
+
+
+State 64
+
+   40 subprogram: return_type ID LPAREN parameters • RPAREN LBRACE statements RBRACE
+   44 parameters: parameters • COMMA parameter
+
+    RPAREN  shift, and go to state 101
+    COMMA   shift, and go to state 102
+
+
+State 65
+
+   43 parameters: parameter •
+
+    $default  reduce using rule 43 (parameters)
+
+
+State 66
+
+   11 declaration_line: declaration_line COMMA declaration_item •
+
+    $default  reduce using rule 11 (declaration_line)
+
+
+State 67
+
+   85 function_call: ID • LPAREN RPAREN
+   86              | ID • LPAREN parameters_call RPAREN
+  143 element: ID •
+
+    LPAREN  shift, and go to state 103
+
+    $default  reduce using rule 143 (element)
+
+
+State 68
+
+  146 literal: INTEGER •
+
+    $default  reduce using rule 146 (literal)
+
+
+State 69
+
+  148 literal: STRING •
+
+    $default  reduce using rule 148 (literal)
+
+
+State 70
+
+  150 literal: BOOL •
+
+    $default  reduce using rule 150 (literal)
+
+
+State 71
+
+  149 literal: REAL •
+
+    $default  reduce using rule 149 (literal)
+
+
+State 72
+
+  147 literal: CHAR •
+
+    $default  reduce using rule 147 (literal)
+
+
+State 73
+
+  136 unary_operator: REF •
+
+    $default  reduce using rule 136 (unary_operator)
+
+
+State 74
+
+  137 unary_operator: VAL •
+
+    $default  reduce using rule 137 (unary_operator)
+
+
+State 75
+
+  142 cast: LPAREN • type RPAREN element
+  145 element: LPAREN • expr RPAREN
+
+    ID         shift, and go to state 104
+    PRIM_TYPE  shift, and go to state 12
+    INTEGER    shift, and go to state 68
+    STRING     shift, and go to state 69
+    BOOL       shift, and go to state 70
+    REAL       shift, and go to state 71
+    CHAR       shift, and go to state 72
+    REF        shift, and go to state 73
+    VAL        shift, and go to state 74
+    STRUCT     shift, and go to state 14
+    ENUM       shift, and go to state 15
+    PTR        shift, and go to state 16
+    LIST       shift, and go to state 17
+    MAP        shift, and go to state 18
+    LPAREN     shift, and go to state 75
+    NOT        shift, and go to state 76
+    PLUS       shift, and go to state 77
+    MINUS      shift, and go to state 78
+
+    type             go to state 105
+    ptr_type         go to state 21
+    map_type         go to state 22
+    list_type        go to state 23
+    enum_type        go to state 24
+    struct_type      go to state 25
+    function_call    go to state 79
+    expr             go to state 106
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 76
+
+  138 unary_operator: NOT •
+
+    $default  reduce using rule 138 (unary_operator)
+
+
+State 77
+
+  134 unary_operator: PLUS •
+
+    $default  reduce using rule 134 (unary_operator)
+
+
+State 78
+
+  135 unary_operator: MINUS •
+
+    $default  reduce using rule 135 (unary_operator)
+
+
+State 79
+
+  140 postfix_expr: function_call •
+
+    $default  reduce using rule 140 (postfix_expr)
+
+
+State 80
+
+   15 declaration_term: declaration_term LBRACKET expr • RBRACKET
+
+    RBRACKET  shift, and go to state 107
+
+
+State 81
+
+  104 expr: or_expr •
+  106 or_expr: or_expr • or_operator and_expr
+
+    OR   shift, and go to state 108
+    ORC  shift, and go to state 109
+
+    $default  reduce using rule 104 (expr)
+
+    or_operator  go to state 110
+
+
+State 82
+
+  105 or_expr: and_expr •
+  110 and_expr: and_expr • and_operator eq_expr
+
+    AND   shift, and go to state 111
+    ANDC  shift, and go to state 112
+
+    $default  reduce using rule 105 (or_expr)
+
+    and_operator  go to state 113
+
+
+State 83
+
+  109 and_expr: eq_expr •
+  114 eq_expr: eq_expr • eq_operator relational_expr
+
+    EQUALITY    shift, and go to state 114
+    DIFFERENCE  shift, and go to state 115
+
+    $default  reduce using rule 109 (and_expr)
+
+    eq_operator  go to state 116
+
+
+State 84
+
+  113 eq_expr: relational_expr •
+  118 relational_expr: relational_expr • ineq_operator arithmetic_expr
+
+    ABRACKET_OPEN     shift, and go to state 117
+    ABRACKET_CLOSE    shift, and go to state 118
+    LESS_THAN_EQUALS  shift, and go to state 119
+    MORE_THAN_EQUALS  shift, and go to state 120
+
+    $default  reduce using rule 113 (eq_expr)
+
+    ineq_operator  go to state 121
+
+
+State 85
+
+  117 relational_expr: arithmetic_expr •
+  124 arithmetic_expr: arithmetic_expr • add_operator term
+
+    PLUS   shift, and go to state 122
+    MINUS  shift, and go to state 123
+
+    $default  reduce using rule 117 (relational_expr)
+
+    add_operator  go to state 124
+
+
+State 86
+
+  123 arithmetic_expr: term •
+  128 term: term • mult_operator prefix_expr
+
+    TIMES  shift, and go to state 125
+    SLASH  shift, and go to state 126
+    MOD    shift, and go to state 127
+
+    $default  reduce using rule 123 (arithmetic_expr)
+
+    mult_operator  go to state 128
+
+
+State 87
+
+  127 term: prefix_expr •
+
+    $default  reduce using rule 127 (term)
+
+
+State 88
+
+  133 prefix_expr: unary_operator • postfix_expr
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    LPAREN   shift, and go to state 75
+
+    function_call  go to state 79
+    postfix_expr   go to state 129
+    cast           go to state 90
+    element        go to state 91
+    literal        go to state 92
+
+
+State 89
+
+  132 prefix_expr: postfix_expr •
+
+    $default  reduce using rule 132 (prefix_expr)
+
+
+State 90
+
+  139 postfix_expr: cast •
+
+    $default  reduce using rule 139 (postfix_expr)
+
+
+State 91
+
+  141 cast: element •
+
+    $default  reduce using rule 141 (cast)
+
+
+State 92
+
+  144 element: literal •
+
+    $default  reduce using rule 144 (element)
+
+
+State 93
+
+   21 allocation: NEW • type LBRACKET expr RBRACKET
+
+    ID         shift, and go to state 11
+    PRIM_TYPE  shift, and go to state 12
+    STRUCT     shift, and go to state 14
+    ENUM       shift, and go to state 15
+    PTR        shift, and go to state 16
+    LIST       shift, and go to state 17
+    MAP        shift, and go to state 18
+
+    type         go to state 130
+    ptr_type     go to state 21
+    map_type     go to state 22
+    list_type    go to state 23
+    enum_type    go to state 24
+    struct_type  go to state 25
+
+
+State 94
+
+   17 initialization: LBRACE • initialization_list RBRACE
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    NEW      shift, and go to state 93
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    LBRACE   shift, and go to state 94
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    initialization       go to state 131
+    initialization_list  go to state 132
+    allocation           go to state 96
+    function_call        go to state 79
+    expr                 go to state 97
+    or_expr              go to state 81
+    and_expr             go to state 82
+    eq_expr              go to state 83
+    relational_expr      go to state 84
+    arithmetic_expr      go to state 85
+    term                 go to state 86
+    prefix_expr          go to state 87
+    unary_operator       go to state 88
+    postfix_expr         go to state 89
+    cast                 go to state 90
+    element              go to state 91
+    literal              go to state 92
+
+
+State 95
+
+   13 declaration_item: declaration_term ASSIGNMENT initialization •
+
+    $default  reduce using rule 13 (declaration_item)
+
+
+State 96
+
+   18 initialization: allocation •
+
+    $default  reduce using rule 18 (initialization)
+
+
+State 97
+
+   16 initialization: expr •
+
+    $default  reduce using rule 16 (initialization)
+
+
+State 98
+
+   34 enum_list: enum_list COMMA ID •
+
+    $default  reduce using rule 34 (enum_list)
+
+
+State 99
+
+   30 map_type: MAP ABRACKET_OPEN type COMMA type • ABRACKET_CLOSE
+
+    ABRACKET_CLOSE  shift, and go to state 133
+
+
+State 100
+
+   45 parameter: type ID •
+
+    $default  reduce using rule 45 (parameter)
+
+
+State 101
+
+   40 subprogram: return_type ID LPAREN parameters RPAREN • LBRACE statements RBRACE
+
+    LBRACE  shift, and go to state 134
+
+
+State 102
+
+   44 parameters: parameters COMMA • parameter
+
+    ID         shift, and go to state 11
+    PRIM_TYPE  shift, and go to state 12
+    STRUCT     shift, and go to state 14
+    ENUM       shift, and go to state 15
+    PTR        shift, and go to state 16
+    LIST       shift, and go to state 17
+    MAP        shift, and go to state 18
+
+    type         go to state 63
+    ptr_type     go to state 21
+    map_type     go to state 22
+    list_type    go to state 23
+    enum_type    go to state 24
+    struct_type  go to state 25
+    parameter    go to state 135
+
+
+State 103
+
+   85 function_call: ID LPAREN • RPAREN
+   86              | ID LPAREN • parameters_call RPAREN
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    RPAREN   shift, and go to state 136
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    parameters_call  go to state 137
+    expr             go to state 138
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 104
+
+   28 type: ID •
+   85 function_call: ID • LPAREN RPAREN
+   86              | ID • LPAREN parameters_call RPAREN
+  143 element: ID •
+
+    LPAREN  shift, and go to state 103
+
+    RPAREN    reduce using rule 28 (type)
+    RPAREN    [reduce using rule 143 (element)]
+    $default  reduce using rule 143 (element)
+
+
+State 105
+
+  142 cast: LPAREN type • RPAREN element
+
+    RPAREN  shift, and go to state 139
+
+
+State 106
+
+  145 element: LPAREN expr • RPAREN
+
+    RPAREN  shift, and go to state 140
+
+
+State 107
+
+   15 declaration_term: declaration_term LBRACKET expr RBRACKET •
+
+    $default  reduce using rule 15 (declaration_term)
+
+
+State 108
+
+  107 or_operator: OR •
+
+    $default  reduce using rule 107 (or_operator)
+
+
+State 109
+
+  108 or_operator: ORC •
+
+    $default  reduce using rule 108 (or_operator)
+
+
+State 110
+
+  106 or_expr: or_expr or_operator • and_expr
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    and_expr         go to state 141
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 111
+
+  111 and_operator: AND •
+
+    $default  reduce using rule 111 (and_operator)
+
+
+State 112
+
+  112 and_operator: ANDC •
+
+    $default  reduce using rule 112 (and_operator)
+
+
+State 113
+
+  110 and_expr: and_expr and_operator • eq_expr
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    eq_expr          go to state 142
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 114
+
+  115 eq_operator: EQUALITY •
+
+    $default  reduce using rule 115 (eq_operator)
+
+
+State 115
+
+  116 eq_operator: DIFFERENCE •
+
+    $default  reduce using rule 116 (eq_operator)
+
+
+State 116
+
+  114 eq_expr: eq_expr eq_operator • relational_expr
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    relational_expr  go to state 143
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 117
+
+  119 ineq_operator: ABRACKET_OPEN •
+
+    $default  reduce using rule 119 (ineq_operator)
+
+
+State 118
+
+  121 ineq_operator: ABRACKET_CLOSE •
+
+    $default  reduce using rule 121 (ineq_operator)
+
+
+State 119
+
+  122 ineq_operator: LESS_THAN_EQUALS •
+
+    $default  reduce using rule 122 (ineq_operator)
+
+
+State 120
+
+  120 ineq_operator: MORE_THAN_EQUALS •
+
+    $default  reduce using rule 120 (ineq_operator)
+
+
+State 121
+
+  118 relational_expr: relational_expr ineq_operator • arithmetic_expr
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    arithmetic_expr  go to state 144
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 122
+
+  125 add_operator: PLUS •
+
+    $default  reduce using rule 125 (add_operator)
+
+
+State 123
+
+  126 add_operator: MINUS •
+
+    $default  reduce using rule 126 (add_operator)
+
+
+State 124
+
+  124 arithmetic_expr: arithmetic_expr add_operator • term
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call   go to state 79
+    term            go to state 145
+    prefix_expr     go to state 87
+    unary_operator  go to state 88
+    postfix_expr    go to state 89
+    cast            go to state 90
+    element         go to state 91
+    literal         go to state 92
+
+
+State 125
+
+  129 mult_operator: TIMES •
+
+    $default  reduce using rule 129 (mult_operator)
+
+
+State 126
+
+  130 mult_operator: SLASH •
+
+    $default  reduce using rule 130 (mult_operator)
+
+
+State 127
+
+  131 mult_operator: MOD •
+
+    $default  reduce using rule 131 (mult_operator)
+
+
+State 128
+
+  128 term: term mult_operator • prefix_expr
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call   go to state 79
+    prefix_expr     go to state 146
+    unary_operator  go to state 88
+    postfix_expr    go to state 89
+    cast            go to state 90
+    element         go to state 91
+    literal         go to state 92
+
+
+State 129
+
+  133 prefix_expr: unary_operator postfix_expr •
+
+    $default  reduce using rule 133 (prefix_expr)
+
+
+State 130
+
+   21 allocation: NEW type • LBRACKET expr RBRACKET
+
+    LBRACKET  shift, and go to state 147
+
+
+State 131
+
+   19 initialization_list: initialization •
+
+    $default  reduce using rule 19 (initialization_list)
+
+
+State 132
+
+   17 initialization: LBRACE initialization_list • RBRACE
+   20 initialization_list: initialization_list • COMMA initialization
+
+    RBRACE  shift, and go to state 148
+    COMMA   shift, and go to state 149
+
+
+State 133
+
+   30 map_type: MAP ABRACKET_OPEN type COMMA type ABRACKET_CLOSE •
+
+    $default  reduce using rule 30 (map_type)
+
+
+State 134
+
+   40 subprogram: return_type ID LPAREN parameters RPAREN LBRACE • statements RBRACE
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statements       go to state 161
+    statement        go to state 162
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 135
+
+   44 parameters: parameters COMMA parameter •
+
+    $default  reduce using rule 44 (parameters)
+
+
+State 136
+
+   85 function_call: ID LPAREN RPAREN •
+
+    $default  reduce using rule 85 (function_call)
+
+
+State 137
+
+   86 function_call: ID LPAREN parameters_call • RPAREN
+   88 parameters_call: parameters_call • COMMA expr
+
+    RPAREN  shift, and go to state 173
+    COMMA   shift, and go to state 174
+
+
+State 138
+
+   87 parameters_call: expr •
+
+    $default  reduce using rule 87 (parameters_call)
+
+
+State 139
+
+  142 cast: LPAREN type RPAREN • element
+
+    ID       shift, and go to state 175
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    LPAREN   shift, and go to state 176
+
+    element  go to state 177
+    literal  go to state 92
+
+
+State 140
+
+  145 element: LPAREN expr RPAREN •
+
+    $default  reduce using rule 145 (element)
+
+
+State 141
+
+  106 or_expr: or_expr or_operator and_expr •
+  110 and_expr: and_expr • and_operator eq_expr
+
+    AND   shift, and go to state 111
+    ANDC  shift, and go to state 112
+
+    $default  reduce using rule 106 (or_expr)
+
+    and_operator  go to state 113
+
+
+State 142
+
+  110 and_expr: and_expr and_operator eq_expr •
+  114 eq_expr: eq_expr • eq_operator relational_expr
+
+    EQUALITY    shift, and go to state 114
+    DIFFERENCE  shift, and go to state 115
+
+    $default  reduce using rule 110 (and_expr)
+
+    eq_operator  go to state 116
+
+
+State 143
+
+  114 eq_expr: eq_expr eq_operator relational_expr •
+  118 relational_expr: relational_expr • ineq_operator arithmetic_expr
+
+    ABRACKET_OPEN     shift, and go to state 117
+    ABRACKET_CLOSE    shift, and go to state 118
+    LESS_THAN_EQUALS  shift, and go to state 119
+    MORE_THAN_EQUALS  shift, and go to state 120
+
+    $default  reduce using rule 114 (eq_expr)
+
+    ineq_operator  go to state 121
+
+
+State 144
+
+  118 relational_expr: relational_expr ineq_operator arithmetic_expr •
+  124 arithmetic_expr: arithmetic_expr • add_operator term
+
+    PLUS   shift, and go to state 122
+    MINUS  shift, and go to state 123
+
+    $default  reduce using rule 118 (relational_expr)
+
+    add_operator  go to state 124
+
+
+State 145
+
+  124 arithmetic_expr: arithmetic_expr add_operator term •
+  128 term: term • mult_operator prefix_expr
+
+    TIMES  shift, and go to state 125
+    SLASH  shift, and go to state 126
+    MOD    shift, and go to state 127
+
+    $default  reduce using rule 124 (arithmetic_expr)
+
+    mult_operator  go to state 128
+
+
+State 146
+
+  128 term: term mult_operator prefix_expr •
+
+    $default  reduce using rule 128 (term)
+
+
+State 147
+
+   21 allocation: NEW type LBRACKET • expr RBRACKET
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    expr             go to state 178
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 148
+
+   17 initialization: LBRACE initialization_list RBRACE •
+
+    $default  reduce using rule 17 (initialization)
+
+
+State 149
+
+   20 initialization_list: initialization_list COMMA • initialization
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    NEW      shift, and go to state 93
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    LBRACE   shift, and go to state 94
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    initialization   go to state 179
+    allocation       go to state 96
+    function_call    go to state 79
+    expr             go to state 97
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 150
+
+   85 function_call: ID • LPAREN RPAREN
+   86              | ID • LPAREN parameters_call RPAREN
+
+    LPAREN  shift, and go to state 103
+
+
+State 151
+
+   64 if: IF • LPAREN expr RPAREN LBRACE statement RBRACE else_ifs_opt else_opt
+
+    LPAREN  shift, and go to state 180
+
+
+State 152
+
+   78 switch: SWITCH • LPAREN expr RPAREN LBRACE cases RBRACE
+   79       | SWITCH • LPAREN expr RPAREN LBRACE cases default RBRACE
+
+    LPAREN  shift, and go to state 181
+
+
+State 153
+
+   74 do_while: DO • LBRACE statements RBRACE WHILE LPAREN expr RPAREN
+
+    LBRACE  shift, and go to state 182
+
+
+State 154
+
+   73 while: WHILE • LPAREN expr RPAREN LBRACE statements RBRACE
+
+    LPAREN  shift, and go to state 183
+
+
+State 155
+
+   75 for: FOR • LPAREN for_initialization COMMA expr COMMA command RPAREN LBRACE statements RBRACE
+
+    LPAREN  shift, and go to state 184
+
+
+State 156
+
+   59 jump: BREAK •
+
+    $default  reduce using rule 59 (jump)
+
+
+State 157
+
+   58 jump: CONTINUE •
+
+    $default  reduce using rule 58 (jump)
+
+
+State 158
+
+   61 return: RETURN • return_value
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    $default  reduce using rule 62 (return_value)
+
+    return_value     go to state 185
+    function_call    go to state 79
+    expr             go to state 186
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 159
+
+  100 deletion: DELETE • identifier_ref SEMICOLON
+
+    ID  shift, and go to state 187
+
+    identifier_ref  go to state 188
+
+
+State 160
+
+   48 statement: var_declaration •
+
+    $default  reduce using rule 48 (statement)
+
+
+State 161
+
+   40 subprogram: return_type ID LPAREN parameters RPAREN LBRACE statements • RBRACE
+   47 statements: statements • statement
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+    RBRACE    shift, and go to state 189
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statement        go to state 190
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 162
+
+   46 statements: statement •
+
+    $default  reduce using rule 46 (statements)
+
+
+State 163
+
+   49 statement: command •
+
+    $default  reduce using rule 49 (statement)
+
+
+State 164
+
+   56 command: jump • SEMICOLON
+
+    SEMICOLON  shift, and go to state 191
+
+
+State 165
+
+   60 jump: return •
+
+    $default  reduce using rule 60 (jump)
+
+
+State 166
+
+   50 command: if •
+
+    $default  reduce using rule 50 (command)
+
+
+State 167
+
+   51 command: while •
+
+    $default  reduce using rule 51 (command)
+
+
+State 168
+
+   52 command: do_while •
+
+    $default  reduce using rule 52 (command)
+
+
+State 169
+
+   53 command: for •
+
+    $default  reduce using rule 53 (command)
+
+
+State 170
+
+   54 command: switch •
+
+    $default  reduce using rule 54 (command)
+
+
+State 171
+
+   55 command: function_call • SEMICOLON
+
+    SEMICOLON  shift, and go to state 192
+
+
+State 172
+
+   57 command: deletion •
+
+    $default  reduce using rule 57 (command)
+
+
+State 173
+
+   86 function_call: ID LPAREN parameters_call RPAREN •
+
+    $default  reduce using rule 86 (function_call)
+
+
+State 174
+
+   88 parameters_call: parameters_call COMMA • expr
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    expr             go to state 193
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 175
+
+  143 element: ID •
+
+    $default  reduce using rule 143 (element)
+
+
+State 176
+
+  145 element: LPAREN • expr RPAREN
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    expr             go to state 106
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 177
+
+  142 cast: LPAREN type RPAREN element •
+
+    $default  reduce using rule 142 (cast)
+
+
+State 178
+
+   21 allocation: NEW type LBRACKET expr • RBRACKET
+
+    RBRACKET  shift, and go to state 194
+
+
+State 179
+
+   20 initialization_list: initialization_list COMMA initialization •
+
+    $default  reduce using rule 20 (initialization_list)
+
+
+State 180
+
+   64 if: IF LPAREN • expr RPAREN LBRACE statement RBRACE else_ifs_opt else_opt
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    expr             go to state 195
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 181
+
+   78 switch: SWITCH LPAREN • expr RPAREN LBRACE cases RBRACE
+   79       | SWITCH LPAREN • expr RPAREN LBRACE cases default RBRACE
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    expr             go to state 196
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 182
+
+   74 do_while: DO LBRACE • statements RBRACE WHILE LPAREN expr RPAREN
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statements       go to state 197
+    statement        go to state 162
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 183
+
+   73 while: WHILE LPAREN • expr RPAREN LBRACE statements RBRACE
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    expr             go to state 198
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 184
+
+   75 for: FOR LPAREN • for_initialization COMMA expr COMMA command RPAREN LBRACE statements RBRACE
+
+    ID     shift, and go to state 187
+    VAL    shift, and go to state 199
+    CONST  shift, and go to state 1
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration     go to state 200
+    var_specifier       go to state 7
+    for_initialization  go to state 201
+    assignment          go to state 202
+    assignable          go to state 203
+    identifier_ref      go to state 204
+
+
+State 185
+
+   61 return: RETURN return_value •
+
+    $default  reduce using rule 61 (return)
+
+
+State 186
+
+   63 return_value: expr •
+
+    $default  reduce using rule 63 (return_value)
+
+
+State 187
+
+  101 identifier_ref: ID •
+
+    $default  reduce using rule 101 (identifier_ref)
+
+
+State 188
+
+  100 deletion: DELETE identifier_ref • SEMICOLON
+  102 identifier_ref: identifier_ref • LBRACKET expr RBRACKET
+  103               | identifier_ref • DOT ID
+
+    LBRACKET   shift, and go to state 205
+    SEMICOLON  shift, and go to state 206
+    DOT        shift, and go to state 207
+
+
+State 189
+
+   40 subprogram: return_type ID LPAREN parameters RPAREN LBRACE statements RBRACE •
+
+    $default  reduce using rule 40 (subprogram)
+
+
+State 190
+
+   47 statements: statements statement •
+
+    $default  reduce using rule 47 (statements)
+
+
+State 191
+
+   56 command: jump SEMICOLON •
+
+    $default  reduce using rule 56 (command)
+
+
+State 192
+
+   55 command: function_call SEMICOLON •
+
+    $default  reduce using rule 55 (command)
+
+
+State 193
+
+   88 parameters_call: parameters_call COMMA expr •
+
+    $default  reduce using rule 88 (parameters_call)
+
+
+State 194
+
+   21 allocation: NEW type LBRACKET expr RBRACKET •
+
+    $default  reduce using rule 21 (allocation)
+
+
+State 195
+
+   64 if: IF LPAREN expr • RPAREN LBRACE statement RBRACE else_ifs_opt else_opt
+
+    RPAREN  shift, and go to state 208
+
+
+State 196
+
+   78 switch: SWITCH LPAREN expr • RPAREN LBRACE cases RBRACE
+   79       | SWITCH LPAREN expr • RPAREN LBRACE cases default RBRACE
+
+    RPAREN  shift, and go to state 209
+
+
+State 197
+
+   47 statements: statements • statement
+   74 do_while: DO LBRACE statements • RBRACE WHILE LPAREN expr RPAREN
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+    RBRACE    shift, and go to state 210
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statement        go to state 190
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 198
+
+   73 while: WHILE LPAREN expr • RPAREN LBRACE statements RBRACE
+
+    RPAREN  shift, and go to state 211
+
+
+State 199
+
+   91 assignable: VAL • postfix_expr
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    LPAREN   shift, and go to state 75
+
+    function_call  go to state 79
+    postfix_expr   go to state 212
+    cast           go to state 90
+    element        go to state 91
+    literal        go to state 92
+
+
+State 200
+
+   77 for_initialization: var_declaration •
+
+    $default  reduce using rule 77 (for_initialization)
+
+
+State 201
+
+   75 for: FOR LPAREN for_initialization • COMMA expr COMMA command RPAREN LBRACE statements RBRACE
+
+    COMMA  shift, and go to state 213
+
+
+State 202
+
+   76 for_initialization: assignment •
+
+    $default  reduce using rule 76 (for_initialization)
+
+
+State 203
+
+   89 assignment: assignable • assignment_operator assignment_expr SEMICOLON
+
+    ASSIGNMENT      shift, and go to state 214
+    ASSIGNMENT_MUL  shift, and go to state 215
+    ASSIGNMENT_DIV  shift, and go to state 216
+    ASSIGNMENT_MOD  shift, and go to state 217
+    ASSIGNMENT_ADD  shift, and go to state 218
+    ASSIGNMENT_SUB  shift, and go to state 219
+
+    assignment_operator  go to state 220
+
+
+State 204
+
+   90 assignable: identifier_ref •
+  102 identifier_ref: identifier_ref • LBRACKET expr RBRACKET
+  103               | identifier_ref • DOT ID
+
+    LBRACKET  shift, and go to state 205
+    DOT       shift, and go to state 207
+
+    $default  reduce using rule 90 (assignable)
+
+
+State 205
+
+  102 identifier_ref: identifier_ref LBRACKET • expr RBRACKET
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    expr             go to state 221
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 206
+
+  100 deletion: DELETE identifier_ref SEMICOLON •
+
+    $default  reduce using rule 100 (deletion)
+
+
+State 207
+
+  103 identifier_ref: identifier_ref DOT • ID
+
+    ID  shift, and go to state 222
+
+
+State 208
+
+   64 if: IF LPAREN expr RPAREN • LBRACE statement RBRACE else_ifs_opt else_opt
+
+    LBRACE  shift, and go to state 223
+
+
+State 209
+
+   78 switch: SWITCH LPAREN expr RPAREN • LBRACE cases RBRACE
+   79       | SWITCH LPAREN expr RPAREN • LBRACE cases default RBRACE
+
+    LBRACE  shift, and go to state 224
+
+
+State 210
+
+   74 do_while: DO LBRACE statements RBRACE • WHILE LPAREN expr RPAREN
+
+    WHILE  shift, and go to state 225
+
+
+State 211
+
+   73 while: WHILE LPAREN expr RPAREN • LBRACE statements RBRACE
+
+    LBRACE  shift, and go to state 226
+
+
+State 212
+
+   91 assignable: VAL postfix_expr •
+
+    $default  reduce using rule 91 (assignable)
+
+
+State 213
+
+   75 for: FOR LPAREN for_initialization COMMA • expr COMMA command RPAREN LBRACE statements RBRACE
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    expr             go to state 227
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 214
+
+   92 assignment_operator: ASSIGNMENT •
+
+    $default  reduce using rule 92 (assignment_operator)
+
+
+State 215
+
+   93 assignment_operator: ASSIGNMENT_MUL •
+
+    $default  reduce using rule 93 (assignment_operator)
+
+
+State 216
+
+   94 assignment_operator: ASSIGNMENT_DIV •
+
+    $default  reduce using rule 94 (assignment_operator)
+
+
+State 217
+
+   95 assignment_operator: ASSIGNMENT_MOD •
+
+    $default  reduce using rule 95 (assignment_operator)
+
+
+State 218
+
+   96 assignment_operator: ASSIGNMENT_ADD •
+
+    $default  reduce using rule 96 (assignment_operator)
+
+
+State 219
+
+   97 assignment_operator: ASSIGNMENT_SUB •
+
+    $default  reduce using rule 97 (assignment_operator)
+
+
+State 220
+
+   89 assignment: assignable assignment_operator • assignment_expr SEMICOLON
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    NEW      shift, and go to state 93
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    allocation       go to state 228
+    function_call    go to state 79
+    assignment_expr  go to state 229
+    expr             go to state 230
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 221
+
+  102 identifier_ref: identifier_ref LBRACKET expr • RBRACKET
+
+    RBRACKET  shift, and go to state 231
+
+
+State 222
+
+  103 identifier_ref: identifier_ref DOT ID •
+
+    $default  reduce using rule 103 (identifier_ref)
+
+
+State 223
+
+   64 if: IF LPAREN expr RPAREN LBRACE • statement RBRACE else_ifs_opt else_opt
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statement        go to state 232
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 224
+
+   78 switch: SWITCH LPAREN expr RPAREN LBRACE • cases RBRACE
+   79       | SWITCH LPAREN expr RPAREN LBRACE • cases default RBRACE
+
+    CASE  shift, and go to state 233
+
+    cases  go to state 234
+    case   go to state 235
+
+
+State 225
+
+   74 do_while: DO LBRACE statements RBRACE WHILE • LPAREN expr RPAREN
+
+    LPAREN  shift, and go to state 236
+
+
+State 226
+
+   73 while: WHILE LPAREN expr RPAREN LBRACE • statements RBRACE
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statements       go to state 237
+    statement        go to state 162
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 227
+
+   75 for: FOR LPAREN for_initialization COMMA expr • COMMA command RPAREN LBRACE statements RBRACE
+
+    COMMA  shift, and go to state 238
+
+
+State 228
+
+   99 assignment_expr: allocation •
+
+    $default  reduce using rule 99 (assignment_expr)
+
+
+State 229
+
+   89 assignment: assignable assignment_operator assignment_expr • SEMICOLON
+
+    SEMICOLON  shift, and go to state 239
+
+
+State 230
+
+   98 assignment_expr: expr •
+
+    $default  reduce using rule 98 (assignment_expr)
+
+
+State 231
+
+  102 identifier_ref: identifier_ref LBRACKET expr RBRACKET •
+
+    $default  reduce using rule 102 (identifier_ref)
+
+
+State 232
+
+   64 if: IF LPAREN expr RPAREN LBRACE statement • RBRACE else_ifs_opt else_opt
+
+    RBRACE  shift, and go to state 240
+
+
+State 233
+
+   82 case: CASE • case_item
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    case_item        go to state 241
+    function_call    go to state 79
+    expr             go to state 242
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 234
+
+   78 switch: SWITCH LPAREN expr RPAREN LBRACE cases • RBRACE
+   79       | SWITCH LPAREN expr RPAREN LBRACE cases • default RBRACE
+   81 cases: cases • case
+
+    CASE     shift, and go to state 233
+    DEFAULT  shift, and go to state 243
+    RBRACE   shift, and go to state 244
+
+    case     go to state 245
+    default  go to state 246
+
+
+State 235
+
+   80 cases: case •
+
+    $default  reduce using rule 80 (cases)
+
+
+State 236
+
+   74 do_while: DO LBRACE statements RBRACE WHILE LPAREN • expr RPAREN
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    expr             go to state 247
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 237
+
+   47 statements: statements • statement
+   73 while: WHILE LPAREN expr RPAREN LBRACE statements • RBRACE
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+    RBRACE    shift, and go to state 248
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statement        go to state 190
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 238
+
+   75 for: FOR LPAREN for_initialization COMMA expr COMMA • command RPAREN LBRACE statements RBRACE
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+
+    command        go to state 249
+    jump           go to state 164
+    return         go to state 165
+    if             go to state 166
+    while          go to state 167
+    do_while       go to state 168
+    for            go to state 169
+    switch         go to state 170
+    function_call  go to state 171
+    deletion       go to state 172
+
+
+State 239
+
+   89 assignment: assignable assignment_operator assignment_expr SEMICOLON •
+
+    $default  reduce using rule 89 (assignment)
+
+
+State 240
+
+   64 if: IF LPAREN expr RPAREN LBRACE statement RBRACE • else_ifs_opt else_opt
+
+    ELSEIF  shift, and go to state 250
+
+    $default  reduce using rule 65 (else_ifs_opt)
+
+    else_ifs_opt  go to state 251
+    else_ifs      go to state 252
+    else_if       go to state 253
+
+
+State 241
+
+   82 case: CASE case_item •
+
+    $default  reduce using rule 82 (case)
+
+
+State 242
+
+   84 case_item: expr • COLON statements
+
+    COLON  shift, and go to state 254
+
+
+State 243
+
+   83 default: DEFAULT • case_item
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    case_item        go to state 255
+    function_call    go to state 79
+    expr             go to state 242
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 244
+
+   78 switch: SWITCH LPAREN expr RPAREN LBRACE cases RBRACE •
+
+    $default  reduce using rule 78 (switch)
+
+
+State 245
+
+   81 cases: cases case •
+
+    $default  reduce using rule 81 (cases)
+
+
+State 246
+
+   79 switch: SWITCH LPAREN expr RPAREN LBRACE cases default • RBRACE
+
+    RBRACE  shift, and go to state 256
+
+
+State 247
+
+   74 do_while: DO LBRACE statements RBRACE WHILE LPAREN expr • RPAREN
+
+    RPAREN  shift, and go to state 257
+
+
+State 248
+
+   73 while: WHILE LPAREN expr RPAREN LBRACE statements RBRACE •
+
+    $default  reduce using rule 73 (while)
+
+
+State 249
+
+   75 for: FOR LPAREN for_initialization COMMA expr COMMA command • RPAREN LBRACE statements RBRACE
+
+    RPAREN  shift, and go to state 258
+
+
+State 250
+
+   69 else_if: ELSEIF • LPAREN expr RPAREN LBRACE statements RBRACE
+
+    LPAREN  shift, and go to state 259
+
+
+State 251
+
+   64 if: IF LPAREN expr RPAREN LBRACE statement RBRACE else_ifs_opt • else_opt
+
+    ELSE  shift, and go to state 260
+
+    $default  reduce using rule 70 (else_opt)
+
+    else_opt  go to state 261
+    else      go to state 262
+
+
+State 252
+
+   66 else_ifs_opt: else_ifs •
+   68 else_ifs: else_ifs • else_if
+
+    ELSEIF  shift, and go to state 250
+
+    $default  reduce using rule 66 (else_ifs_opt)
+
+    else_if  go to state 263
+
+
+State 253
+
+   67 else_ifs: else_if •
+
+    $default  reduce using rule 67 (else_ifs)
+
+
+State 254
+
+   84 case_item: expr COLON • statements
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statements       go to state 264
+    statement        go to state 162
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 255
+
+   83 default: DEFAULT case_item •
+
+    $default  reduce using rule 83 (default)
+
+
+State 256
+
+   79 switch: SWITCH LPAREN expr RPAREN LBRACE cases default RBRACE •
+
+    $default  reduce using rule 79 (switch)
+
+
+State 257
+
+   74 do_while: DO LBRACE statements RBRACE WHILE LPAREN expr RPAREN •
+
+    $default  reduce using rule 74 (do_while)
+
+
+State 258
+
+   75 for: FOR LPAREN for_initialization COMMA expr COMMA command RPAREN • LBRACE statements RBRACE
+
+    LBRACE  shift, and go to state 265
+
+
+State 259
+
+   69 else_if: ELSEIF LPAREN • expr RPAREN LBRACE statements RBRACE
+
+    ID       shift, and go to state 67
+    INTEGER  shift, and go to state 68
+    STRING   shift, and go to state 69
+    BOOL     shift, and go to state 70
+    REAL     shift, and go to state 71
+    CHAR     shift, and go to state 72
+    REF      shift, and go to state 73
+    VAL      shift, and go to state 74
+    LPAREN   shift, and go to state 75
+    NOT      shift, and go to state 76
+    PLUS     shift, and go to state 77
+    MINUS    shift, and go to state 78
+
+    function_call    go to state 79
+    expr             go to state 266
+    or_expr          go to state 81
+    and_expr         go to state 82
+    eq_expr          go to state 83
+    relational_expr  go to state 84
+    arithmetic_expr  go to state 85
+    term             go to state 86
+    prefix_expr      go to state 87
+    unary_operator   go to state 88
+    postfix_expr     go to state 89
+    cast             go to state 90
+    element          go to state 91
+    literal          go to state 92
+
+
+State 260
+
+   72 else: ELSE • LBRACE statements RBRACE
+
+    LBRACE  shift, and go to state 267
+
+
+State 261
+
+   64 if: IF LPAREN expr RPAREN LBRACE statement RBRACE else_ifs_opt else_opt •
+
+    $default  reduce using rule 64 (if)
+
+
+State 262
+
+   71 else_opt: else •
+
+    $default  reduce using rule 71 (else_opt)
+
+
+State 263
+
+   68 else_ifs: else_ifs else_if •
+
+    $default  reduce using rule 68 (else_ifs)
+
+
+State 264
+
+   47 statements: statements • statement
+   84 case_item: expr COLON statements •
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+
+    ID        [reduce using rule 7 (var_specifier)]
+    CASE      reduce using rule 84 (case_item)
+    DEFAULT   reduce using rule 84 (case_item)
+    RBRACE    reduce using rule 84 (case_item)
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statement        go to state 190
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 265
+
+   75 for: FOR LPAREN for_initialization COMMA expr COMMA command RPAREN LBRACE • statements RBRACE
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statements       go to state 268
+    statement        go to state 162
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 266
+
+   69 else_if: ELSEIF LPAREN expr • RPAREN LBRACE statements RBRACE
+
+    RPAREN  shift, and go to state 269
+
+
+State 267
+
+   72 else: ELSE LBRACE • statements RBRACE
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statements       go to state 270
+    statement        go to state 162
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 268
+
+   47 statements: statements • statement
+   75 for: FOR LPAREN for_initialization COMMA expr COMMA command RPAREN LBRACE statements • RBRACE
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+    RBRACE    shift, and go to state 271
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statement        go to state 190
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 269
+
+   69 else_if: ELSEIF LPAREN expr RPAREN • LBRACE statements RBRACE
+
+    LBRACE  shift, and go to state 272
+
+
+State 270
+
+   47 statements: statements • statement
+   72 else: ELSE LBRACE statements • RBRACE
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+    RBRACE    shift, and go to state 273
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statement        go to state 190
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 271
+
+   75 for: FOR LPAREN for_initialization COMMA expr COMMA command RPAREN LBRACE statements RBRACE •
+
+    $default  reduce using rule 75 (for)
+
+
+State 272
+
+   69 else_if: ELSEIF LPAREN expr RPAREN LBRACE • statements RBRACE
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statements       go to state 274
+    statement        go to state 162
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 273
+
+   72 else: ELSE LBRACE statements RBRACE •
+
+    $default  reduce using rule 72 (else)
+
+
+State 274
+
+   47 statements: statements • statement
+   69 else_if: ELSEIF LPAREN expr RPAREN LBRACE statements • RBRACE
+
+    ID        shift, and go to state 150
+    IF        shift, and go to state 151
+    SWITCH    shift, and go to state 152
+    DO        shift, and go to state 153
+    WHILE     shift, and go to state 154
+    FOR       shift, and go to state 155
+    BREAK     shift, and go to state 156
+    CONTINUE  shift, and go to state 157
+    RETURN    shift, and go to state 158
+    DELETE    shift, and go to state 159
+    CONST     shift, and go to state 1
+    RBRACE    shift, and go to state 275
+
+    ID        [reduce using rule 7 (var_specifier)]
+    $default  reduce using rule 7 (var_specifier)
+
+    var_declaration  go to state 160
+    var_specifier    go to state 7
+    statement        go to state 190
+    command          go to state 163
+    jump             go to state 164
+    return           go to state 165
+    if               go to state 166
+    while            go to state 167
+    do_while         go to state 168
+    for              go to state 169
+    switch           go to state 170
+    function_call    go to state 171
+    deletion         go to state 172
+
+
+State 275
+
+   69 else_if: ELSEIF LPAREN expr RPAREN LBRACE statements RBRACE •
+
+    $default  reduce using rule 69 (else_if)

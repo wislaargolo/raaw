@@ -17,27 +17,27 @@ else[ \r?\n\t]+if                   { return(ELSEIF); }
 "case"                              { return(CASE); }
 "default"                           { return(DEFAULT); }
 
-"do"                                { printf("DO\n"); }
+"do"                                { return(DO); }
 "while"                             { return(WHILE); }
 "for"                               { return(FOR); }
-"break"                             { printf("BREAK\n");}
-"continue"                          { printf("CONTINUE\n"); }
-"return"                            { printf("RETURN\n"); }
+"break"                             { return(BREAK);}
+"continue"                          { return(CONTINUE); }
+"return"                            { return(RETURN); }
 
-"new"                               { printf("NEW\n"); }
-"delete"                            { printf("DELETE\n"); }
-"ref"                               { printf("REF\n"); }
-"val"                               { printf("VAL\n"); }
+"new"                               { return(NEW); }
+"delete"                            { return(DELETE); }
+"ref"                               { return(REF); }
+"val"                               { return(VAL); }
 
-int|long|float|double|boolean|char|string|file { yylval.sValue = yytext; return (PRIM_TYPE); }
+int|long|float|double|boolean|char|string|file { yylval.sValue = strdup(yytext); return (PRIM_TYPE); }
 
 "const"                             { return(CONST); }
-"void"                              { printf("VOID\n"); }
-"struct"                            { printf("STRUCT_TYPE\n"); }
-"enum"                              { printf("ENUM_TYPE\n"); }
-"ptr"                               { printf("PTR_TYPE\n"); }
-"list"                              { printf("LIST_TYPE\n"); }
-"map"                               { printf("MAP_TYPE\n"); }
+"void"                              { return(VOID); }
+"struct"                            { return(STRUCT); }
+"enum"                              { return(ENUM); }
+"ptr"                               { return(PTR); }
+"list"                              { return(LIST); }
+"map"                               { return(MAP); }
 "type"                              { return(TYPE); }
 
 "("                                 { return(LPAREN); }
@@ -51,43 +51,43 @@ int|long|float|double|boolean|char|string|file { yylval.sValue = yytext; return 
 ","                                 { return(COMMA); }
 "."                                 { return(DOT); }
 
-"=="                                { printf("EQUALITY\n"); }
-"!="                                { printf("DIFFERENCE\n"); }
-"<"                                 { printf("ABRACKET_OPEN\n"); }
-">"                                 { printf("ABRACKET_CLOSE\n"); }
-"<="                                { printf("LESS_THAN_EQUALS\n"); }
-">="                                { printf("MORE_THAN_EQUALS\n"); }
+"=="                                { return(EQUALITY); }
+"!="                                { return(DIFFERENCE); }
+"<"                                 { return(ABRACKET_OPEN); }
+">"                                 { return(ABRACKET_CLOSE); }
+"<="                                { return(LESS_THAN_EQUALS); }
+">="                                { return(MORE_THAN_EQUALS); }
 
 "="                                 { return(ASSIGNMENT); }
-"*="                                { printf("ASSIGNMENT_MUL\n"); }
-"/="                                { printf("ASSIGNMENT_DIV\n"); }
-"%="                                { printf("ASSIGNMENT_MOD\n"); }
-"+="                                { printf("ASSIGNMENT_ADD\n"); }
-"-="                                { printf("ASSIGNMENT_SUB\n"); }
+"*="                                { return(ASSIGNMENT_MUL); }
+"/="                                { return(ASSIGNMENT_DIV); }
+"%="                                { return(ASSIGNMENT_MOD); }
+"+="                                { return(ASSIGNMENT_ADD); }
+"-="                                { return(ASSIGNMENT_SUB); }
 
-"&&"                                { printf("AND\n"); }
-"and"                               { printf("ANDC\n"); }
-"||"                                { printf("OR\n"); }
-"or"                                { printf("ORC\n"); }
-"!"                                 { printf("NOT\n"); }
+"&&"                                { return(AND); }
+"and"                               { return(ANDC); }
+"||"                                { return(OR); }
+"or"                                { return(ORC); }
+"!"                                 { return(NOT); }
 
 "+"                                 { return(PLUS); }
-"-"                                 { printf("MINUS\n"); }
-"*"                                 { printf("TIMES\n"); }
-"/"                                 { printf("SLASH\n"); }
-"%"                                 { printf("MOD\n"); }
+"-"                                 { return(MINUS); }
+"*"                                 { return(TIMES); }
+"/"                                 { return(SLASH); }
+"%"                                 { return(MOD); }
 
-true|false                          { printf("BOOL(%s)\n", yytext); }
-[0-9]+\.[0-9]+                      { printf("REAL(%s)\n", yytext); }
-[0-9]+                              { yylval.iValue = atoi(yytext); return (INTEGER); }
-\'.\'                               { printf("CHAR(%s)\n", yytext); }
-\"(?:(?:[^"\\\n\r]|\\.)*[^\\])?\"   { printf("STRING(%s)\n", yytext); }
+true|false                          { yylval.sValue = strdup(yytext); return(BOOL); }
+[0-9]+\.[0-9]+                      { yylval.sValue = strdup(yytext); return(REAL); }
+[0-9]+                              { yylval.sValue = strdup(yytext); return(INTEGER); }
+\'.\'                               { yylval.cValue = yytext[0]; return(CHAR); }
+\"(?:(?:[^"\\\n\r]|\\.)*[^\\])?\"   { yylval.sValue = strdup(yytext); return(STRING); }
 
-[a-zA-Z][a-zA-Z0-9\_]*	            { yylval.sValue = yytext; return (ID); }
+[a-zA-Z][a-zA-Z0-9\_]*	            { yylval.sValue = strdup(yytext); return (ID); }
 "//".*                              { /* ignora comentário de linha */ }
 "/*"([^*]|\*+[^*/])*\*+"/"          { /* ignora comentário de bloco */ }
 
-.                                   { printf("Invalid character\n"); }
+.                                   { yyerror("Invalid character"); }
 
 %%
 
