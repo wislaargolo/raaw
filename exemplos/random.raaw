@@ -3,7 +3,7 @@ const int MAX_ITEMS = 5;
 type Color = enum {
     red,
     green,
-    blue,
+    blue
 };
 
 type Node = struct {
@@ -38,15 +38,15 @@ void main() {
     printLine(numero);
 
     // Exemplo struct pequena árvore
-    ptr<Node> root = new Node;
+    ptr<Node> root = new Node[1];
     root.value = numero;
-    root.left = new Node;
+    root.left = new Node[1];
     root.left.value = numero - 1;
-    root.right = new Node;
+    root.right = new Node[1];
     root.right.value = numero + 1;
 
-    delete root.left;
-    delete root.right;
+    delete(root.left);
+    delete(root.right);
 
     // Exemplo struct sem ponteiro
     Struct st;
@@ -71,14 +71,14 @@ void main() {
     dicionario["laranja"] = 3;
     int qtdMaca = dicionario["maçã"];
 
-    delete arr;
-    delete mat[0];
-    delete mat;
+    delete(arr);
+    delete(mat[0]);
+    delete(mat);
 
     // Exemplo com operações básicas
     int a = 20, b = 5;
     double c = 2.5, d = 2.0;
-    int    somaInt    = (a + b);
+    int somaInt    = (a + b);
     double somaDouble = (c + d);
     string saudacao   = ("Olá, " + "mundo!");
     printLine("somaInt    = " + somaInt);

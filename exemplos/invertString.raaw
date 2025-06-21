@@ -15,7 +15,7 @@ string reverse(ptr<char> str, int length) {
 }
 
 void main() {
-    out.print("Digite uma palavra para inverter: ");
+    print("Digite uma palavra para inverter: ");
     string input = nextLine();
 
     int n = length(input);
@@ -37,5 +37,5 @@ void main() {
 
     printLine("String invertida: " + resultado);
 
-    delete chars;
+    delete(chars);
 }

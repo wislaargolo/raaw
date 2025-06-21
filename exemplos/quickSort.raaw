@@ -1,7 +1,7 @@
 void swap(ptr<int> a, ptr<int> b) {
-    int temp = val a;
-    val a = val b;
-    val b = temp;
+    int temp = val(a);
+    val(a) = val(b);
+    val(b) = temp;
 }
 
 /*
@@ -30,21 +30,18 @@ int partition(ptr<int> arr, int low, int high) {
             j = j - 1;
         }
         if (i < j) {
-            swap(ref arr[i], ref arr[j]);
+            swap(ref(arr[i]), ref(arr[j]));
         }
     }
-    swap(ref arr[low], ref arr[j]);
+    swap(ref(arr[low]), ref(arr[j]));
     return j;
 }
 
 void quickSort(ptr<int> arr, int low, int high) {
     if (low < high) {
 
-        // call partition function to find Partition Index
         int pi = partition(arr, low, high);
 
-        // Recursively call quickSort() for left and right
-        // half based on Partition Index
         quickSort(arr, low, pi - 1);
         quickSort(arr, pi + 1, high);
     }
@@ -59,19 +56,19 @@ void main() {
 
     printLine("Insira os numeros da lista: ");
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i += 1) {
       arr[i] = nextInt();
     }
 
     // calling quickSort() to sort the given array
     quickSort(arr, 0, n - 1);
 
-    for (int i = 0; i < n; i = i + 1) {
+    for (int i = 0; i < n; i += 1) {
       print(arr[i]);
       print(" ");
     }
 
     printLine("");
 
-    delete arr;
+    delete(arr);
 }

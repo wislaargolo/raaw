@@ -29,11 +29,11 @@ extern char * yytext;
 
 
 %%
-program : declarations subprograms                                                                 {}
+program : declarations subprograms                                                                  {}
         ;
 
 
-declarations : declaration                                                                          {}
+declarations :                                                                                      {}
              | declarations declaration                                                             {}
              ;
 
@@ -75,7 +75,7 @@ allocation : NEW type LBRACKET expr RBRACKET                                    
            ;
 
 
-type : PRIM_TYPE
+type : PRIM_TYPE                                                                                    {}
      | ptr_type                                                                                     {}
      | enum_type                                                                                    {}
      | struct_type                                                                                  {}
@@ -112,7 +112,9 @@ subprograms : subprogram                                                        
             ;
 
 subprogram : type ID LPAREN parameters RPAREN LBRACE statements RBRACE                              {}
-subprogram : VOID ID LPAREN parameters RPAREN LBRACE statements RBRACE                              {}
+           | VOID ID LPAREN parameters RPAREN LBRACE statements RBRACE                              {}
+           | type ID LPAREN RPAREN LBRACE statements RBRACE                                         {}
+           | VOID ID LPAREN RPAREN LBRACE statements RBRACE                                         {}
            ;
 
 parameters : parameter                                                                              {}
@@ -129,6 +131,7 @@ statements : statement                                                          
 statement : var_declaration                                                                         {}
           | const_declaration                                                                       {}
           | command                                                                                 {}
+          | assignment_command                                                                      {}
           ;
 
 command : if                                                                                        {}
@@ -153,7 +156,7 @@ return_value :                                                                  
              | expr                                                                                 {}
              ;
 
-if : IF LPAREN expr RPAREN LBRACE statement RBRACE else_ifs_opt else_opt                            {}
+if : IF LPAREN expr RPAREN LBRACE statements RBRACE else_ifs_opt else_opt                            {}
    ;
 
 else_ifs_opt :                                                                                      {}
@@ -179,12 +182,12 @@ while : WHILE LPAREN expr RPAREN LBRACE statements RBRACE                       
 do_while : DO LBRACE statements RBRACE WHILE LPAREN expr RPAREN                                     {}
          ;
 
-for : FOR LPAREN for_initialization COMMA expr COMMA command RPAREN LBRACE statements RBRACE        {}
+for : FOR LPAREN for_init expr SEMICOLON assignment RPAREN LBRACE statements RBRACE                 {}
     ;
 
-for_initialization : assignment                                                                     {}
-                   | var_declaration                                                                {}
-                   ;
+for_init : assignment_command                                                                       {}
+         | var_declaration                                                                          {}
+         ;
 
 switch : SWITCH LPAREN expr RPAREN LBRACE cases RBRACE                                              {}
        | SWITCH LPAREN expr RPAREN LBRACE cases default RBRACE                                      {}
@@ -197,7 +200,7 @@ cases : case                                                                    
 case : CASE case_item                                                                               {}
      ;
 
-default : DEFAULT case_item                                                                         {}
+default : DEFAULT COLON statements                                                                  {}
         ;
 
 case_item : expr COLON statements                                                                   {}
@@ -212,12 +215,18 @@ parameters_call : expr                                                          
                 | parameters_call COMMA expr                                                        {}
                 ;
 
-assignment : assignable assignment_operator assignment_expr SEMICOLON                               {}
+assignment : assignable assignment_operator assignment_expr                                         {}
            ;
 
-assignable : identifier_ref                                                                        {}
-            | VAL postfix_expr                                                                      {}
+assignment_command : assignment SEMICOLON                                                           {}
+                   ;
+
+assignable : identifier_ref                                                                         {}
+            | val                                                                                   {}
             ;
+
+val : VAL LPAREN target RPAREN                                                                      {}
+    ;
 
 assignment_operator : ASSIGNMENT                                                                    {}
                     | ASSIGNMENT_MUL                                                                {}
@@ -231,7 +240,7 @@ assignment_expr : expr                                                          
                 | allocation                                                                        {}
                 ;
 
-deletion : DELETE identifier_ref SEMICOLON                                                          {}
+deletion : DELETE LPAREN identifier_ref RPAREN SEMICOLON                                            {}
          ;
 
 identifier_ref : ID                                                                                 {}
@@ -295,27 +304,33 @@ mult_operator : TIMES                                                           
 
 prefix_expr : postfix_expr                                                                          {}
             | unary_operator postfix_expr                                                           {}
+            | REF LPAREN identifier_ref RPAREN                                                      {}
+            | cast 
             ;
+
+cast : LPAREN PRIM_TYPE RPAREN postfix_expr                                                         {}
+     ;
 
 unary_operator : PLUS                                                                               {}
                | MINUS                                                                              {}
-               | REF                                                                                {}
-               | VAL                                                                                {}
                | NOT                                                                                {}
                ;
 
-postfix_expr : cast                                                                                 {}
-             | function_call                                                                        {}
+postfix_expr : target                                                                               {}                               
+             | literal                                                                              {}
              ;
 
-cast : element                                                                                      {}
-     | LPAREN PRIM_TYPE RPAREN element                                                                   {}
-     ;
-
-element : ID                                                                                        {}
-        | literal                                                                                   {}
-        | LPAREN expr RPAREN                                                                        {}
+base :    ID                                                                                        {}
+        | val                                                                                       {}
+        | LPAREN expr RPAREN                                                                        {}        
         ;
+
+target : base                                                                                       {}
+       | function_call                                                                              {}
+       | target LBRACKET expr RBRACKET                                                              {}
+       | target DOT ID                                                                              {}
+       ;
+     
 
 literal : INTEGER                                                                                   {}
         | CHAR                                                                                      {}
