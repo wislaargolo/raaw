@@ -156,7 +156,7 @@ return_value :                                                                  
              | expr                                                                                 {}
              ;
 
-if : IF LPAREN expr RPAREN LBRACE statements RBRACE else_ifs_opt else_opt                            {}
+if : IF LPAREN expr RPAREN LBRACE statements RBRACE else_ifs_opt else_opt                           {}
    ;
 
 else_ifs_opt :                                                                                      {}
@@ -320,10 +320,10 @@ postfix_expr : target                                                           
              | literal                                                                              {}
              ;
 
-base :    ID                                                                                        {}
-        | val                                                                                       {}
-        | LPAREN expr RPAREN                                                                        {}        
-        ;
+base : ID                                                                                           {}
+     | val                                                                                          {}
+     | LPAREN expr RPAREN                                                                           {}        
+     ;
 
 target : base                                                                                       {}
        | function_call                                                                              {}
