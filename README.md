@@ -93,12 +93,14 @@ Para executar o analisador léxico em um dos arquivos de exemplo da pasta `exemp
 ## ⚔️ Desafios Encontrados
 
 ### Conflitos
-- Shift/Reduce: 
+- Shift/Reduce:
+  
 O conflito shift/reduce identificado estava relacionado à regra `return_type`, usada para definir o tipo de retorno de funções da seguinte forma:
 
 ```ebnf
 return_type : VOID
             | type
+            ;
 ```
 
 Quando aparecia um type seguido por um `ID`, o analisador não conseguia decidir se deveria consumir o `ID` - no caso de uma declaração de variável - ou reduzir imediatamente para return_type. Para resolver isso, a regra `return_type` foi removida e a declaração de função foi dividida em duas regras separadas: uma específica para funções com `VOID` e outra para funções com `type`.
