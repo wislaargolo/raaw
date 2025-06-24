@@ -60,7 +60,7 @@ gcc lex.yy.c y.tab.c -o compiler
 
 ## ▶️ Execução
 
-Para executar o analisador léxico em um dos arquivos de exemplo da pasta `exemplos/`, utilize o seguinte comando:
+Para executar o analisador sintático em um dos arquivos de exemplo da pasta `exemplos/`, utilize o seguinte comando:
 
 ```bash
 ./compiler < exemplos/<nome_do_arquivo>.raaw
