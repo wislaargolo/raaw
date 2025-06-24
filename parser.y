@@ -1,17 +1,26 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+
+#include "./lib/record.h"
 
 int yylex(void);
 int yyerror(char *s);
 extern int yylineno;
 extern char * yytext;
+extern FILE * yyin, * yyout;
+
+char *cat(int, ...);
 
 %}
 
 %union {
 	char   cValue; 	/* char value */
 	char * sValue;      /* string value */
-	};
+     struct record * rec;
+};
 
 %token <sValue> ID PRIM_TYPE INTEGER STRING BOOL REAL
 %token <cValue> CHAR
@@ -341,11 +350,65 @@ literal : INTEGER                                                               
 
 %%
 
-int main (void) {
-	return yyparse ( );
+int main (int argc, char ** argv) {
+
+     int codigo;
+
+     if (argc != 3) {
+          printf("Usage: $./compiler input.txt output.txt\nClosing application...\n");
+          exit(0);
+     }
+
+     yyin = fopen(argv[1], "r");
+     yyout = fopen(argv[2], "w");
+
+     codigo = yyparse();
+
+     fclose(yyin);
+     fclose(yyout);
+
+     return codigo;
 }
 
 int yyerror (char *msg) {
 	fprintf (stderr, "%d: %s at '%s'\n", yylineno, msg, yytext);
 	return 0;
+}
+
+char *cat(int count, ...) {
+     va_list args;
+     int tam_total = 0;
+
+     va_start(args, count);
+
+     for (int i = 0; i < count; i++) {
+          char *str = va_arg(args, char *);
+          tam_total += strlen(str);
+     }
+
+     va_end(args);
+
+     char *result = malloc(tam_total + 1);
+     if (!result) {
+          printf("Allocation problem. Closing application...\n");
+          exit(0);
+     }
+
+     char *current = result;
+     va_start(args, count);
+
+     for (int i = 0; i < count; i++) {
+          char *str = va_arg(args, char *);
+          if (str) {
+               int len = strlen(str);
+               memcpy(current, str, len);
+               current += len;
+          }
+     }
+
+     va_end(args);
+
+     *current = '\0';
+
+     return result;
 }

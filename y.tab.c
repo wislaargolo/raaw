@@ -70,14 +70,22 @@
 #line 1 "parser.y"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+
+#include "./lib/record.h"
 
 int yylex(void);
 int yyerror(char *s);
 extern int yylineno;
 extern char * yytext;
+extern FILE * yyin, * yyout;
+
+char *cat(int, ...);
 
 
-#line 81 "y.tab.c"
+#line 89 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -192,13 +200,13 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 11 "parser.y"
+#line 19 "parser.y"
 
 	char   cValue; 	/* char value */
 	char * sValue;      /* string value */
-	
+     struct record * rec;
 
-#line 202 "y.tab.c"
+#line 210 "y.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -752,22 +760,22 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    32,    32,    36,    37,    40,    41,    42,    45,    48,
-      51,    53,    54,    57,    58,    61,    62,    65,    66,    67,
-      70,    71,    74,    78,    79,    80,    81,    82,    83,    84,
-      87,    90,    93,    96,    99,   100,   103,   106,   107,   110,
-     111,   114,   115,   116,   117,   120,   121,   124,   127,   128,
-     131,   132,   133,   134,   137,   138,   139,   140,   141,   142,
-     143,   144,   147,   148,   149,   152,   155,   156,   159,   162,
-     163,   166,   167,   170,   172,   173,   176,   179,   182,   185,
-     188,   189,   192,   193,   196,   197,   200,   203,   206,   210,
-     211,   214,   215,   218,   221,   224,   225,   228,   231,   232,
-     233,   234,   235,   236,   239,   240,   243,   246,   247,   248,
-     251,   254,   255,   258,   259,   262,   263,   266,   267,   270,
-     271,   274,   275,   278,   279,   282,   283,   284,   285,   288,
-     289,   292,   293,   296,   297,   300,   301,   302,   305,   306,
-     307,   308,   311,   314,   315,   316,   319,   320,   323,   324,
-     325,   328,   329,   330,   331,   335,   336,   337,   338,   339
+       0,    41,    41,    45,    46,    49,    50,    51,    54,    57,
+      60,    62,    63,    66,    67,    70,    71,    74,    75,    76,
+      79,    80,    83,    87,    88,    89,    90,    91,    92,    93,
+      96,    99,   102,   105,   108,   109,   112,   115,   116,   119,
+     120,   123,   124,   125,   126,   129,   130,   133,   136,   137,
+     140,   141,   142,   143,   146,   147,   148,   149,   150,   151,
+     152,   153,   156,   157,   158,   161,   164,   165,   168,   171,
+     172,   175,   176,   179,   181,   182,   185,   188,   191,   194,
+     197,   198,   201,   202,   205,   206,   209,   212,   215,   219,
+     220,   223,   224,   227,   230,   233,   234,   237,   240,   241,
+     242,   243,   244,   245,   248,   249,   252,   255,   256,   257,
+     260,   263,   264,   267,   268,   271,   272,   275,   276,   279,
+     280,   283,   284,   287,   288,   291,   292,   293,   294,   297,
+     298,   301,   302,   305,   306,   309,   310,   311,   314,   315,
+     316,   317,   320,   323,   324,   325,   328,   329,   332,   333,
+     334,   337,   338,   339,   340,   344,   345,   346,   347,   348
 };
 #endif
 
@@ -1626,949 +1634,949 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: declarations subprograms  */
-#line 32 "parser.y"
+#line 41 "parser.y"
                                                                                                     {}
-#line 1632 "y.tab.c"
+#line 1640 "y.tab.c"
     break;
 
   case 3: /* declarations: %empty  */
-#line 36 "parser.y"
+#line 45 "parser.y"
                                                                                                     {}
-#line 1638 "y.tab.c"
+#line 1646 "y.tab.c"
     break;
 
   case 4: /* declarations: declarations declaration  */
-#line 37 "parser.y"
+#line 46 "parser.y"
                                                                                                     {}
-#line 1644 "y.tab.c"
+#line 1652 "y.tab.c"
     break;
 
   case 5: /* declaration: var_declaration  */
-#line 40 "parser.y"
+#line 49 "parser.y"
                                                                                                     {}
-#line 1650 "y.tab.c"
+#line 1658 "y.tab.c"
     break;
 
   case 6: /* declaration: const_declaration  */
-#line 41 "parser.y"
+#line 50 "parser.y"
                                                                                                     {}
-#line 1656 "y.tab.c"
+#line 1664 "y.tab.c"
     break;
 
   case 7: /* declaration: type_declaration  */
-#line 42 "parser.y"
+#line 51 "parser.y"
                                                                                                     {}
-#line 1662 "y.tab.c"
+#line 1670 "y.tab.c"
     break;
 
   case 8: /* var_declaration: type declaration_line SEMICOLON  */
-#line 45 "parser.y"
+#line 54 "parser.y"
                                                                                                     {}
-#line 1668 "y.tab.c"
+#line 1676 "y.tab.c"
     break;
 
   case 9: /* const_declaration: CONST var_declaration  */
-#line 48 "parser.y"
+#line 57 "parser.y"
                                                                                                     {}
-#line 1674 "y.tab.c"
+#line 1682 "y.tab.c"
     break;
 
   case 10: /* type_declaration: TYPE ID ASSIGNMENT type SEMICOLON  */
-#line 51 "parser.y"
+#line 60 "parser.y"
                                                                                                     {}
-#line 1680 "y.tab.c"
+#line 1688 "y.tab.c"
     break;
 
   case 11: /* declaration_line: declaration_item  */
-#line 53 "parser.y"
+#line 62 "parser.y"
                                                                                                     {}
-#line 1686 "y.tab.c"
+#line 1694 "y.tab.c"
     break;
 
   case 12: /* declaration_line: declaration_line COMMA declaration_item  */
-#line 54 "parser.y"
+#line 63 "parser.y"
                                                                                                     {}
-#line 1692 "y.tab.c"
+#line 1700 "y.tab.c"
     break;
 
   case 13: /* declaration_item: declaration_term  */
-#line 57 "parser.y"
+#line 66 "parser.y"
                                                                                                     {}
-#line 1698 "y.tab.c"
+#line 1706 "y.tab.c"
     break;
 
   case 14: /* declaration_item: declaration_term ASSIGNMENT initialization  */
-#line 58 "parser.y"
+#line 67 "parser.y"
                                                                                                     {}
-#line 1704 "y.tab.c"
+#line 1712 "y.tab.c"
     break;
 
   case 15: /* declaration_term: ID  */
-#line 61 "parser.y"
+#line 70 "parser.y"
                                                                                                     {}
-#line 1710 "y.tab.c"
+#line 1718 "y.tab.c"
     break;
 
   case 16: /* declaration_term: declaration_term LBRACKET expr RBRACKET  */
-#line 62 "parser.y"
+#line 71 "parser.y"
                                                                                                     {}
-#line 1716 "y.tab.c"
+#line 1724 "y.tab.c"
     break;
 
   case 17: /* initialization: expr  */
-#line 65 "parser.y"
+#line 74 "parser.y"
                                                                                                     {}
-#line 1722 "y.tab.c"
+#line 1730 "y.tab.c"
     break;
 
   case 18: /* initialization: LBRACE initialization_list RBRACE  */
-#line 66 "parser.y"
+#line 75 "parser.y"
                                                                                                     {}
-#line 1728 "y.tab.c"
+#line 1736 "y.tab.c"
     break;
 
   case 19: /* initialization: allocation  */
-#line 67 "parser.y"
+#line 76 "parser.y"
                                                                                                     {}
-#line 1734 "y.tab.c"
+#line 1742 "y.tab.c"
     break;
 
   case 20: /* initialization_list: initialization  */
-#line 70 "parser.y"
+#line 79 "parser.y"
                                                                                                     {}
-#line 1740 "y.tab.c"
+#line 1748 "y.tab.c"
     break;
 
   case 21: /* initialization_list: initialization_list COMMA initialization  */
-#line 71 "parser.y"
+#line 80 "parser.y"
                                                                                                     {}
-#line 1746 "y.tab.c"
+#line 1754 "y.tab.c"
     break;
 
   case 22: /* allocation: NEW type LBRACKET expr RBRACKET  */
-#line 74 "parser.y"
+#line 83 "parser.y"
                                                                                                     {}
-#line 1752 "y.tab.c"
+#line 1760 "y.tab.c"
     break;
 
   case 23: /* type: PRIM_TYPE  */
-#line 78 "parser.y"
+#line 87 "parser.y"
                                                                                                     {}
-#line 1758 "y.tab.c"
+#line 1766 "y.tab.c"
     break;
 
   case 24: /* type: ptr_type  */
-#line 79 "parser.y"
+#line 88 "parser.y"
                                                                                                     {}
-#line 1764 "y.tab.c"
+#line 1772 "y.tab.c"
     break;
 
   case 25: /* type: enum_type  */
-#line 80 "parser.y"
+#line 89 "parser.y"
                                                                                                     {}
-#line 1770 "y.tab.c"
+#line 1778 "y.tab.c"
     break;
 
   case 26: /* type: struct_type  */
-#line 81 "parser.y"
+#line 90 "parser.y"
                                                                                                     {}
-#line 1776 "y.tab.c"
+#line 1784 "y.tab.c"
     break;
 
   case 27: /* type: map_type  */
-#line 82 "parser.y"
+#line 91 "parser.y"
                                                                                                     {}
-#line 1782 "y.tab.c"
+#line 1790 "y.tab.c"
     break;
 
   case 28: /* type: list_type  */
-#line 83 "parser.y"
+#line 92 "parser.y"
                                                                                                     {}
-#line 1788 "y.tab.c"
+#line 1796 "y.tab.c"
     break;
 
   case 29: /* type: ID  */
-#line 84 "parser.y"
+#line 93 "parser.y"
                                                                                                     {}
-#line 1794 "y.tab.c"
+#line 1802 "y.tab.c"
     break;
 
   case 30: /* ptr_type: PTR ABRACKET_OPEN type ABRACKET_CLOSE  */
-#line 87 "parser.y"
+#line 96 "parser.y"
                                                                                                     {}
-#line 1800 "y.tab.c"
+#line 1808 "y.tab.c"
     break;
 
   case 31: /* map_type: MAP ABRACKET_OPEN type COMMA type ABRACKET_CLOSE  */
-#line 90 "parser.y"
+#line 99 "parser.y"
                                                                                                     {}
-#line 1806 "y.tab.c"
+#line 1814 "y.tab.c"
     break;
 
   case 32: /* list_type: LIST ABRACKET_OPEN type ABRACKET_CLOSE  */
-#line 93 "parser.y"
+#line 102 "parser.y"
                                                                                                     {}
-#line 1812 "y.tab.c"
+#line 1820 "y.tab.c"
     break;
 
   case 33: /* enum_type: ENUM LBRACE enum_list RBRACE  */
-#line 96 "parser.y"
+#line 105 "parser.y"
                                                                                                     {}
-#line 1818 "y.tab.c"
+#line 1826 "y.tab.c"
     break;
 
   case 34: /* enum_list: ID  */
-#line 99 "parser.y"
+#line 108 "parser.y"
                                                                                                     {}
-#line 1824 "y.tab.c"
+#line 1832 "y.tab.c"
     break;
 
   case 35: /* enum_list: enum_list COMMA ID  */
-#line 100 "parser.y"
+#line 109 "parser.y"
                                                                                                     {}
-#line 1830 "y.tab.c"
+#line 1838 "y.tab.c"
     break;
 
   case 36: /* struct_type: STRUCT LBRACE struct_vars RBRACE  */
-#line 103 "parser.y"
+#line 112 "parser.y"
                                                                                                     {}
-#line 1836 "y.tab.c"
+#line 1844 "y.tab.c"
     break;
 
   case 37: /* struct_vars: var_declaration  */
-#line 106 "parser.y"
+#line 115 "parser.y"
                                                                                                     {}
-#line 1842 "y.tab.c"
+#line 1850 "y.tab.c"
     break;
 
   case 38: /* struct_vars: struct_vars var_declaration  */
-#line 107 "parser.y"
+#line 116 "parser.y"
                                                                                                     {}
-#line 1848 "y.tab.c"
+#line 1856 "y.tab.c"
     break;
 
   case 39: /* subprograms: subprogram  */
-#line 110 "parser.y"
+#line 119 "parser.y"
                                                                                                     {}
-#line 1854 "y.tab.c"
+#line 1862 "y.tab.c"
     break;
 
   case 40: /* subprograms: subprograms subprogram  */
-#line 111 "parser.y"
+#line 120 "parser.y"
                                                                                                     {}
-#line 1860 "y.tab.c"
+#line 1868 "y.tab.c"
     break;
 
   case 41: /* subprogram: type ID LPAREN parameters RPAREN LBRACE statements RBRACE  */
-#line 114 "parser.y"
+#line 123 "parser.y"
                                                                                                     {}
-#line 1866 "y.tab.c"
+#line 1874 "y.tab.c"
     break;
 
   case 42: /* subprogram: VOID ID LPAREN parameters RPAREN LBRACE statements RBRACE  */
-#line 115 "parser.y"
+#line 124 "parser.y"
                                                                                                     {}
-#line 1872 "y.tab.c"
+#line 1880 "y.tab.c"
     break;
 
   case 43: /* subprogram: type ID LPAREN RPAREN LBRACE statements RBRACE  */
-#line 116 "parser.y"
+#line 125 "parser.y"
                                                                                                     {}
-#line 1878 "y.tab.c"
+#line 1886 "y.tab.c"
     break;
 
   case 44: /* subprogram: VOID ID LPAREN RPAREN LBRACE statements RBRACE  */
-#line 117 "parser.y"
+#line 126 "parser.y"
                                                                                                     {}
-#line 1884 "y.tab.c"
+#line 1892 "y.tab.c"
     break;
 
   case 45: /* parameters: parameter  */
-#line 120 "parser.y"
+#line 129 "parser.y"
                                                                                                     {}
-#line 1890 "y.tab.c"
+#line 1898 "y.tab.c"
     break;
 
   case 46: /* parameters: parameters COMMA parameter  */
-#line 121 "parser.y"
+#line 130 "parser.y"
                                                                                                     {}
-#line 1896 "y.tab.c"
+#line 1904 "y.tab.c"
     break;
 
   case 47: /* parameter: type ID  */
-#line 124 "parser.y"
+#line 133 "parser.y"
                                                                                                     {}
-#line 1902 "y.tab.c"
+#line 1910 "y.tab.c"
     break;
 
   case 48: /* statements: statement  */
-#line 127 "parser.y"
+#line 136 "parser.y"
                                                                                                     {}
-#line 1908 "y.tab.c"
+#line 1916 "y.tab.c"
     break;
 
   case 49: /* statements: statements statement  */
-#line 128 "parser.y"
+#line 137 "parser.y"
                                                                                                     {}
-#line 1914 "y.tab.c"
+#line 1922 "y.tab.c"
     break;
 
   case 50: /* statement: var_declaration  */
-#line 131 "parser.y"
+#line 140 "parser.y"
                                                                                                     {}
-#line 1920 "y.tab.c"
+#line 1928 "y.tab.c"
     break;
 
   case 51: /* statement: const_declaration  */
-#line 132 "parser.y"
+#line 141 "parser.y"
                                                                                                     {}
-#line 1926 "y.tab.c"
+#line 1934 "y.tab.c"
     break;
 
   case 52: /* statement: command  */
-#line 133 "parser.y"
+#line 142 "parser.y"
                                                                                                     {}
-#line 1932 "y.tab.c"
+#line 1940 "y.tab.c"
     break;
 
   case 53: /* statement: assignment_command  */
-#line 134 "parser.y"
+#line 143 "parser.y"
                                                                                                     {}
-#line 1938 "y.tab.c"
+#line 1946 "y.tab.c"
     break;
 
   case 54: /* command: if  */
-#line 137 "parser.y"
+#line 146 "parser.y"
                                                                                                     {}
-#line 1944 "y.tab.c"
+#line 1952 "y.tab.c"
     break;
 
   case 55: /* command: while  */
-#line 138 "parser.y"
+#line 147 "parser.y"
                                                                                                     {}
-#line 1950 "y.tab.c"
+#line 1958 "y.tab.c"
     break;
 
   case 56: /* command: do_while  */
-#line 139 "parser.y"
+#line 148 "parser.y"
                                                                                                     {}
-#line 1956 "y.tab.c"
+#line 1964 "y.tab.c"
     break;
 
   case 57: /* command: for  */
-#line 140 "parser.y"
+#line 149 "parser.y"
                                                                                                     {}
-#line 1962 "y.tab.c"
+#line 1970 "y.tab.c"
     break;
 
   case 58: /* command: switch  */
-#line 141 "parser.y"
+#line 150 "parser.y"
                                                                                                     {}
-#line 1968 "y.tab.c"
+#line 1976 "y.tab.c"
     break;
 
   case 59: /* command: function_call SEMICOLON  */
-#line 142 "parser.y"
+#line 151 "parser.y"
                                                                                                     {}
-#line 1974 "y.tab.c"
+#line 1982 "y.tab.c"
     break;
 
   case 60: /* command: jump SEMICOLON  */
-#line 143 "parser.y"
+#line 152 "parser.y"
                                                                                                     {}
-#line 1980 "y.tab.c"
+#line 1988 "y.tab.c"
     break;
 
   case 61: /* command: deletion  */
-#line 144 "parser.y"
+#line 153 "parser.y"
                                                                                                     {}
-#line 1986 "y.tab.c"
+#line 1994 "y.tab.c"
     break;
 
   case 62: /* jump: CONTINUE  */
-#line 147 "parser.y"
+#line 156 "parser.y"
                                                                                                     {}
-#line 1992 "y.tab.c"
+#line 2000 "y.tab.c"
     break;
 
   case 63: /* jump: BREAK  */
-#line 148 "parser.y"
+#line 157 "parser.y"
                                                                                                     {}
-#line 1998 "y.tab.c"
+#line 2006 "y.tab.c"
     break;
 
   case 64: /* jump: return  */
-#line 149 "parser.y"
+#line 158 "parser.y"
                                                                                                     {}
-#line 2004 "y.tab.c"
+#line 2012 "y.tab.c"
     break;
 
   case 65: /* return: RETURN return_value  */
-#line 152 "parser.y"
+#line 161 "parser.y"
                                                                                                     {}
-#line 2010 "y.tab.c"
+#line 2018 "y.tab.c"
     break;
 
   case 66: /* return_value: %empty  */
-#line 155 "parser.y"
+#line 164 "parser.y"
                                                                                                     {}
-#line 2016 "y.tab.c"
+#line 2024 "y.tab.c"
     break;
 
   case 67: /* return_value: expr  */
-#line 156 "parser.y"
+#line 165 "parser.y"
                                                                                                     {}
-#line 2022 "y.tab.c"
+#line 2030 "y.tab.c"
     break;
 
   case 68: /* if: IF LPAREN expr RPAREN LBRACE statements RBRACE else_ifs_opt else_opt  */
-#line 159 "parser.y"
-                                                                                                     {}
-#line 2028 "y.tab.c"
+#line 168 "parser.y"
+                                                                                                    {}
+#line 2036 "y.tab.c"
     break;
 
   case 69: /* else_ifs_opt: %empty  */
-#line 162 "parser.y"
+#line 171 "parser.y"
                                                                                                     {}
-#line 2034 "y.tab.c"
+#line 2042 "y.tab.c"
     break;
 
   case 70: /* else_ifs_opt: else_ifs  */
-#line 163 "parser.y"
+#line 172 "parser.y"
                                                                                                     {}
-#line 2040 "y.tab.c"
+#line 2048 "y.tab.c"
     break;
 
   case 71: /* else_ifs: else_if  */
-#line 166 "parser.y"
+#line 175 "parser.y"
                                                                                                     {}
-#line 2046 "y.tab.c"
+#line 2054 "y.tab.c"
     break;
 
   case 72: /* else_ifs: else_ifs else_if  */
-#line 167 "parser.y"
+#line 176 "parser.y"
                                                                                                     {}
-#line 2052 "y.tab.c"
+#line 2060 "y.tab.c"
     break;
 
   case 73: /* else_if: ELSEIF LPAREN expr RPAREN LBRACE statements RBRACE  */
-#line 170 "parser.y"
+#line 179 "parser.y"
                                                                                                     {}
-#line 2058 "y.tab.c"
+#line 2066 "y.tab.c"
     break;
 
   case 74: /* else_opt: %empty  */
-#line 172 "parser.y"
+#line 181 "parser.y"
                                                                                                     {}
-#line 2064 "y.tab.c"
+#line 2072 "y.tab.c"
     break;
 
   case 75: /* else_opt: else  */
-#line 173 "parser.y"
+#line 182 "parser.y"
                                                                                                     {}
-#line 2070 "y.tab.c"
+#line 2078 "y.tab.c"
     break;
 
   case 76: /* else: ELSE LBRACE statements RBRACE  */
-#line 176 "parser.y"
+#line 185 "parser.y"
                                                                                                     {}
-#line 2076 "y.tab.c"
+#line 2084 "y.tab.c"
     break;
 
   case 77: /* while: WHILE LPAREN expr RPAREN LBRACE statements RBRACE  */
-#line 179 "parser.y"
+#line 188 "parser.y"
                                                                                                     {}
-#line 2082 "y.tab.c"
+#line 2090 "y.tab.c"
     break;
 
   case 78: /* do_while: DO LBRACE statements RBRACE WHILE LPAREN expr RPAREN  */
-#line 182 "parser.y"
+#line 191 "parser.y"
                                                                                                     {}
-#line 2088 "y.tab.c"
+#line 2096 "y.tab.c"
     break;
 
   case 79: /* for: FOR LPAREN for_init expr SEMICOLON assignment RPAREN LBRACE statements RBRACE  */
-#line 185 "parser.y"
+#line 194 "parser.y"
                                                                                                     {}
-#line 2094 "y.tab.c"
+#line 2102 "y.tab.c"
     break;
 
   case 80: /* for_init: assignment_command  */
-#line 188 "parser.y"
+#line 197 "parser.y"
                                                                                                     {}
-#line 2100 "y.tab.c"
+#line 2108 "y.tab.c"
     break;
 
   case 81: /* for_init: var_declaration  */
-#line 189 "parser.y"
+#line 198 "parser.y"
                                                                                                     {}
-#line 2106 "y.tab.c"
+#line 2114 "y.tab.c"
     break;
 
   case 82: /* switch: SWITCH LPAREN expr RPAREN LBRACE cases RBRACE  */
-#line 192 "parser.y"
+#line 201 "parser.y"
                                                                                                     {}
-#line 2112 "y.tab.c"
+#line 2120 "y.tab.c"
     break;
 
   case 83: /* switch: SWITCH LPAREN expr RPAREN LBRACE cases default RBRACE  */
-#line 193 "parser.y"
+#line 202 "parser.y"
                                                                                                     {}
-#line 2118 "y.tab.c"
+#line 2126 "y.tab.c"
     break;
 
   case 84: /* cases: case  */
-#line 196 "parser.y"
+#line 205 "parser.y"
                                                                                                     {}
-#line 2124 "y.tab.c"
+#line 2132 "y.tab.c"
     break;
 
   case 85: /* cases: cases case  */
-#line 197 "parser.y"
+#line 206 "parser.y"
                                                                                                     {}
-#line 2130 "y.tab.c"
+#line 2138 "y.tab.c"
     break;
 
   case 86: /* case: CASE case_item  */
-#line 200 "parser.y"
+#line 209 "parser.y"
                                                                                                     {}
-#line 2136 "y.tab.c"
+#line 2144 "y.tab.c"
     break;
 
   case 87: /* default: DEFAULT COLON statements  */
-#line 203 "parser.y"
+#line 212 "parser.y"
                                                                                                     {}
-#line 2142 "y.tab.c"
+#line 2150 "y.tab.c"
     break;
 
   case 88: /* case_item: expr COLON statements  */
-#line 206 "parser.y"
+#line 215 "parser.y"
                                                                                                     {}
-#line 2148 "y.tab.c"
+#line 2156 "y.tab.c"
     break;
 
   case 89: /* function_call: ID LPAREN RPAREN  */
-#line 210 "parser.y"
+#line 219 "parser.y"
                                                                                                     {}
-#line 2154 "y.tab.c"
+#line 2162 "y.tab.c"
     break;
 
   case 90: /* function_call: ID LPAREN parameters_call RPAREN  */
-#line 211 "parser.y"
+#line 220 "parser.y"
                                                                                                     {}
-#line 2160 "y.tab.c"
+#line 2168 "y.tab.c"
     break;
 
   case 91: /* parameters_call: expr  */
-#line 214 "parser.y"
+#line 223 "parser.y"
                                                                                                     {}
-#line 2166 "y.tab.c"
+#line 2174 "y.tab.c"
     break;
 
   case 92: /* parameters_call: parameters_call COMMA expr  */
-#line 215 "parser.y"
+#line 224 "parser.y"
                                                                                                     {}
-#line 2172 "y.tab.c"
+#line 2180 "y.tab.c"
     break;
 
   case 93: /* assignment: assignable assignment_operator assignment_expr  */
-#line 218 "parser.y"
+#line 227 "parser.y"
                                                                                                     {}
-#line 2178 "y.tab.c"
+#line 2186 "y.tab.c"
     break;
 
   case 94: /* assignment_command: assignment SEMICOLON  */
-#line 221 "parser.y"
+#line 230 "parser.y"
                                                                                                     {}
-#line 2184 "y.tab.c"
+#line 2192 "y.tab.c"
     break;
 
   case 95: /* assignable: identifier_ref  */
-#line 224 "parser.y"
+#line 233 "parser.y"
                                                                                                     {}
-#line 2190 "y.tab.c"
+#line 2198 "y.tab.c"
     break;
 
   case 96: /* assignable: val  */
-#line 225 "parser.y"
+#line 234 "parser.y"
                                                                                                     {}
-#line 2196 "y.tab.c"
+#line 2204 "y.tab.c"
     break;
 
   case 97: /* val: VAL LPAREN target RPAREN  */
-#line 228 "parser.y"
+#line 237 "parser.y"
                                                                                                     {}
-#line 2202 "y.tab.c"
+#line 2210 "y.tab.c"
     break;
 
   case 98: /* assignment_operator: ASSIGNMENT  */
-#line 231 "parser.y"
+#line 240 "parser.y"
                                                                                                     {}
-#line 2208 "y.tab.c"
+#line 2216 "y.tab.c"
     break;
 
   case 99: /* assignment_operator: ASSIGNMENT_MUL  */
-#line 232 "parser.y"
+#line 241 "parser.y"
                                                                                                     {}
-#line 2214 "y.tab.c"
+#line 2222 "y.tab.c"
     break;
 
   case 100: /* assignment_operator: ASSIGNMENT_DIV  */
-#line 233 "parser.y"
+#line 242 "parser.y"
                                                                                                     {}
-#line 2220 "y.tab.c"
+#line 2228 "y.tab.c"
     break;
 
   case 101: /* assignment_operator: ASSIGNMENT_MOD  */
-#line 234 "parser.y"
+#line 243 "parser.y"
                                                                                                     {}
-#line 2226 "y.tab.c"
+#line 2234 "y.tab.c"
     break;
 
   case 102: /* assignment_operator: ASSIGNMENT_ADD  */
-#line 235 "parser.y"
+#line 244 "parser.y"
                                                                                                     {}
-#line 2232 "y.tab.c"
+#line 2240 "y.tab.c"
     break;
 
   case 103: /* assignment_operator: ASSIGNMENT_SUB  */
-#line 236 "parser.y"
+#line 245 "parser.y"
                                                                                                     {}
-#line 2238 "y.tab.c"
+#line 2246 "y.tab.c"
     break;
 
   case 104: /* assignment_expr: expr  */
-#line 239 "parser.y"
+#line 248 "parser.y"
                                                                                                     {}
-#line 2244 "y.tab.c"
+#line 2252 "y.tab.c"
     break;
 
   case 105: /* assignment_expr: allocation  */
-#line 240 "parser.y"
+#line 249 "parser.y"
                                                                                                     {}
-#line 2250 "y.tab.c"
+#line 2258 "y.tab.c"
     break;
 
   case 106: /* deletion: DELETE LPAREN identifier_ref RPAREN SEMICOLON  */
-#line 243 "parser.y"
+#line 252 "parser.y"
                                                                                                     {}
-#line 2256 "y.tab.c"
+#line 2264 "y.tab.c"
     break;
 
   case 107: /* identifier_ref: ID  */
-#line 246 "parser.y"
+#line 255 "parser.y"
                                                                                                     {}
-#line 2262 "y.tab.c"
+#line 2270 "y.tab.c"
     break;
 
   case 108: /* identifier_ref: identifier_ref LBRACKET expr RBRACKET  */
-#line 247 "parser.y"
+#line 256 "parser.y"
                                                                                                     {}
-#line 2268 "y.tab.c"
+#line 2276 "y.tab.c"
     break;
 
   case 109: /* identifier_ref: identifier_ref DOT ID  */
-#line 248 "parser.y"
+#line 257 "parser.y"
                                                                                                     {}
-#line 2274 "y.tab.c"
+#line 2282 "y.tab.c"
     break;
 
   case 110: /* expr: or_expr  */
-#line 251 "parser.y"
+#line 260 "parser.y"
                                                                                                     {}
-#line 2280 "y.tab.c"
+#line 2288 "y.tab.c"
     break;
 
   case 111: /* or_expr: and_expr  */
-#line 254 "parser.y"
+#line 263 "parser.y"
                                                                                                     {}
-#line 2286 "y.tab.c"
+#line 2294 "y.tab.c"
     break;
 
   case 112: /* or_expr: or_expr or_operator and_expr  */
-#line 255 "parser.y"
+#line 264 "parser.y"
                                                                                                     {}
-#line 2292 "y.tab.c"
+#line 2300 "y.tab.c"
     break;
 
   case 113: /* or_operator: OR  */
-#line 258 "parser.y"
+#line 267 "parser.y"
                                                                                                     {}
-#line 2298 "y.tab.c"
+#line 2306 "y.tab.c"
     break;
 
   case 114: /* or_operator: ORC  */
-#line 259 "parser.y"
+#line 268 "parser.y"
                                                                                                     {}
-#line 2304 "y.tab.c"
+#line 2312 "y.tab.c"
     break;
 
   case 115: /* and_expr: eq_expr  */
-#line 262 "parser.y"
+#line 271 "parser.y"
                                                                                                     {}
-#line 2310 "y.tab.c"
+#line 2318 "y.tab.c"
     break;
 
   case 116: /* and_expr: and_expr and_operator eq_expr  */
-#line 263 "parser.y"
+#line 272 "parser.y"
                                                                                                     {}
-#line 2316 "y.tab.c"
+#line 2324 "y.tab.c"
     break;
 
   case 117: /* and_operator: AND  */
-#line 266 "parser.y"
+#line 275 "parser.y"
                                                                                                     {}
-#line 2322 "y.tab.c"
+#line 2330 "y.tab.c"
     break;
 
   case 118: /* and_operator: ANDC  */
-#line 267 "parser.y"
+#line 276 "parser.y"
                                                                                                     {}
-#line 2328 "y.tab.c"
+#line 2336 "y.tab.c"
     break;
 
   case 119: /* eq_expr: relational_expr  */
-#line 270 "parser.y"
+#line 279 "parser.y"
                                                                                                     {}
-#line 2334 "y.tab.c"
+#line 2342 "y.tab.c"
     break;
 
   case 120: /* eq_expr: eq_expr eq_operator relational_expr  */
-#line 271 "parser.y"
+#line 280 "parser.y"
                                                                                                     {}
-#line 2340 "y.tab.c"
+#line 2348 "y.tab.c"
     break;
 
   case 121: /* eq_operator: EQUALITY  */
-#line 274 "parser.y"
+#line 283 "parser.y"
                                                                                                     {}
-#line 2346 "y.tab.c"
+#line 2354 "y.tab.c"
     break;
 
   case 122: /* eq_operator: DIFFERENCE  */
-#line 275 "parser.y"
+#line 284 "parser.y"
                                                                                                     {}
-#line 2352 "y.tab.c"
+#line 2360 "y.tab.c"
     break;
 
   case 123: /* relational_expr: arithmetic_expr  */
-#line 278 "parser.y"
+#line 287 "parser.y"
                                                                                                     {}
-#line 2358 "y.tab.c"
+#line 2366 "y.tab.c"
     break;
 
   case 124: /* relational_expr: relational_expr ineq_operator arithmetic_expr  */
-#line 279 "parser.y"
+#line 288 "parser.y"
                                                                                                     {}
-#line 2364 "y.tab.c"
+#line 2372 "y.tab.c"
     break;
 
   case 125: /* ineq_operator: ABRACKET_OPEN  */
-#line 282 "parser.y"
+#line 291 "parser.y"
                                                                                                     {}
-#line 2370 "y.tab.c"
+#line 2378 "y.tab.c"
     break;
 
   case 126: /* ineq_operator: MORE_THAN_EQUALS  */
-#line 283 "parser.y"
+#line 292 "parser.y"
                                                                                                     {}
-#line 2376 "y.tab.c"
+#line 2384 "y.tab.c"
     break;
 
   case 127: /* ineq_operator: ABRACKET_CLOSE  */
-#line 284 "parser.y"
+#line 293 "parser.y"
                                                                                                     {}
-#line 2382 "y.tab.c"
+#line 2390 "y.tab.c"
     break;
 
   case 128: /* ineq_operator: LESS_THAN_EQUALS  */
-#line 285 "parser.y"
+#line 294 "parser.y"
                                                                                                     {}
-#line 2388 "y.tab.c"
+#line 2396 "y.tab.c"
     break;
 
   case 129: /* arithmetic_expr: term  */
-#line 288 "parser.y"
+#line 297 "parser.y"
                                                                                                     {}
-#line 2394 "y.tab.c"
+#line 2402 "y.tab.c"
     break;
 
   case 130: /* arithmetic_expr: arithmetic_expr add_operator term  */
-#line 289 "parser.y"
+#line 298 "parser.y"
                                                                                                     {}
-#line 2400 "y.tab.c"
+#line 2408 "y.tab.c"
     break;
 
   case 131: /* add_operator: PLUS  */
-#line 292 "parser.y"
+#line 301 "parser.y"
                                                                                                     {}
-#line 2406 "y.tab.c"
+#line 2414 "y.tab.c"
     break;
 
   case 132: /* add_operator: MINUS  */
-#line 293 "parser.y"
+#line 302 "parser.y"
                                                                                                     {}
-#line 2412 "y.tab.c"
+#line 2420 "y.tab.c"
     break;
 
   case 133: /* term: prefix_expr  */
-#line 296 "parser.y"
+#line 305 "parser.y"
                                                                                                     {}
-#line 2418 "y.tab.c"
+#line 2426 "y.tab.c"
     break;
 
   case 134: /* term: term mult_operator prefix_expr  */
-#line 297 "parser.y"
+#line 306 "parser.y"
                                                                                                     {}
-#line 2424 "y.tab.c"
+#line 2432 "y.tab.c"
     break;
 
   case 135: /* mult_operator: TIMES  */
-#line 300 "parser.y"
+#line 309 "parser.y"
                                                                                                     {}
-#line 2430 "y.tab.c"
+#line 2438 "y.tab.c"
     break;
 
   case 136: /* mult_operator: SLASH  */
-#line 301 "parser.y"
+#line 310 "parser.y"
                                                                                                     {}
-#line 2436 "y.tab.c"
+#line 2444 "y.tab.c"
     break;
 
   case 137: /* mult_operator: MOD  */
-#line 302 "parser.y"
+#line 311 "parser.y"
                                                                                                     {}
-#line 2442 "y.tab.c"
+#line 2450 "y.tab.c"
     break;
 
   case 138: /* prefix_expr: postfix_expr  */
-#line 305 "parser.y"
+#line 314 "parser.y"
                                                                                                     {}
-#line 2448 "y.tab.c"
+#line 2456 "y.tab.c"
     break;
 
   case 139: /* prefix_expr: unary_operator postfix_expr  */
-#line 306 "parser.y"
+#line 315 "parser.y"
                                                                                                     {}
-#line 2454 "y.tab.c"
+#line 2462 "y.tab.c"
     break;
 
   case 140: /* prefix_expr: REF LPAREN identifier_ref RPAREN  */
-#line 307 "parser.y"
+#line 316 "parser.y"
                                                                                                     {}
-#line 2460 "y.tab.c"
+#line 2468 "y.tab.c"
     break;
 
   case 142: /* cast: LPAREN PRIM_TYPE RPAREN postfix_expr  */
-#line 311 "parser.y"
+#line 320 "parser.y"
                                                                                                     {}
-#line 2466 "y.tab.c"
+#line 2474 "y.tab.c"
     break;
 
   case 143: /* unary_operator: PLUS  */
-#line 314 "parser.y"
+#line 323 "parser.y"
                                                                                                     {}
-#line 2472 "y.tab.c"
+#line 2480 "y.tab.c"
     break;
 
   case 144: /* unary_operator: MINUS  */
-#line 315 "parser.y"
+#line 324 "parser.y"
                                                                                                     {}
-#line 2478 "y.tab.c"
+#line 2486 "y.tab.c"
     break;
 
   case 145: /* unary_operator: NOT  */
-#line 316 "parser.y"
+#line 325 "parser.y"
                                                                                                     {}
-#line 2484 "y.tab.c"
+#line 2492 "y.tab.c"
     break;
 
   case 146: /* postfix_expr: target  */
-#line 319 "parser.y"
+#line 328 "parser.y"
                                                                                                     {}
-#line 2490 "y.tab.c"
+#line 2498 "y.tab.c"
     break;
 
   case 147: /* postfix_expr: literal  */
-#line 320 "parser.y"
+#line 329 "parser.y"
                                                                                                     {}
-#line 2496 "y.tab.c"
+#line 2504 "y.tab.c"
     break;
 
   case 148: /* base: ID  */
-#line 323 "parser.y"
+#line 332 "parser.y"
                                                                                                     {}
-#line 2502 "y.tab.c"
+#line 2510 "y.tab.c"
     break;
 
   case 149: /* base: val  */
-#line 324 "parser.y"
+#line 333 "parser.y"
                                                                                                     {}
-#line 2508 "y.tab.c"
+#line 2516 "y.tab.c"
     break;
 
   case 150: /* base: LPAREN expr RPAREN  */
-#line 325 "parser.y"
+#line 334 "parser.y"
                                                                                                     {}
-#line 2514 "y.tab.c"
+#line 2522 "y.tab.c"
     break;
 
   case 151: /* target: base  */
-#line 328 "parser.y"
+#line 337 "parser.y"
                                                                                                     {}
-#line 2520 "y.tab.c"
+#line 2528 "y.tab.c"
     break;
 
   case 152: /* target: function_call  */
-#line 329 "parser.y"
+#line 338 "parser.y"
                                                                                                     {}
-#line 2526 "y.tab.c"
+#line 2534 "y.tab.c"
     break;
 
   case 153: /* target: target LBRACKET expr RBRACKET  */
-#line 330 "parser.y"
+#line 339 "parser.y"
                                                                                                     {}
-#line 2532 "y.tab.c"
+#line 2540 "y.tab.c"
     break;
 
   case 154: /* target: target DOT ID  */
-#line 331 "parser.y"
+#line 340 "parser.y"
                                                                                                     {}
-#line 2538 "y.tab.c"
+#line 2546 "y.tab.c"
     break;
 
   case 155: /* literal: INTEGER  */
-#line 335 "parser.y"
+#line 344 "parser.y"
                                                                                                     {}
-#line 2544 "y.tab.c"
+#line 2552 "y.tab.c"
     break;
 
   case 156: /* literal: CHAR  */
-#line 336 "parser.y"
+#line 345 "parser.y"
                                                                                                     {}
-#line 2550 "y.tab.c"
+#line 2558 "y.tab.c"
     break;
 
   case 157: /* literal: STRING  */
-#line 337 "parser.y"
+#line 346 "parser.y"
                                                                                                     {}
-#line 2556 "y.tab.c"
+#line 2564 "y.tab.c"
     break;
 
   case 158: /* literal: REAL  */
-#line 338 "parser.y"
+#line 347 "parser.y"
                                                                                                     {}
-#line 2562 "y.tab.c"
+#line 2570 "y.tab.c"
     break;
 
   case 159: /* literal: BOOL  */
-#line 339 "parser.y"
+#line 348 "parser.y"
                                                                                                     {}
-#line 2568 "y.tab.c"
+#line 2576 "y.tab.c"
     break;
 
 
-#line 2572 "y.tab.c"
+#line 2580 "y.tab.c"
 
       default: break;
     }
@@ -2761,14 +2769,68 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 342 "parser.y"
+#line 351 "parser.y"
 
 
-int main (void) {
-	return yyparse ( );
+int main (int argc, char ** argv) {
+
+     int codigo;
+
+     if (argc != 3) {
+          printf("Usage: $./compiler input.txt output.txt\nClosing application...\n");
+          exit(0);
+     }
+
+     yyin = fopen(argv[1], "r");
+     yyout = fopen(argv[2], "w");
+
+     codigo = yyparse();
+
+     fclose(yyin);
+     fclose(yyout);
+
+     return codigo;
 }
 
 int yyerror (char *msg) {
 	fprintf (stderr, "%d: %s at '%s'\n", yylineno, msg, yytext);
 	return 0;
+}
+
+char *cat(int count, ...) {
+     va_list args;
+     int tam_total = 0;
+
+     va_start(args, count);
+
+     for (int i = 0; i < count; i++) {
+          char *str = va_arg(args, char *);
+          tam_total += strlen(str);
+     }
+
+     va_end(args);
+
+     char *result = malloc(tam_total + 1);
+     if (!result) {
+          printf("Allocation problem. Closing application...\n");
+          exit(0);
+     }
+
+     char *current = result;
+     va_start(args, count);
+
+     for (int i = 0; i < count; i++) {
+          char *str = va_arg(args, char *);
+          if (str) {
+               int len = strlen(str);
+               memcpy(current, str, len);
+               current += len;
+          }
+     }
+
+     va_end(args);
+
+     *current = '\0';
+
+     return result;
 }
