@@ -80,7 +80,7 @@ int|long|float|double|boolean|char|string|file { yylval.sValue = strdup(yytext);
 true|false                          { yylval.sValue = strdup(yytext); return(BOOL); }
 [0-9]+\.[0-9]+                      { yylval.sValue = strdup(yytext); return(REAL); }
 [0-9]+                              { yylval.sValue = strdup(yytext); return(INTEGER); }
-\'.\'                               { yylval.cValue = yytext[0]; return(CHAR); }
+\'.\'                               { yylval.sValue = strdup(yytext); return(CHAR); }
 \"(?:(?:[^"\\\n\r]|\\.)*[^\\])?\"   { yylval.sValue = strdup(yytext); return(STRING); }
 
 [a-zA-Z][a-zA-Z0-9\_]*	            { yylval.sValue = strdup(yytext); return (ID); }

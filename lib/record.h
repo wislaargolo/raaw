@@ -2,8 +2,8 @@
 #define RECORD
 
 struct record {
-	   char * code; 
-	   char * type; 
+	char * code; 
+	char * type; 
 };
 
 typedef struct record record;
