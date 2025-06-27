@@ -1,0 +1,22 @@
+type Color = enum {
+  red,
+  green,
+  blue
+};
+
+void main() {
+  if (x) {
+    print("a");
+  } else if (b) {
+    print("c");
+  } else {
+    print("d");
+  }
+
+  switch (x) {
+    case 1:
+      print("1");
+    default:
+      print("100");
+  }
+}
