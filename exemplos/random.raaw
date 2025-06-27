@@ -6,6 +6,8 @@ type Color = enum {
     blue
 };
 
+type Fruits = enum { apple, orange, banana };
+
 type Node = struct {
     int value;
     ptr<Node> left;
@@ -24,7 +26,7 @@ void main() {
     printLine("=== Código exemplo ===");
 
     // Exemplo enum local declarado/definido
-    enum { apple, orange, banana } fruits;
+    Fruits fruits;
     fruits = orange;
     print("Fruta selecionada (enum local): ");
     printLine(fruits);
