@@ -6,7 +6,7 @@
 hash_table* create_hash_table() {
   hash_table* ht = (hash_table*) malloc(sizeof(hash_table));
 
-  ht->capacity = 100;
+  ht->capacity = 5;
   ht->num_elements = 0;
   ht->nodes = (hash_node**) malloc(sizeof(hash_node*) * ht->capacity);
 
@@ -32,21 +32,28 @@ int hash_function(hash_table* ht, char* key) {
 }
 
 void hash_insert(hash_table* ht, char* key, void* value) {
+  if (ht->num_elements >= 0.75 * ht->capacity) {
+      hash_resize(ht, ht->capacity * 2);
+  }
+
   int index = hash_function(ht, key);
-  hash_node* node = (hash_node*) malloc(sizeof(node));
+  hash_node* node = ht->nodes[index];
 
-  node->key = strdup(key);
-  node->value = value;
-  node->next = NULL;
-
-  if (ht->nodes[index] == NULL) {
-    ht->nodes[index] = node;
+  while (node != NULL) {
+    if (strcmp(node->key, key) == 0) {
+      free(node->value);  
+      node->value = value;
+      return;
+    }
+    node = node->next;
   }
 
-  else {
-    node->next = ht->nodes[index];
-    ht->nodes[index] = node;
-  }
+  hash_node* new_node = (hash_node*) malloc(sizeof(hash_node));
+  new_node->key = strdup(key);
+  new_node->value = value;
+  new_node->next = ht->nodes[index];
+  ht->nodes[index] = new_node;
+  ht->num_elements++;
 }
 
 void hash_delete(hash_table* ht, char* key) {
@@ -63,13 +70,14 @@ void hash_delete(hash_table* ht, char* key) {
         prev_node->next = curr_node->next;
       }
       free(curr_node->value);
+      free(curr_node->key);
       free(curr_node);
+      ht->num_elements--;
       break;
-    }
+  }
     prev_node = curr_node;
     curr_node = curr_node->next;
   }
-  return;
 }
 
 int hash_has(hash_table* ht, char* key) {
@@ -98,4 +106,73 @@ void* hash_get(hash_table* ht, char* key) {
   }
 
   return NULL;
+
 }
+
+void hash_resize(hash_table* ht, int new_capacity) {
+  hash_node** new_nodes = (hash_node**) calloc(new_capacity, sizeof(hash_node*));
+  int old_capacity = ht->capacity;
+  ht->capacity = new_capacity;
+
+  for (int i = 0; i < old_capacity; i++) {
+    hash_node* node = ht->nodes[i];
+    while (node) {
+      hash_node* next = node->next;
+
+      int index = hash_function(ht, node->key);
+      node->next = new_nodes[index];
+      new_nodes[index] = node;
+
+      node = next;
+    }
+  }
+
+  free(ht->nodes);
+  ht->nodes = new_nodes;
+  ht->capacity = new_capacity;
+}
+
+void free_hash(hash_table* ht) {
+  if (ht == NULL) return;
+
+  for (int i = 0; i < ht->capacity; i++) {
+    hash_node* node = ht->nodes[i];
+    while (node) {
+      hash_node* next = node->next;
+
+      free(node->key);     
+      free(node->value);   
+      free(node);          
+
+      node = next;
+    }
+  }
+
+  free(ht->nodes);   
+  free(ht);          
+}
+
+
+
+void print_hash_table(hash_table* ht) {
+  printf("\n[ESTADO ATUAL DA HASH TABLE]\n");
+  printf("Capacidade: %d | Elementos: %d\n", ht->capacity, ht->num_elements);
+
+  for (int i = 0; i < ht->capacity; i++) {
+    printf("Bucket %d: ", i);
+    hash_node* node = ht->nodes[i];
+    if (!node) {
+        printf("(vazio)\n");
+        continue;
+    }
+
+    while (node) {
+        printf("['%s' -> %p] -> ", node->key, node->value);
+        node = node->next;
+    }
+    printf("NULL\n");
+  }
+
+  printf("\n");
+}
+

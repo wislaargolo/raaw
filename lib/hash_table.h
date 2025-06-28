@@ -29,5 +29,7 @@ void hash_insert(hash_table* ht, char* key, void* value);
 void hash_delete(hash_table* ht, char* key);
 int hash_has(hash_table* ht, char* key);
 void* hash_get(hash_table* ht, char* key);
+void hash_resize(hash_table* ht, int new_capacity);
+void free_hash(hash_table* ht);
 
 #endif
