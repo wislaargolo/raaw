@@ -17,8 +17,6 @@ void push_subprogram(Stack* stack, char* name, char* return_type) {
     printf("NO NODE!!! >.<\n");
     return;
   }
-  
-  printf("%s\n", name);
 
   node->name = strdup(name);
   node->count = 0;
@@ -38,7 +36,7 @@ void push(Stack* stack, int is_loop, int is_switch) {
 
   sprintf(count_str, "%d", parent->count);
 
-  int name_size = strlen(parent_name) + strlen(count_str) + 2; 
+  int name_size = strlen(parent_name) + strlen(count_str) + 2;
   char* name = (char*) malloc(name_size);
 
   if (name == NULL) {
@@ -47,10 +45,6 @@ void push(Stack* stack, int is_loop, int is_switch) {
   }
 
   snprintf(name, name_size, "%s_%s", parent_name, count_str);
-
-  printf("%s\n", name);
-
-
 
   ScopeNode* node = (ScopeNode*) malloc(sizeof(ScopeNode));
 
@@ -68,9 +62,6 @@ void push(Stack* stack, int is_loop, int is_switch) {
   node->parent = parent;
   parent->count++;
   stack->top = node;
-
-  printf("%s\n", node->is_loop ? "is_loop" : "not is_loop");
-  printf("%s\n", node->is_switch ? "is_switch" : "not is_switch");
 }
 
 void pop(Stack* stack) {
@@ -92,6 +83,6 @@ void free_stack(Stack *stack) {
   while (stack->top != NULL) {
     pop(stack);
   }
-  
+
   free(stack);
 }

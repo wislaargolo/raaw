@@ -23,6 +23,7 @@ Stack* stack = NULL;
 %union {
 	char * sValue;      /* string value */
      struct record * rec;
+     struct declaration_term_record* decl_term;
 };
 
 %token <sValue> ID PRIM_TYPE INTEGER STRING BOOL REAL CHAR
@@ -45,8 +46,10 @@ Stack* stack = NULL;
             do_while while else else_opt else_if else_ifs else_ifs_opt if return return_value
             command jump statement const_declaration parameter type user_type type_compound subprogram subprograms
             struct_vars struct_type enum_list enum_type ptr_type list_type map_type initialization
-            initialization_list declaration declaration_term declaration_line declaration_item
+            initialization_list declaration
             declarations program default_opt
+
+%type <decl_term> declaration_term declaration_line declaration_item
 
 %start program
 
@@ -79,7 +82,17 @@ declaration : var_declaration                                                   
 var_declaration : type declaration_line SEMICOLON  {
                                                        char *s = cat(4, $1->code, " ", $2->code, ";");
                                                        free_record($1);
-                                                       free_record($2);
+
+                                                       declaration_term_record* decl = $2;
+
+                                                       while (decl != NULL) {
+                                                            //TO-DO: insert in symbols table
+                                                            printf("%s(%d)\n", decl->name, decl->dimension);
+                                                            free(decl->name);
+                                                            free(decl->code);
+                                                            decl = decl->next;
+                                                       }
+
                                                        $$ = create_record(s, "");
                                                        free(s);
                                                   }
@@ -104,57 +117,40 @@ type_declaration : TYPE ID { type_name = strdup($2); } ASSIGNMENT type_compound 
 
 declaration_line : declaration_item                                                                 { $$ = $1; }
                  | declaration_line COMMA declaration_item  {
-                                                                 var_declaration_list decls = $1->var_declarations;
-                                                                 var_declaration* decl = $3->var_declarations.top;
-
-                                                                 decls.size++;
-                                                                 decl->next = decls.top;
-                                                                 decls.top = decl;
-
-                                                                 char *s = cat(3, $1->code, ",", $3->code);
-                                                                 free_record($1);
-                                                                 free_record($3);
-                                                                 $$ = create_record(s, "");
-                                                                 $$->var_declarations = decls;
-                                                                 free(s);
+                                                                 char *s = cat(3, $1->code, ", ", $3->code);
+                                                                 free($1->code);
+                                                                 free($3->code);
+                                                                 $$ = $3;
+                                                                 $$->code = s;
+                                                                 $$->next = $1;
                                                             }
                  ;
 
 declaration_item : declaration_term                                                                 { $$ = $1; }
                  | declaration_term ASSIGNMENT initialization    {
-                                                                      var_declaration_list decls = $1->var_declarations;
-
                                                                       char *s = cat(3, $1->code, " = ", $3->code);
-                                                                      free_record($1);
+                                                                      free($1->code);
                                                                       free_record($3);
-                                                                      $$ = create_record(s, "");
-                                                                      $$->var_declarations = decls;
-                                                                      free(s);
+                                                                      $$ = $1;
+                                                                      $$->code = s;
                                                                  }
                  ;
 
 declaration_term : ID                                       {
-                                                                 var_declaration* decl = (var_declaration*) malloc(sizeof(var_declaration));
-                                                                 decl->name = $1;
-                                                                 decl->dimension = 0;
-                                                                 decl->type = "";
-                                                                 decl->next = NULL;
-
-                                                                 $$ = create_record($1, "");
-                                                                 $$->var_declarations.size = 1;
-                                                                 $$->var_declarations.top = decl;
+                                                                 $$ = (declaration_term_record*) malloc((sizeof(declaration_term_record)));
+                                                                 $$->code = strdup($1);
+                                                                 $$->name = strdup($1);
+                                                                 $$->dimension = 0;
+                                                                 $$->next = NULL;
                                                                  free($1);
                                                             }
                  | declaration_term LBRACKET expr RBRACKET  {
-                                                                 var_declaration_list decls = $1->var_declarations;
-                                                                 decls.top->dimension++;
-
                                                                  char *s = cat(4, $1->code, "[", $3->code,"]");
-                                                                 free_record($1);
+                                                                 free($1->code);
                                                                  free_record($3);
-                                                                 $$ = create_record(s, "");
-                                                                 $$->var_declarations = decls;
-                                                                 free(s);
+                                                                 $$ = $1;
+                                                                 $$->dimension++;
+                                                                 $$->code = s;
                                                             }
                  ;
 

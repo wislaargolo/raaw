@@ -26,10 +26,6 @@ void init_types_table() {
 }
 
 int insert_list_type(char* name, char* type) {
-  if (!has_type(type)) {
-    return -1;
-  }
-
   type_data data;
   type_info info;
 
@@ -43,20 +39,11 @@ int insert_list_type(char* name, char* type) {
   return 0;
 }
 
-int insert_struct_type(char* name, struct_tuple* tuples) {
-  struct_tuple* tuple = tuples;
-
-  while (tuple != NULL) {
-    if (!has_type(tuple->type)) {
-      return -1;
-    }
-    tuple = tuple->next;
-  }
-
+int insert_struct_type(char* name, hash_table* struct_attrs) {
   type_data data;
   type_info info;
 
-  info.struct_tuples = tuples;
+  info.struct_attrs = struct_attrs;
 
   data.discriminator = STRUCT;
   data.info = info;

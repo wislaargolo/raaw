@@ -1,26 +1,18 @@
 #ifndef RECORD
 #define RECORD
 
-struct var_declaration {
+struct declaration_term_record {
+	char* code;
 	char* name;
-	char* type;
 	int dimension;
-	struct var_declaration* next;
+	struct declaration_term_record* next;
 };
 
-typedef struct var_declaration var_declaration;
-
-struct var_declaration_list {
-	int size;
-	var_declaration* top;
-};
-
-typedef struct var_declaration_list var_declaration_list;
+typedef struct declaration_term_record declaration_term_record;
 
 struct record {
 	char * code;
 	char * type;
-	var_declaration_list var_declarations;
 };
 
 typedef struct record record;

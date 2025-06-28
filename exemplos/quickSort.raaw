@@ -71,6 +71,4 @@ void main() {
     printLine("");
 
     delete(arr);
-
-    break;
 }
