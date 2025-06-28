@@ -17,6 +17,14 @@ char *cat(int, ...);
 
 char* type_name;
 
+const char header[] =
+    "#include <stdio.h>\n"
+    "#include <stdlib.h>\n"
+    "#include <string.h>\n\n"
+    "typedef int boolean;\n"
+    "#define true  1\n"
+    "#define false 0\n\n";
+
 Stack* stack = NULL;
 %}
 
@@ -56,7 +64,7 @@ Stack* stack = NULL;
 
 %%
 program : { stack = create_stack(); } declarations subprograms   {
-                                                                      fprintf(yyout, "%s\n%s", $2->code, $3->code);
+                                                                      fprintf(yyout, "%s\n%s\n%s", header, $2->code, $3->code);
                                                                       free_record($2);
                                                                       free_record($3);
                                                                       free_stack(stack);
