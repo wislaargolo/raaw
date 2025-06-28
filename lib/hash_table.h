@@ -31,5 +31,6 @@ int hash_has(hash_table* ht, char* key);
 void* hash_get(hash_table* ht, char* key);
 void hash_resize(hash_table* ht, int new_capacity);
 void free_hash(hash_table* ht);
+void print_hash_table(hash_table* ht);
 
 #endif

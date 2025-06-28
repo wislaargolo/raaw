@@ -39,5 +39,7 @@ int insert_list_type(char* name, char* type);
 int insert_struct_type(char* name, hash_table* struct_attrs);
 int has_type(char* name);
 type_data get_type_data(char* name);
+void init_types_table();
+void insert_prim_type(char* name);
 
 #endif

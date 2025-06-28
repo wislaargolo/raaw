@@ -5,7 +5,18 @@
 
 Stack* create_stack() {
   Stack* stack = (Stack*) malloc(sizeof(Stack));
-  stack->top = NULL;
+  ScopeNode* node = (ScopeNode*) malloc(sizeof(ScopeNode));
+  if (stack == NULL || node == NULL) {
+    printf("NO MEMORY!!!\n");
+    return NULL;
+  }
+  node->name = strdup("global");
+  node->is_loop = 0;
+  node->is_switch = 0;
+  node->return_type = NULL;
+  node->parent = NULL;
+  node->count = 0;
+  stack->top = node;
   return stack;
 }
 
@@ -23,13 +34,14 @@ void push_subprogram(Stack* stack, char* name, char* return_type) {
   node->is_loop = 0;
   node->is_switch = 0;
   node->return_type = strdup(return_type);
-  node->parent = NULL;
+  node->parent = stack->top;
   stack->top = node;
 }
 
 void push(Stack* stack, int is_loop, int is_switch) {
   ScopeNode* parent = stack->top;
 
+  
   char* parent_name = parent->name;
 
   char count_str[20];
@@ -72,8 +84,8 @@ void pop(Stack* stack) {
     return;
   }
 
-  free(top->name);
-  free(top->return_type);
+  if (top->name) free(top->name);
+  if (top->return_type) free(top->return_type);
 
   stack->top = top->parent;
   free(top);
