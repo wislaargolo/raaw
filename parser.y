@@ -35,7 +35,7 @@ Stack* stack = NULL;
        ASSIGNMENT ASSIGNMENT_MUL ASSIGNMENT_DIV ASSIGNMENT_MOD ASSIGNMENT_ADD ASSIGNMENT_SUB
        AND ANDC OR ORC NOT PLUS MINUS TIMES SLASH MOD
 
-%type <sValue> unary_operator mult_operator add_operator ineq_operator eq_operator 
+%type <sValue> unary_operator mult_operator add_operator ineq_operator eq_operator
                and_operator or_operator assignment_operator
 
 %type <rec> literal target base expr val function_call postfix_expr cast prefix_expr term
@@ -52,7 +52,7 @@ Stack* stack = NULL;
 
 
 %%
-program : { stack = create_stack(); } declarations subprograms   { 
+program : { stack = create_stack(); } declarations subprograms   {
                                                                       fprintf(yyout, "%s\n%s", $2->code, $3->code);
                                                                       free_record($2);
                                                                       free_record($3);
@@ -62,7 +62,7 @@ program : { stack = create_stack(); } declarations subprograms   {
 
 
 declarations :                           { $$ = create_record("", ""); }
-             | declarations declaration  { 
+             | declarations declaration  {
                                              char *s = cat(2, $1->code, $2->code);
                                              free_record($1);
                                              free_record($2);
@@ -76,7 +76,7 @@ declaration : var_declaration                                                   
             | type_declaration                                                                      { $$ = $1; }
             ;
 
-var_declaration : type declaration_line SEMICOLON  { 
+var_declaration : type declaration_line SEMICOLON  {
                                                        char *s = cat(4, $1->code, " ", $2->code, ";");
                                                        free_record($1);
                                                        free_record($2);
@@ -85,7 +85,7 @@ var_declaration : type declaration_line SEMICOLON  {
                                                   }
                ;
 
-const_declaration : CONST var_declaration { 
+const_declaration : CONST var_declaration {
                                              char *s = cat(2, "const ", $2->code);
                                              free_record($2);
                                              $$ = create_record(s, "");
@@ -98,45 +98,68 @@ type_declaration : TYPE ID { type_name = strdup($2); } ASSIGNMENT type_compound 
                                                                                                free($2);
                                                                                                free_record($5);
                                                                                                $$ = create_record(s, "");
-                                                                                               free(s); 
+                                                                                               free(s);
                                                                                           }
                  ;
 
 declaration_line : declaration_item                                                                 { $$ = $1; }
-                 | declaration_line COMMA declaration_item  { 
+                 | declaration_line COMMA declaration_item  {
+                                                                 var_declaration_list decls = $1->var_declarations;
+                                                                 var_declaration* decl = $3->var_declarations.top;
+
+                                                                 decls.size++;
+                                                                 decl->next = decls.top;
+                                                                 decls.top = decl;
+
                                                                  char *s = cat(3, $1->code, ",", $3->code);
                                                                  free_record($1);
                                                                  free_record($3);
                                                                  $$ = create_record(s, "");
+                                                                 $$->var_declarations = decls;
                                                                  free(s);
                                                             }
                  ;
 
 declaration_item : declaration_term                                                                 { $$ = $1; }
-                 | declaration_term ASSIGNMENT initialization    { 
+                 | declaration_term ASSIGNMENT initialization    {
+                                                                      var_declaration_list decls = $1->var_declarations;
+
                                                                       char *s = cat(3, $1->code, " = ", $3->code);
                                                                       free_record($1);
                                                                       free_record($3);
                                                                       $$ = create_record(s, "");
+                                                                      $$->var_declarations = decls;
                                                                       free(s);
                                                                  }
                  ;
 
-declaration_term : ID                                       {    
-                                                                 $$ = create_record($1, ""); 
+declaration_term : ID                                       {
+                                                                 var_declaration* decl = (var_declaration*) malloc(sizeof(var_declaration));
+                                                                 decl->name = $1;
+                                                                 decl->dimension = 0;
+                                                                 decl->type = "";
+                                                                 decl->next = NULL;
+
+                                                                 $$ = create_record($1, "");
+                                                                 $$->var_declarations.size = 1;
+                                                                 $$->var_declarations.top = decl;
                                                                  free($1);
                                                             }
                  | declaration_term LBRACKET expr RBRACKET  {
+                                                                 var_declaration_list decls = $1->var_declarations;
+                                                                 decls.top->dimension++;
+
                                                                  char *s = cat(4, $1->code, "[", $3->code,"]");
                                                                  free_record($1);
                                                                  free_record($3);
                                                                  $$ = create_record(s, "");
+                                                                 $$->var_declarations = decls;
                                                                  free(s);
                                                             }
                  ;
 
 initialization : expr                                                                               { $$ = $1; }
-               | LBRACE initialization_list RBRACE  { 
+               | LBRACE initialization_list RBRACE  {
                          char *s = cat(3, "{", $2->code, "}\n");
                          free_record($2);
                          $$ = create_record(s, "");
@@ -152,7 +175,7 @@ initialization_list : initialization                                            
                                                                       free_record($3);
                                                                       $$ = create_record(s, "");
                                                                       free(s);
-                                                                 }  
+                                                                 }
                     ;
 
 allocation : NEW type LBRACKET expr RBRACKET {
@@ -161,7 +184,7 @@ allocation : NEW type LBRACKET expr RBRACKET {
                                                   );
                                                   free_record($2);
                                                   free_record($4);
-                                                  $$ = create_record(s, ""); 
+                                                  $$ = create_record(s, "");
                                                   free(s);
                                              }
            ;
@@ -170,21 +193,21 @@ type_compound : type                                                            
               | user_type                                                                           { $$ = $1; }
               ;
 
-type : PRIM_TYPE    {    
-                         $$ = create_record($1, ""); 
+type : PRIM_TYPE    {
+                         $$ = create_record($1, "");
                          free($1);
                     }
      | ptr_type                                                                                     { $$ = $1; }
      | map_type     { $$ = $1; }
      | list_type    { $$ = $1; }
-     | ID { 
-               $$ = create_record($1, ""); 
+     | ID {
+               $$ = create_record($1, "");
                free($1);
           }
      ;
 
-user_type : enum_type    { $$ = $1; }               
-          | struct_type  { $$ = $1; }    
+user_type : enum_type    { $$ = $1; }
+          | struct_type  { $$ = $1; }
           ;
 
 ptr_type : PTR ABRACKET_OPEN type ABRACKET_CLOSE       {
@@ -220,8 +243,8 @@ enum_type : ENUM LBRACE enum_list RBRACE     {
                                              }
           ;
 
-enum_list : ID {    
-                    $$ = create_record($1, ""); 
+enum_list : ID {
+                    $$ = create_record($1, "");
                     free($1);
                }
 
@@ -314,14 +337,14 @@ parameters : parameter                  { $$ = $1; }
                                              free(s);
                                         }
            ;
-           
+
 parameter : type ID {
                          char *s = cat(3, $1->code, " ", $2);
                          free_record($1);
                          free($2);
                          $$ = create_record(s, "");
                          free(s);
-                    }  
+                    }
           ;
 
 statements : statement   {
@@ -365,7 +388,7 @@ command : if                                                                    
         | deletion                                                                                  { $$ = $1; }
         ;
 
-jump : CONTINUE                                                                                     { 
+jump : CONTINUE                                                                                     {
                                                                                                          ScopeNode* top = stack->top;
                                                                                                          if (!top->is_loop) {
                                                                                                               yyerror("Invalid continue outside loop");
@@ -413,10 +436,10 @@ else_ifs_opt :                                                                  
 else_ifs : else_if                                                                                  { $$ = $1; }
          | else_ifs else_if   {
                                    char *s = cat(3, $1->code, " ", $2->code);
-                                   free_record($1);     
+                                   free_record($1);
                                    free_record($2);
                                    $$ = create_record(s, "");
-                                   free(s);     
+                                   free(s);
                               }
          ;
 
@@ -447,18 +470,18 @@ while : WHILE LPAREN expr RPAREN LBRACE { push(stack, 1, 0); } statements RBRACE
                                                                  free_record($3);
                                                                  free_record($7);
                                                                  $$ = create_record(s, "");
-                                                                 free(s);   
-                                                                 pop(stack);           
+                                                                 free(s);
+                                                                 pop(stack);
                                                           }
       ;
 
-do_while : DO LBRACE  { push(stack, 1, 0); } statements RBRACE WHILE LPAREN expr RPAREN  {                                          
+do_while : DO LBRACE  { push(stack, 1, 0); } statements RBRACE WHILE LPAREN expr RPAREN  {
                                                                       char *s = cat(8, "do {", $4->code, "} while (", $8->code, ");");
                                                                       free_record($4);
                                                                       free_record($8);
                                                                       $$ = create_record(s, "");
-                                                                      free(s);     
-                                                                      pop(stack);         
+                                                                      free(s);
+                                                                      pop(stack);
                                                                  }
          ;
 
@@ -487,12 +510,12 @@ switch : SWITCH LPAREN expr RPAREN LBRACE { push(stack, 0, 1); } cases default_o
                                                                                      pop(stack);
                                                                                 }
        ;
-       
+
 default_opt :          { $$ = create_record("", ""); }
             | default  { $$ = $1; }
             ;
 
-cases : case        { $$ = $1; }        
+cases : case        { $$ = $1; }
       | cases case  {
                          char *s = cat(3, $1->code, "\n", $2->code);
                          free_record($1);
@@ -598,28 +621,28 @@ assignment_expr : expr                                                          
 deletion : DELETE LPAREN identifier_ref RPAREN SEMICOLON    {
                                                                  char * s = cat(5, "free", "(,", $3->code, ")", ";");
                                                                  free_record($3);
-                                                                 $$ = create_record(s, ""); 
-                                                                 free(s); 
+                                                                 $$ = create_record(s, "");
+                                                                 free(s);
                                                             }
          ;
 
 identifier_ref : ID                                    {
-                                                            $$ = create_record($1, ""); 
+                                                            $$ = create_record($1, "");
                                                             free($1);
                                                        }
                | identifier_ref LBRACKET expr RBRACKET {
                                                             char * s = cat(4, $1->code, "[", $3->code, "]");
                                                             free_record($1);
                                                             free_record($3);
-                                                            $$ = create_record(s, ""); 
-                                                            free(s); 
+                                                            $$ = create_record(s, "");
+                                                            free(s);
                                                        }
                | identifier_ref DOT ID  {
                                              char * s = cat(3, $1->code, ".", $3);
                                              free_record($1);
                                              free($3);
-                                             $$ = create_record(s, ""); 
-                                             free(s); 
+                                             $$ = create_record(s, "");
+                                             free(s);
                                         }
                ;
 
@@ -634,8 +657,8 @@ or_expr : and_expr                                                              
                                              free_record($1);
                                              free($2);
                                              free_record($3);
-                                             $$ = create_record(s, ""); 
-                                             free(s); 
+                                             $$ = create_record(s, "");
+                                             free(s);
                                         }
         ;
 
@@ -649,8 +672,8 @@ and_expr : eq_expr                                {$$ = $1;}
                                                   free_record($1);
                                                   free($2);
                                                   free_record($3);
-                                                  $$ = create_record(s, ""); 
-                                                  free(s); 
+                                                  $$ = create_record(s, "");
+                                                  free(s);
                                              }
           ;
 
@@ -664,8 +687,8 @@ eq_expr : relational_expr                                                       
                                                        free_record($1);
                                                        free($2);
                                                        free_record($3);
-                                                       $$ = create_record(s, ""); 
-                                                       free(s); 
+                                                       $$ = create_record(s, "");
+                                                       free(s);
                                                   }
           ;
 
@@ -679,12 +702,12 @@ relational_expr : arithmetic_expr                               { $$ = $1; }
                                                                       free_record($1);
                                                                       free($2);
                                                                       free_record($3);
-                                                                      $$ = create_record(s, ""); 
-                                                                      free(s); 
+                                                                      $$ = create_record(s, "");
+                                                                      free(s);
                                                                  }
                 ;
 
-ineq_operator : ABRACKET_OPEN                   { $$ = strdup(" < "); }             
+ineq_operator : ABRACKET_OPEN                   { $$ = strdup(" < "); }
               | MORE_THAN_EQUALS                { $$ = strdup(" >= "); }
               | ABRACKET_CLOSE                  { $$ = strdup(" > "); }
               | LESS_THAN_EQUALS                { $$ = strdup(" <= "); }
@@ -696,8 +719,8 @@ arithmetic_expr : term                                                          
                                                        free_record($1);
                                                        free($2);
                                                        free_record($3);
-                                                       $$ = create_record(s, ""); 
-                                                       free(s); 
+                                                       $$ = create_record(s, "");
+                                                       free(s);
                                                      }
                 ;
 
@@ -707,8 +730,8 @@ term : prefix_expr                                                              
                                              free_record($1);
                                              free($2);
                                              free_record($3);
-                                             $$ = create_record(s, ""); 
-                                             free(s); 
+                                             $$ = create_record(s, "");
+                                             free(s);
                                         }
      ;
 
@@ -718,18 +741,18 @@ mult_operator : TIMES    { $$ = strdup(" * "); }
               ;
 
 prefix_expr : postfix_expr                                                                          { $$ = $1; }
-            | unary_operator postfix_expr         { 
+            | unary_operator postfix_expr         {
                                                        char * s = cat(2, $1, $2->code);
                                                        free($1);
                                                        free_record($2);
-                                                       $$ = create_record(s, ""); 
-                                                       free(s); 
+                                                       $$ = create_record(s, "");
+                                                       free(s);
                                                   }
-            | REF LPAREN identifier_ref RPAREN   { 
+            | REF LPAREN identifier_ref RPAREN   {
                                                        char * s = cat(4,"&","(", $3->code,")");
                                                        free_record($3);
-                                                       $$ = create_record(s, ""); 
-                                                       free(s); 
+                                                       $$ = create_record(s, "");
+                                                       free(s);
                                                   }
             | cast                                                                                    { $$ = $1; }
             ;
@@ -738,8 +761,8 @@ cast : LPAREN PRIM_TYPE RPAREN postfix_expr  {
                                                   char * s = cat(4,"(", $2,")", $4->code);
                                                   free($2);
                                                   free_record($4);
-                                                  $$ = create_record(s, ""); 
-                                                  free(s);    
+                                                  $$ = create_record(s, "");
+                                                  free(s);
                                              }
      ;
 
@@ -748,24 +771,24 @@ unary_operator : add_operator { $$ = $1; }
                ;
 
 add_operator : PLUS      { $$ = strdup(" + "); }
-             | MINUS     { $$ = strdup(" - "); }     
+             | MINUS     { $$ = strdup(" - "); }
              ;
 
-postfix_expr : target    { $$ = $1; }                          
+postfix_expr : target    { $$ = $1; }
              | literal   { $$ = $1; }
              ;
 
 base : ID                     {
-                                   $$ = create_record($1, ""); 
+                                   $$ = create_record($1, "");
                                    free($1);
                               }
      | val                    { $$ = $1; }
      | LPAREN expr RPAREN     {
                                    char * s = cat(3,"(", $2->code,")");
                                    free_record($2);
-                                   $$ = create_record(s, ""); 
-                                   free(s); 
-                              }        
+                                   $$ = create_record(s, "");
+                                   free(s);
+                              }
      ;
 
 
@@ -775,18 +798,18 @@ target : base                           { $$ = $1; }
                                              char * s = cat(4, $1->code, "[", $3->code,"]");
                                              free_record($1);
                                              free_record($3);
-                                             $$ = create_record(s, ""); 
-                                             free(s);     
+                                             $$ = create_record(s, "");
+                                             free(s);
                                         }
        | target DOT ID                  {
                                              char * s = cat(3, $1->code, ".", $3);
                                              free_record($1);
                                              free($3);
-                                             $$ = create_record(s, ""); 
-                                             free(s);     
+                                             $$ = create_record(s, "");
+                                             free(s);
                                         }
        ;
-     
+
 
 literal : INTEGER   {
                          $$ = create_record($1, "long");

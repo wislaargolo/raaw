@@ -21,7 +21,8 @@ record * create_record(char * c1, char * c2){
 
   r->code = strdup(c1);
   r->type = strdup(c2);
+  r->var_declarations.size = 0;
+  r->var_declarations.top = NULL;
 
   return r;
 }
-

@@ -1,12 +1,12 @@
 all: compilador
 
-compilador: lex.yy.c y.tab.c ./lib/record.c ./lib/stack.c 
-	gcc lex.yy.c y.tab.c ./lib/record.c ./lib/stack.c -o compiler
+compilador: lex.yy.c y.tab.c ./lib
+	gcc lex.yy.c y.tab.c ./lib/record.c ./lib/stack.c ./lib/hash_table.c ./lib/types.c -o compiler
 
 lex.yy.c: lex.l
 	flex lex.l
 
-y.tab.c: parser.y  
+y.tab.c: parser.y
 	bison parser.y -d -v -o y.tab.c
 
 clean:
