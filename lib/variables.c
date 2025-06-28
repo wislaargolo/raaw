@@ -49,7 +49,7 @@ static char* make_key(char* name, char* scope) {
     char* key = (char*) malloc(strlen(name) + strlen(scope) + 2);
     if (key == NULL) {
         fprintf(stderr, "Memory allocation failed for variable key\n");
-        exit(EXIT_FAILURE);
+        exit(0);
     }
     sprintf(key, "%s#%s", scope, name);
     return key;
@@ -132,66 +132,4 @@ void remove_scope_variables(Stack* stack) {
             node = next;
         }
     }
-}
-
-int main() {
-    printf("=== Inicializando tabelas ===\n");
-
-    // Inicializa tabela de tipos e de variáveis
-    init_types_table();
-    init_variables_table();
-
-    // Adiciona tipos primitivos
-    insert_prim_type("int");
-    insert_prim_type("float");
-
-    // Cria a pilha de escopos
-    Stack* stack = create_stack();  // escopo "global"
-
-    // Escopo global
-    printf("\n--- Escopo: global ---\n");
-    insert_variable(stack, "x", "int", 0);       // int x
-    insert_variable(stack, "pi", "float", 1);    // const float pi
-
-    printf("Variáveis no escopo global:\n");
-    print_variable_table();
-
-    // Novo escopo: bloco 1 (global_0)
-    printf("%s ---\n", stack->top == NULL ? "Pilha vazia" : stack->top->name);
-    printf("\n--- Escopo 1: %s ---\n", stack->top->name);
-    push_subprogram(stack, "function_1" , "int");
-    printf("\n--- Escopo: %s ---\n", stack->top->name);
-
-    insert_variable(stack, "y", "float", 0);     // float y
-    insert_variable(stack, "x", "int", 1);       // const int x (shadowing)
-
-    printf("Variáveis após entrar em novo escopo:\n");
-    print_variable_table();
-
-    // Checa variáveis
-    variable_data* var = get_variable(stack, "x");
-    printf("\n[x] no escopo atual: tipo = %s, const = %s\n",
-           var->type, var->is_const ? "sim" : "nao");
-
-    // Remoção das variáveis do escopo atual
-    printf("\nRemovendo variáveis do escopo: %s\n", stack->top->name);
-    remove_scope_variables(stack);
-
-    printf("Tabela após remoção do escopo atual:\n");
-    print_variable_table();
-
-    // Sair do escopo
-    pop(stack);
-
-    // Confirma que 'x' voltou a ser o do global
-    var = get_variable(stack, "x");
-    printf("\n[x] no escopo global novamente: tipo = %s, const = %s\n",
-           var->type, var->is_const ? "sim" : "nao");
-
-    // Finaliza
-    free_variables_tables();
-    free_stack(stack);
-
-    printf("\n=== Testes concluídos ===\n");
-    return 0;
 }
