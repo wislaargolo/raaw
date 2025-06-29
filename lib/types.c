@@ -40,6 +40,7 @@ int insert_list_type(char* name, char* type) {
 }
 
 int insert_struct_type(char* name, hash_table* struct_attrs) {
+
   type_data data;
   type_info info;
 

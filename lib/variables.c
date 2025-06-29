@@ -5,60 +5,44 @@
 #include "types.h"
 #include "stack.h"
 #include "variables.h"
+#include "aux_functions.h"
 
 hash_table* variables_table;
 
 void init_variables_table() {  
     variables_table = create_hash_table();
-    if (variables_table == NULL) {
-        fprintf(stderr, "Failed to create variables hash table\n");
-        exit(EXIT_FAILURE);
-    }
-
 }
 
-void insert_variable(Stack* stack, char* name, char* type, int is_const) {
+int insert_variable(Stack* stack, char* name, char* type, int is_const) {
     if (stack == NULL || stack->top == NULL) {
         fprintf(stderr, "Stack is empty or not initialized\n");
-        return; 
+        return -1; 
     }
 
-    if(!has_type(type)) {
-        fprintf(stderr, "Type '%s' does not exist\n", type);
-        return; 
-    }
-
+    if(exists_in_scope(stack, name)) return 1;
+    
     char* scope = stack->top->name;
     char* key = make_key(name, scope);
     
-    if (hash_has(variables_table, key)) {
-        fprintf(stderr, "Variable '%s' already exists in scope '%s'\n", name, scope);
-        free(key);
-        return;
-    }
-
     variable_data* data = malloc(sizeof(variable_data));
     data->type = strdup(type);
     data->is_const = is_const;
 
     hash_insert(variables_table, key, data);
     free(key);
+
+    return 0;
 }
 
 static char* make_key(char* name, char* scope) {
     char* key = (char*) malloc(strlen(name) + strlen(scope) + 2);
-    if (key == NULL) {
-        fprintf(stderr, "Memory allocation failed for variable key\n");
-        exit(0);
-    }
+
     sprintf(key, "%s#%s", scope, name);
     return key;
 }
 
 int exists_in_scope(Stack* stack, char* name) {
-    if (stack == NULL || stack->top == NULL) {
-        return 0; 
-    }
+    if (stack == NULL || stack->top == NULL) return -1; 
 
     char* scope = stack->top->name;
     char* key = make_key(name, scope);
@@ -69,11 +53,9 @@ int exists_in_scope(Stack* stack, char* name) {
     return exists;
 }
 
-variable_data* get_variable(Stack* stack, char* name) {
-    if (stack == NULL || stack->top == NULL) return NULL;
-
+variable_data get_variable(Stack* stack, char* name) {
     char* key = make_key(name, stack->top->name);
-    variable_data* data = (variable_data*) hash_get(variables_table, key);
+    variable_data data = hash_get_t(variables_table, key, variable_data);
     free(key);
     return data;
 }
@@ -102,8 +84,8 @@ void free_variables_tables() {
     free_hash(variables_table);
 }
 
-void remove_scope_variables(Stack* stack) {
-    if (stack == NULL || stack->top == NULL) return;
+int remove_scope_variables(Stack* stack) {
+    if (stack == NULL || stack->top == NULL) return -1;
 
     char* scope = stack->top->name;
     for (int i = 0; i < variables_table->capacity; i++) {
@@ -132,4 +114,6 @@ void remove_scope_variables(Stack* stack) {
             node = next;
         }
     }
+
+    return 0;
 }

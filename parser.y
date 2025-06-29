@@ -2,10 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
 #include "./lib/record.h"
 #include "./lib/stack.h"
+#include "./lib/functions.h"
+#include "./lib/variables.h"
+#include "./lib/aux_functions.h"
 
 int yylex(void);
 int yyerror(char *s);
@@ -13,9 +15,9 @@ extern int yylineno;
 extern char * yytext;
 extern FILE * yyin, * yyout;
 
-char *cat(int, ...);
 
 char* type_name;
+function_data *current_fd = NULL;
 
 
 Stack* stack = NULL;
@@ -116,7 +118,7 @@ type_declaration : TYPE ID { type_name = strdup($2); } ASSIGNMENT type_compound 
                                                                                           }
                  ;
 
-declaration_line : declaration_item                                                                 { $$ = $1; }
+declaration_line : declaration_item                         { $$ = $1; }
                  | declaration_line COMMA declaration_item  {
                                                                  char *s = cat(3, $1->code, ", ", $3->code);
                                                                  free($1->code);
@@ -127,7 +129,7 @@ declaration_line : declaration_item                                             
                                                             }
                  ;
 
-declaration_item : declaration_term                                                                 { $$ = $1; }
+declaration_item : declaration_term                              { $$ = $1; }
                  | declaration_term ASSIGNMENT initialization    {
                                                                       char *s = cat(3, $1->code, " = ", $3->code);
                                                                       free($1->code);
@@ -276,6 +278,7 @@ subprograms : subprogram                {
                                              char* s = cat(2, $1->code, "\n");
                                              free_record($1);
                                              $$ = create_record(s, "");
+                                             current_fd = NULL; 
                                              free(s);
                                         }
             | subprograms subprogram    {
@@ -288,6 +291,7 @@ subprograms : subprogram                {
             ;
 
 subprogram : type ID LPAREN parameters RPAREN LBRACE { push_subprogram(stack, $2, $1->code); } statements RBRACE     {
+                                                                                insert_function($2, $1->code, &current_fd); 
                                                                                 char *s = cat(8, $1->code, " ", $2, "(", $4->code, ") {\n", $8->code, "\n}\n");
                                                                                 free_record($1);
                                                                                 free($2);
@@ -298,6 +302,7 @@ subprogram : type ID LPAREN parameters RPAREN LBRACE { push_subprogram(stack, $2
                                                                                 pop(stack);
                                                                            }
            | VOID ID LPAREN parameters RPAREN LBRACE { push_subprogram(stack, $2, "void"); } statements RBRACE     {
+                                                                                insert_function($2, strdup("void"), &current_fd); 
                                                                                 char *s = cat(7, "void ", $2, "(", $4->code, ") {\n", $8->code, "\n}\n");
                                                                                 free($2);
                                                                                 free_record($4);
@@ -307,6 +312,7 @@ subprogram : type ID LPAREN parameters RPAREN LBRACE { push_subprogram(stack, $2
                                                                                 pop(stack);
                                                                            }
            | type ID LPAREN RPAREN LBRACE { push_subprogram(stack, $2, $1->code); } statements RBRACE                {
+                                                                                insert_function($2, $1->code, &current_fd); 
                                                                                 char *s = cat(5, $1->code, $2, "() {\n", $7->code, "\n}\n");
                                                                                 free_record($1);
                                                                                 free($2);
@@ -316,6 +322,7 @@ subprogram : type ID LPAREN parameters RPAREN LBRACE { push_subprogram(stack, $2
                                                                                 pop(stack);
                                                                            }
            | VOID ID LPAREN RPAREN LBRACE { push_subprogram(stack, $2, "void"); } statements RBRACE                {
+                                                                                insert_function($2, strdup("void"), &current_fd); 
                                                                                 char *s = cat(5, "void ", $2, "() {\n", $7->code, "\n}\n");
                                                                                 free($2);
                                                                                 free_record($7);
@@ -336,6 +343,7 @@ parameters : parameter                  { $$ = $1; }
            ;
 
 parameter : type ID {
+                         new_param(current_fd, $2, $1->code);
                          char *s = cat(3, $1->code, " ", $2);
                          free_record($1);
                          free($2);
@@ -841,10 +849,15 @@ int main (int argc, char ** argv) {
           exit(0);
      }
 
+     init_function_table();
+     init_variables_table();
+
      yyin = fopen(argv[1], "r");
      yyout = fopen(argv[2], "w");
 
      codigo = yyparse();
+
+     print_function_table();
 
      fclose(yyin);
      fclose(yyout);
@@ -855,43 +868,4 @@ int main (int argc, char ** argv) {
 int yyerror (char *msg) {
 	fprintf (stderr, "%d: %s at '%s'\n", yylineno, msg, yytext);
 	return 0;
-}
-
-
-char *cat(int count, ...) {
-     va_list args;
-     int tam_total = 0;
-
-     va_start(args, count);
-
-     for (int i = 0; i < count; i++) {
-          char *str = va_arg(args, char *);
-          tam_total += strlen(str);
-     }
-
-     va_end(args);
-
-     char *result = malloc(tam_total + 1);
-     if (!result) {
-          printf("Allocation problem. Closing application...\n");
-          exit(0);
-     }
-
-     char *current = result;
-     va_start(args, count);
-
-     for (int i = 0; i < count; i++) {
-          char *str = va_arg(args, char *);
-          if (str) {
-               int len = strlen(str);
-               memcpy(current, str, len);
-               current += len;
-          }
-     }
-
-     va_end(args);
-
-     *current = '\0';
-
-     return result;
 }

@@ -1,7 +1,7 @@
 all: compilador
 
 compilador: lex.yy.c y.tab.c ./lib
-	gcc lex.yy.c y.tab.c ./lib/record.c ./lib/stack.c ./lib/hash_table.c ./lib/types.c ./lib/variables.c -o compiler
+	gcc lex.yy.c y.tab.c ./lib/record.c ./lib/stack.c ./lib/hash_table.c ./lib/types.c ./lib/variables.c ./lib/functions.c ./lib/aux_functions.c -o compiler
 
 lex.yy.c: lex.l
 	flex lex.l
