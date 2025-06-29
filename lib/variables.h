@@ -14,7 +14,7 @@ static char* make_key(char* name, char* scope);
 int exists_in_scope(Stack* stack, char* name);
 variable_data get_variable(Stack* stack, char* name);
 void print_variable_table();
-void free_variables_tables();
+void free_variables_table();
 int remove_scope_variables(Stack* stack);
 
 //void insert_const_variable(Stack* stack, char* name, char* type);

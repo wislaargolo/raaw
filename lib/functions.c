@@ -4,6 +4,7 @@
 #include "hash_table.h"
 #include "functions.h"
 #include "aux_functions.h"
+#include "prompt.h"
 
 int yyerror(char *msg);
 
@@ -11,6 +12,8 @@ hash_table* functions_table;
 
 void init_function_table() {
     functions_table = create_hash_table();
+    insert_function("print", "void", NULL);
+    insert_function("printLine", "void", NULL);
 }
 
 int insert_function(char* name, char* return_type, function_data** current) {

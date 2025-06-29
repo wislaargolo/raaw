@@ -64,7 +64,7 @@ void print_variable_table() {
     print_hash_table(variables_table);
 }
 
-void free_variables_tables() {
+void free_variables_table() {
     if (variables_table == NULL) return;
 
     for (int i = 0; i < variables_table->capacity; i++) {

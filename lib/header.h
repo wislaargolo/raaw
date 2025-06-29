@@ -4,9 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
-typedef int boolean;
-#define true  1
-#define false 0
+#include "prompt.h" 
+
+typedef bool boolean;
 
 #endif 

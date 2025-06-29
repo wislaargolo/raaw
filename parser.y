@@ -889,6 +889,8 @@ int main (int argc, char ** argv) {
 
      fclose(yyin);
      fclose(yyout);
+     free_function_table();
+     free_variables_table();
 
      return codigo;
 }
