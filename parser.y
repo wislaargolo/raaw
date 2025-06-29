@@ -18,6 +18,7 @@ extern FILE * yyin, * yyout;
 
 char* type_name;
 function_data *current_fd = NULL;
+int const_mode = 0;
 
 
 Stack* stack = NULL;
@@ -102,6 +103,7 @@ var_declaration : type declaration_line SEMICOLON  {
                ;
 
 const_declaration : CONST var_declaration {
+
                                              char *s = cat(2, "const ", $2->code);
                                              free_record($2);
                                              $$ = create_record(s, "");
@@ -152,6 +154,7 @@ declaration_term : ID                                       {
                                                                  free($1->code);
                                                                  free_record($3);
                                                                  $$ = $1;
+                                                                 printf(" -- TERMO -------: %i", $$->dimension);
                                                                  $$->dimension++;
                                                                  $$->code = s;
                                                             }
@@ -290,44 +293,64 @@ subprograms : subprogram                {
                                         }
             ;
 
-subprogram : type ID LPAREN parameters RPAREN LBRACE { push_subprogram(stack, $2, $1->code); } statements RBRACE     {
-                                                                                insert_function($2, $1->code, &current_fd); 
-                                                                                char *s = cat(8, $1->code, " ", $2, "(", $4->code, ") {\n", $8->code, "\n}\n");
+subprogram : type ID LPAREN { push_subprogram(stack, $2, $1->code); } parameters RPAREN LBRACE statements RBRACE     {
+
+                                                                                if(insert_function($2, $1->code, &current_fd) == 1) {
+                                                                                     yyerror(cat(3, "Function ", $2, " has already bean declareted."));
+                                                                                } 
+
+                                                                                char *s = cat(8, $1->code, " ", $2, "(", $5->code, ") {\n", $8->code, "\n}\n");
                                                                                 free_record($1);
                                                                                 free($2);
-                                                                                free_record($4);
+                                                                                free_record($5);
                                                                                 free_record($8);
                                                                                 $$ = create_record(s, "");
                                                                                 free(s);
+                                                                                remove_scope_variables(stack);
                                                                                 pop(stack);
                                                                            }
-           | VOID ID LPAREN parameters RPAREN LBRACE { push_subprogram(stack, $2, "void"); } statements RBRACE     {
-                                                                                insert_function($2, strdup("void"), &current_fd); 
-                                                                                char *s = cat(7, "void ", $2, "(", $4->code, ") {\n", $8->code, "\n}\n");
+           | VOID ID LPAREN { push_subprogram(stack, $2, "void"); } parameters RPAREN LBRACE statements RBRACE     {
+                                                                                
+                                                                                if(insert_function($2, strdup("void"), &current_fd) == 1) {
+                                                                                     yyerror(cat(3, "Function ", $2, " has already bean declareted."));
+                                                                                } 
+
+                                                                                char *s = cat(7, "void ", $2, "(", $5->code, ") {\n", $8->code, "\n}\n");
                                                                                 free($2);
-                                                                                free_record($4);
+                                                                                free_record($5);
                                                                                 free_record($8);
                                                                                 $$ = create_record(s, "");
                                                                                 free(s);
+                                                                                remove_scope_variables(stack);
                                                                                 pop(stack);
                                                                            }
-           | type ID LPAREN RPAREN LBRACE { push_subprogram(stack, $2, $1->code); } statements RBRACE                {
-                                                                                insert_function($2, $1->code, &current_fd); 
+           | type ID LPAREN { push_subprogram(stack, $2, $1->code); } RPAREN LBRACE statements RBRACE                {
+                                                                                
+                                                                                if(insert_function($2, $1->code, &current_fd) == 1) {
+                                                                                     yyerror(cat(3, "Function ", $2, " has already bean declareted."));
+                                                                                } 
+
                                                                                 char *s = cat(5, $1->code, $2, "() {\n", $7->code, "\n}\n");
                                                                                 free_record($1);
                                                                                 free($2);
                                                                                 free_record($7);
                                                                                 $$ = create_record(s, "");
                                                                                 free(s);
+                                                                                remove_scope_variables(stack);
                                                                                 pop(stack);
                                                                            }
-           | VOID ID LPAREN RPAREN LBRACE { push_subprogram(stack, $2, "void"); } statements RBRACE                {
-                                                                                insert_function($2, strdup("void"), &current_fd); 
+           | VOID ID LPAREN { push_subprogram(stack, $2, "void"); } RPAREN LBRACE statements RBRACE                {
+                                                                                
+                                                                                if(insert_function($2, strdup("void"), &current_fd) == 1) {
+                                                                                     yyerror(cat(3, "Function ", $2, " has already bean declareted."));
+                                                                                } 
+
                                                                                 char *s = cat(5, "void ", $2, "() {\n", $7->code, "\n}\n");
                                                                                 free($2);
                                                                                 free_record($7);
                                                                                 $$ = create_record(s, "");
                                                                                 free(s);
+                                                                                remove_scope_variables(stack);
                                                                                 pop(stack);
                                                                            }
            ;
@@ -343,7 +366,11 @@ parameters : parameter                  { $$ = $1; }
            ;
 
 parameter : type ID {
-                         new_param(current_fd, $2, $1->code);
+                         new_param(current_fd, $1->code);
+                         if(insert_variable(stack, $2, $1->code, 0) == 1) {
+                              yyerror(cat(3, "Variable ", $2, " already declared on scope."));
+                         } 
+                         //  parametro pode ser constante
                          char *s = cat(3, $1->code, " ", $2);
                          free_record($1);
                          free($2);
@@ -858,6 +885,7 @@ int main (int argc, char ** argv) {
      codigo = yyparse();
 
      print_function_table();
+     print_variable_table();
 
      fclose(yyin);
      fclose(yyout);

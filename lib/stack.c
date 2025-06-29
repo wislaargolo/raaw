@@ -41,7 +41,7 @@ void push_subprogram(Stack* stack, char* name, char* return_type) {
 void push(Stack* stack, int is_loop, int is_switch) {
   ScopeNode* parent = stack->top;
 
-  
+
   char* parent_name = parent->name;
 
   char count_str[20];

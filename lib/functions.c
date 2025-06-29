@@ -29,21 +29,11 @@ int insert_function(char* name, char* return_type, function_data** current) {
     return 0;
 }
 
-
-int param_name_exists(function_data* function, const char *name) {
-    for(function_param* param = function->params; param != NULL; param = param->next) {
-        if (strcmp(param->name, name) == 0) return 1;
-    }
-    return 0;
-}
-
-int new_param(function_data* function, char* name, char* type) {
+int new_param(function_data* function,char* type) {
     if (function == NULL) return -1;
-    if(param_name_exists(function, name)) return 1;
 
     function_param* param = malloc(sizeof(function_param));
     param->type = strdup(type);
-    param->name = strdup(name);
     param->next = function->params; 
     function->params = param;
     function->num_params++;
@@ -60,8 +50,7 @@ function_data get_function(char* name) {
 void free_params(function_param* params) {
     while (params != NULL) {
         function_param* next = params->next;
-        free(params->type);
-        free(params->name); 
+        free(params->type); 
         free(params);
         params = next;
     }
@@ -104,7 +93,7 @@ void print_function_table() {
             if(fd.num_params > 0) printf(", params: ");
 
             while(fd.params != NULL) {
-                printf("%s - %s", fd.params->type, fd.params->name);
+                printf("%s", fd.params->type);
                 fd.params = fd.params->next;
                 if (fd.params != NULL) {
                     printf(", ");
