@@ -4,7 +4,6 @@
 #include "hash_table.h"
 #include "functions.h"
 #include "aux_functions.h"
-#include "prompt.h"
 
 int yyerror(char *msg);
 

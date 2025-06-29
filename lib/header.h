@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "prompt.h" 
+#include "input.h" 
 
 typedef bool boolean;
 
