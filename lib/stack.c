@@ -26,8 +26,7 @@ Stack* create_stack() {
 void push_subprogram(Stack* stack, char* name) {
   ScopeNode* node = (ScopeNode*) malloc(sizeof(ScopeNode));
 
-  if (node == NULL)
-  {
+  if (node == NULL) {
     printf("NO NODE!!! >.<\n");
     return;
   }
@@ -45,7 +44,6 @@ void push_subprogram(Stack* stack, char* name) {
 
 void push(Stack* stack, int is_loop, int is_switch) {
   ScopeNode* parent = stack->top;
-
 
   char* parent_name = parent->name;
 

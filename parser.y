@@ -380,7 +380,7 @@ subprograms : subprogram                {
 subprogram : type ID LPAREN   {    push_subprogram(stack, $2);
                                    if(insert_function($2, $1->code, &current_fd) == 1) {
                                         yyerror(cat(3, "Function ", $2, " has already bean declareted."));
-                              }
+                                   }
 
                               } parameters RPAREN LBRACE statements RBRACE {
                                    char *s = cat(8, $1->code, " ", $2, "(", $5->code, ") {\n", $8->code, "\n}\n");
@@ -568,18 +568,18 @@ if : IF LPAREN expr RPAREN LBRACE  {
                                         char* final_code;
 
                                         if (strlen(else_chain) > 0) {
-                                             final_code = cat(15,
+                                             final_code = cat(17,
                                                   "if (!(", $3->code, ")) goto ", next_else, ";\n",
-                                                  $7->code,
+                                                  "{", $7->code, "\n}\n",
                                                   "goto ", top->if_end_label, ";\n",
                                                   next_else, ":\n",
                                                   else_chain, "\n",
                                                   top->if_end_label, ":"
                                              );
                                         } else {
-                                             final_code = cat(8,
+                                             final_code = cat(10,
                                                   "if (!(", $3->code, ")) goto ", top->if_end_label, ";\n",
-                                                  $7->code,
+                                                   "{", $7->code, "\n}\n",
                                                   top->if_end_label, ":"
                                              );
                                         }
@@ -614,9 +614,9 @@ else_if : ELSEIF LPAREN expr RPAREN LBRACE { push(stack, 0, 0); } statements RBR
                                                                                                ScopeNode* top = stack->top;
                                                                                                char* next_else = cat(2, top->name, "_next");
 
-                                                                                               char* s = cat(11,
+                                                                                               char* s = cat(13,
                                                                                                     "if (!(", $3->code, ")) goto ", next_else, ";\n",
-                                                                                                    $7->code,
+                                                                                                    "{", $7->code, "\n}\n",
                                                                                                     "goto ", top->if_end_label, ";\n",
                                                                                                     next_else, ":"
                                                                                                );
@@ -633,8 +633,10 @@ else_opt :          { $$ = create_record("", ""); }
          ;
 
 else : ELSE LBRACE { push(stack, 0, 0); } statements RBRACE    {
-                                             $$ = create_record($4->code, "");
+                                             char* s = cat(3, "{", $4->code, "\n}\n");
                                              free_record($4);
+                                             $$ = create_record(s, "");
+                                             free(s);
                                              pop(stack);
                                         }
      ;
@@ -648,11 +650,11 @@ while : WHILE LPAREN expr RPAREN LBRACE {
                                         } statements RBRACE {
 
                                              ScopeNode* top = stack->top;
-                                             char* s = cat(15,
+                                             char* s = cat(16,
                                                   "\n", top->name, ":\n",
                                                   "if (!(", $3->code, ")) goto ", top->break_label, ";\n",
-                                                  $7->code, "\n",
-                                                  "goto ", top->name, ";\n",
+                                                  "{", $7->code, "\n",
+                                                  "goto ", top->name, ";\n}\n",
                                                   top->break_label, ":"
                                              );
                                              free_record($3);
@@ -671,9 +673,9 @@ do_while : DO LBRACE  {
                     } statements RBRACE WHILE LPAREN expr RPAREN  {
 
                          ScopeNode* top = stack->top;
-                         char *s = cat(12,
+                         char *s = cat(13,
                               "\n", top->name, ":\n",
-                              $4->code, "\n",
+                              "{", $4->code, "\n}\n",
                               "if (", $8->code, ") goto ", top->name, ";\n",
                               top->break_label, ":"
                          );
@@ -696,14 +698,14 @@ for : FOR LPAREN {
 
                     ScopeNode* top = stack->top;
 
-                    char* s = cat(20,
+                    char* s = cat(20,"\n{\n",
                          $4->code, "\n",
                          top->name, ":\n",
                          "if (!(", $5->code, ")) goto ", top->break_label, ";\n",
-                         $10->code, "\n",
+                         $10->code,
                          top->continue_label, ":\n",
                          $7->code, ";\n",
-                         "goto ", top->name, ";\n",
+                         "goto ", top->name, ";\n}\n",
                          top->break_label, ":"
                     );
 
@@ -1022,7 +1024,7 @@ base : ID                     {
                                    if (!exists_scope_parent(stack, $1)) {
                                         yyerror(cat(3, "Variable '", $1, "' is not declared"));
                                    }
-                                   
+
                                    $$ = create_record($1, "");
                                    free($1);
                               }
