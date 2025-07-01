@@ -6,7 +6,6 @@ typedef struct ScopeNode {
   struct ScopeNode* parent;
   int is_loop;
   int is_switch;
-  char* return_type;
   int count;
   char* break_label;
   char* continue_label;
@@ -19,7 +18,7 @@ typedef struct Stack {
 
 Stack* create_stack();
 
-void push_subprogram(Stack* stack, char* name, char* return_type);
+void push_subprogram(Stack* stack, char* name);
 
 void push(Stack* stack, int is_loop, int is_switch);
 

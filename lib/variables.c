@@ -14,6 +14,7 @@ void init_variables_table() {
 }
 
 int insert_variable(Stack* stack, char* name, char* type, int is_const) {
+    
     if (stack == NULL || stack->top == NULL) {
         fprintf(stderr, "Stack is empty or not initialized\n");
         return -1; 
@@ -53,6 +54,24 @@ int exists_in_scope(Stack* stack, char* name) {
     return exists;
 }
 
+int exists_scope_parent(Stack* stack, char* name) {
+    if (stack == NULL || stack->top == NULL) return -1; 
+
+    ScopeNode* node = stack->top;
+    while (node != NULL) {
+        char* key = make_key(name, node->name);
+        if (hash_has(variables_table, key)) {
+            free(key);
+            return 1; 
+        }
+        free(key);
+        node = node->parent;
+    }
+    
+    return 0; 
+}
+
+
 variable_data get_variable(Stack* stack, char* name) {
     char* key = make_key(name, stack->top->name);
     variable_data data = hash_get_t(variables_table, key, variable_data);
@@ -61,6 +80,7 @@ variable_data get_variable(Stack* stack, char* name) {
 }
 
 void print_variable_table() {
+
     print_hash_table(variables_table);
 }
 

@@ -53,7 +53,7 @@ Stack* stack = NULL;
             command jump statement const_declaration parameter user_type type_compound subprogram subprograms
             struct_vars struct_type enum_list enum_type initialization
             initialization_list declaration struct_var_declaration
-            declarations program default_opt
+            declarations program default_opt const_parameter parameter_type
 
 %type <decl_term> declaration_term declaration_line declaration_item struct_declaration_line
 
@@ -64,9 +64,11 @@ Stack* stack = NULL;
 
 %%
 program : { stack = create_stack(); } declarations subprograms   {
-                                                                      fprintf(yyout,"#include \"./lib/header.h\"\n\n%s%s", $2->code, $3->code);
+                                                                      fprintf(yyout,"#include \"./raaw/header.h\"\n\n%s%s", $2->code, $3->code);
                                                                       free_record($2);
                                                                       free_record($3);
+                                                                      print_function_table();
+                                                                      print_variable_table();
                                                                       free_stack(stack);
                                                                  }
         ;
@@ -95,7 +97,16 @@ var_declaration : type declaration_line SEMICOLON  {
                                                        while (decl != NULL) {
                                                             char* type = strdup($1->name);
 
-                                                            // TO-DO: insert in variables table
+                                                            for (int i = 0; i < decl->dimension; i++) {
+                                                                 char* aux = type;
+                                                                 type = cat(3, "ptr<", aux, ">");
+                                                                 free(aux);
+                                                            }
+
+                                                            if(insert_variable(stack, decl->name, type, const_mode) == 1) {
+                                                                 yyerror(cat(4, "Variable '", decl->name, "' already declared in scope ", stack->top->name));
+                                                            }
+
 
                                                             free(decl->name);
                                                             free(decl->code);
@@ -109,10 +120,10 @@ var_declaration : type declaration_line SEMICOLON  {
                                                   }
                ;
 
-const_declaration : CONST var_declaration {
+const_declaration : CONST { const_mode = 1; } var_declaration {
 
-                                             char *s = cat(2, "const ", $2->code);
-                                             free_record($2);
+                                             char *s = cat(2, "const ", $3->code);
+                                             free_record($3);
                                              $$ = create_record(s, "");
                                              free(s);
                                         }
@@ -169,7 +180,6 @@ declaration_term : ID                                       {
                                                                  free($1->code);
                                                                  free_record($3);
                                                                  $$ = $1;
-                                                                 printf(" -- TERMO -------: %i", $$->dimension);
                                                                  $$->dimension++;
                                                                  $$->code = s;
                                                             }
@@ -367,7 +377,7 @@ subprograms : subprogram                {
                                         }
             ;
 
-subprogram : type ID LPAREN   {    push_subprogram(stack, $2, $1->code);
+subprogram : type ID LPAREN   {    push_subprogram(stack, $2);
                                    if(insert_function($2, $1->code, &current_fd) == 1) {
                                         yyerror(cat(3, "Function ", $2, " has already bean declareted."));
                               }
@@ -381,11 +391,10 @@ subprogram : type ID LPAREN   {    push_subprogram(stack, $2, $1->code);
                                    free_record($8);
                                    $$ = create_record(s, "");
                                    free(s);
-                                   remove_scope_variables(stack);
                                    pop(stack);
                               }
            | VOID ID LPAREN   {
-                                   push_subprogram(stack, $2, "void");
+                                   push_subprogram(stack, $2);
                                    if(insert_function($2, strdup("void"), &current_fd) == 1) {
                                         yyerror(cat(3, "Function ", $2, " has already bean declareted."));
                                    }
@@ -396,11 +405,10 @@ subprogram : type ID LPAREN   {    push_subprogram(stack, $2, $1->code);
                                    free_record($8);
                                    $$ = create_record(s, "");
                                    free(s);
-                                   remove_scope_variables(stack);
                                    pop(stack);
                               }
            | type ID LPAREN   {
-                              push_subprogram(stack, $2, $1->code);
+                              push_subprogram(stack, $2);
                               if(insert_function($2, $1->code, &current_fd) == 1) {
                                    yyerror(cat(3, "Function ", $2, " has already bean declareted."));
                               }
@@ -412,11 +420,10 @@ subprogram : type ID LPAREN   {    push_subprogram(stack, $2, $1->code);
                                    free_record($7);
                                    $$ = create_record(s, "");
                                    free(s);
-                                   remove_scope_variables(stack);
                                    pop(stack);
                               }
            | VOID ID LPAREN   {
-                                   push_subprogram(stack, $2, "void");
+                                   push_subprogram(stack, $2);
                                    if(insert_function($2, strdup("void"), &current_fd) == 1) {
                                         yyerror(cat(3, "Function ", $2, " has already bean declareted."));
                                    }
@@ -426,13 +433,12 @@ subprogram : type ID LPAREN   {    push_subprogram(stack, $2, $1->code);
                                    free_record($7);
                                    $$ = create_record(s, "");
                                    free(s);
-                                   remove_scope_variables(stack);
                                    pop(stack);
                               }
            ;
 
-parameters : parameter                  { $$ = $1; }
-           | parameters COMMA parameter {
+parameters : parameter_type                  { $$ = $1; }
+           | parameters COMMA parameter_type {
                                              char *s = cat(3, $1->code, ", ", $3->code);
                                              free_record($1);
                                              free_record($3);
@@ -441,20 +447,33 @@ parameters : parameter                  { $$ = $1; }
                                         }
            ;
 
+parameter_type : parameter                   { $$ = $1; }    
+               | const_parameter             { $$ = $1; }
+               ;
+
 parameter : type ID {
-                         new_param(current_fd, $1->code);
-                         if(insert_variable(stack, $2, $1->code, 0) == 1) {
+                         new_param(current_fd, $1->name);
+                         if(insert_variable(stack, $2, $1->name, const_mode) == 1) {
                               yyerror(cat(3, "Variable ", $2, " already declared on scope."));
                          }
                          //  parametro pode ser constante
-                         char *s = cat(3, $1->code, " ", $2);
+                         char *s = cat(3, $1->code, " ", $2);  
                          free($1->code);
                          free($1->name);
                          free($2);
                          $$ = create_record(s, "");
+                         const_mode = 0;
                          free(s);
                     }
-          ;
+          ; 
+
+const_parameter : CONST {const_mode = 1; } parameter  {
+                                                            char *s = cat(2, "const ", $3->code);
+                                                            free($3->code);
+                                                            $$ = create_record(s, "");
+                                                            free(s);  
+                                                       }
+                ;
 
 statements : statement   {
                               char *s = cat(3, "\n", $1->code, "\n");
@@ -504,7 +523,7 @@ jump : CONTINUE                                                                 
                                                                                                               s = "";
                                                                                                               yyerror("Invalid continue outside loop");
                                                                                                          } else {
-                                                                                                              s = cat(3, "goto ", top->continue_label, ";");
+                                                                                                              s = cat(2, "goto ", top->continue_label);
                                                                                                          }
                                                                                                          $$ = create_record(s, "");
                                                                                                          free(s);
@@ -516,13 +535,13 @@ jump : CONTINUE                                                                 
                                                                                                               s = "";
                                                                                                               yyerror("Invalid break outside loop or switch");
                                                                                                          } else {
-                                                                                                              s = cat(3, "goto ", top->break_label, ";");
+                                                                                                              s = cat(2, "goto ", top->break_label);
                                                                                                          }
                                                                                                          $$ = create_record(s, "");
                                                                                                          free(s);
                                                                                                     }
      | return                                                                                       { $$ = $1; }
-      ;
+     ;
 
 return : RETURN return_value {
                                    char *s = cat(2, "return ", $2->code);
@@ -629,8 +648,8 @@ while : WHILE LPAREN expr RPAREN LBRACE {
                                         } statements RBRACE {
 
                                              ScopeNode* top = stack->top;
-                                             char* s = cat(14,
-                                                  top->name, ":\n",
+                                             char* s = cat(15,
+                                                  "\n", top->name, ":\n",
                                                   "if (!(", $3->code, ")) goto ", top->break_label, ";\n",
                                                   $7->code, "\n",
                                                   "goto ", top->name, ";\n",
@@ -652,8 +671,8 @@ do_while : DO LBRACE  {
                     } statements RBRACE WHILE LPAREN expr RPAREN  {
 
                          ScopeNode* top = stack->top;
-                         char *s = cat(11,
-                              top->name, ":\n",
+                         char *s = cat(12,
+                              "\n", top->name, ":\n",
                               $4->code, "\n",
                               "if (", $8->code, ") goto ", top->name, ";\n",
                               top->break_label, ":"
@@ -667,35 +686,35 @@ do_while : DO LBRACE  {
                     }
          ;
 
-for : FOR LPAREN for_init expr SEMICOLON assignment RPAREN LBRACE     {
-                                                                           push(stack, 1, 0);
-                                                                           ScopeNode* top = stack->top;
-                                                                           top->break_label = cat(2, top->name, "_end");
-                                                                           top->continue_label = cat(2, top->name, "_continue");
+for : FOR LPAREN {
+                    push(stack, 1, 0);
+                    ScopeNode* top = stack->top;
+                    top->break_label = cat(2, top->name, "_end");
+                    top->continue_label = cat(2, top->name, "_continue");
 
-                                                                      } statements RBRACE  {
+               } for_init expr SEMICOLON assignment RPAREN LBRACE statements RBRACE  {
 
-                                                                           ScopeNode* top = stack->top;
+                    ScopeNode* top = stack->top;
 
-                                                                           char* s = cat(19,
-                                                                                $3->code,
-                                                                                top->name, ":\n",
-                                                                                "if (!(", $4->code, ")) goto ", top->break_label, ";\n",
-                                                                                $10->code, "\n",
-                                                                                top->continue_label, ":\n",
-                                                                                $6->code, ";\n",
-                                                                                "goto ", top->name, ";\n",
-                                                                                top->break_label, ":"
-                                                                           );
+                    char* s = cat(20,
+                         $4->code, "\n",
+                         top->name, ":\n",
+                         "if (!(", $5->code, ")) goto ", top->break_label, ";\n",
+                         $10->code, "\n",
+                         top->continue_label, ":\n",
+                         $7->code, ";\n",
+                         "goto ", top->name, ";\n",
+                         top->break_label, ":"
+                    );
 
-                                                                           free_record($3);
-                                                                           free_record($4);
-                                                                           free_record($6);
-                                                                           free_record($10);
-                                                                           $$ = create_record(s, "");
-                                                                           free(s);
-                                                                           pop(stack);
-                                                                      }
+                    free_record($4);
+                    free_record($5);
+                    free_record($7);
+                    free_record($10);
+                    $$ = create_record(s, "");
+                    free(s);
+                    pop(stack);
+               }
     ;
 
 for_init : assignment_command                                                                       { $$ = $1; }
@@ -841,14 +860,21 @@ deletion : DELETE LPAREN identifier_ref RPAREN SEMICOLON    {
          ;
 
 identifier_ref : ID                                    {
+                                                            if (!exists_scope_parent(stack, $1)) {
+                                                                 yyerror(cat(3, "Variable '", $1, "' is not declared"));
+                                                            }
+                                                            //$$ = create_record($1, get_variable(stack, $1).type);
                                                             $$ = create_record($1, "");
                                                             free($1);
                                                        }
                | identifier_ref LBRACKET expr RBRACKET {
+                                                            if (!is_ptr($1->type)) {
+                                                                 yyerror(cat(2, "Invalid type: expected ptr, received ", $3->type));
+                                                            }
                                                             char * s = cat(4, $1->code, "[", $3->code, "]");
+                                                            $$ = create_record(s, get_ptr_type($3->type));
                                                             free_record($1);
                                                             free_record($3);
-                                                            $$ = create_record(s, "");
                                                             free(s);
                                                        }
                | identifier_ref DOT ID  {
@@ -993,6 +1019,10 @@ postfix_expr : target    { $$ = $1; }
              ;
 
 base : ID                     {
+                                   if (!exists_scope_parent(stack, $1)) {
+                                        yyerror(cat(3, "Variable '", $1, "' is not declared"));
+                                   }
+                                   
                                    $$ = create_record($1, "");
                                    free($1);
                               }
@@ -1067,11 +1097,10 @@ int main (int argc, char ** argv) {
 
      codigo = yyparse();
 
-     print_function_table();
-
      fclose(yyin);
      fclose(yyout);
      free_function_table();
+     free_variables_table();
 
      return codigo;
 }

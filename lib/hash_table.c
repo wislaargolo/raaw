@@ -54,6 +54,7 @@ void hash_insert(hash_table* ht, char* key, void* value) {
   new_node->next = ht->nodes[index];
   ht->nodes[index] = new_node;
   ht->num_elements++;
+
 }
 
 void hash_delete(hash_table* ht, char* key) {
@@ -164,12 +165,12 @@ void print_hash_table(hash_table* ht) {
   for (int i = 0; i < ht->capacity; i++) {
     printf("Bucket %d: ", i);
     hash_node* node = ht->nodes[i];
-    if (!node) {
+    if (node == NULL) {
         printf("(vazio)\n");
         continue;
     }
 
-    while (node) {
+    while (node != NULL) {
         printf("['%s' -> %p] -> ", node->key, node->value);
         node = node->next;
     }

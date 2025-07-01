@@ -131,3 +131,11 @@ int is_list(char* name) {
 char* get_list_type(char* name) {
   return get_inner_type(name, "list");
 }
+
+int is_ptr(char* name) {
+  return is_of_type(name, "ptr");
+}
+
+char* get_ptr_type(char* name) {
+  return get_inner_type(name, "ptr");
+}

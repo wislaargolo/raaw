@@ -35,5 +35,7 @@ char* get_struct_attr_type(char* struct_name, char* name);
 void insert_alias_type(char* name, char* type);
 int is_list(char* name);
 char* get_list_type(char* name);
+int is_ptr(char* name);
+char* get_ptr_type(char* name);
 
 #endif

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "stack.h"
+#include "variables.h"
 
 Stack* create_stack() {
   Stack* stack = (Stack*) malloc(sizeof(Stack));
@@ -13,7 +14,6 @@ Stack* create_stack() {
   node->name = strdup("global");
   node->is_loop = 0;
   node->is_switch = 0;
-  node->return_type = NULL;
   node->parent = NULL;
   node->count = 0;
   node->break_label = NULL;
@@ -23,7 +23,7 @@ Stack* create_stack() {
   return stack;
 }
 
-void push_subprogram(Stack* stack, char* name, char* return_type) {
+void push_subprogram(Stack* stack, char* name) {
   ScopeNode* node = (ScopeNode*) malloc(sizeof(ScopeNode));
 
   if (node == NULL)
@@ -36,7 +36,6 @@ void push_subprogram(Stack* stack, char* name, char* return_type) {
   node->count = 0;
   node->is_loop = 0;
   node->is_switch = 0;
-  node->return_type = strdup(return_type);
   node->parent = stack->top;
   node->break_label = NULL;
   node->continue_label = NULL;
@@ -85,7 +84,6 @@ void push(Stack* stack, int is_loop, int is_switch) {
   node->count = 0;
   node->is_loop = parent->is_loop || is_loop;
   node->is_switch = parent->is_switch || is_switch;
-  node->return_type = strdup(parent->return_type);
   node->parent = parent;
   parent->count++;
   stack->top = node;
@@ -99,12 +97,13 @@ void pop(Stack* stack) {
     return;
   }
 
+  remove_scope_variables(stack);
+
   if (top->name) free(top->name);
-  if (top->return_type) free(top->return_type);
   if (top->break_label) free(top->break_label);
   if (top->continue_label) free(top->continue_label);
   if (top->if_end_label) free(top->if_end_label);
-
+  
   stack->top = top->parent;
   free(top);
 }
