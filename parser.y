@@ -8,6 +8,7 @@
 #include "./lib/functions.h"
 #include "./lib/variables.h"
 #include "./lib/aux_functions.h"
+#include "./lib/types.h"
 
 int yylex(void);
 int yyerror(char *s);
@@ -28,6 +29,7 @@ Stack* stack = NULL;
 	char * sValue;      /* string value */
      struct record * rec;
      struct declaration_term_record* decl_term;
+     struct type_record* type_rec;
 };
 
 %token <sValue> ID PRIM_TYPE INTEGER STRING BOOL REAL CHAR
@@ -48,12 +50,14 @@ Stack* stack = NULL;
             assignment_expr assignment_command allocation assignment assignable parameters_call
             parameters cases case case_item default statements switch for_init for var_declaration type_declaration
             do_while while else else_opt else_if else_ifs else_ifs_opt if return return_value
-            command jump statement const_declaration parameter type user_type type_compound subprogram subprograms
-            struct_vars struct_type enum_list enum_type ptr_type list_type map_type initialization
+            command jump statement const_declaration parameter user_type type_compound subprogram subprograms
+            struct_vars struct_type enum_list enum_type initialization
             initialization_list declaration
             declarations program default_opt
 
 %type <decl_term> declaration_term declaration_line declaration_item
+
+%type <type_rec> type ptr_type list_type map_type
 
 %start program
 
@@ -85,19 +89,36 @@ declaration : var_declaration                                                   
 
 var_declaration : type declaration_line SEMICOLON  {
                                                        char *s = cat(4, $1->code, " ", $2->code, ";");
-                                                       free_record($1);
 
                                                        declaration_term_record* decl = $2;
 
+                                                       char* type = strdup($1->name);
+
+                                                       for (int i = 0; i < decl->dimension; i++) {
+                                                            char* aux = type;
+                                                            type = cat(3, "ptr<", aux, ">");
+                                                            free(aux);
+                                                       }
+
                                                        while (decl != NULL) {
-                                                            //TO-DO: insert in symbols table
-                                                            printf("%s(%d)\n", decl->name, decl->dimension);
+                                                            if (type_name != NULL && is_struct(type_name)) {
+                                                                 if (struct_has_attr(type_name, decl->name)) {
+                                                                      yyerror(cat(3, "Attribute '", decl->name, "' declared twice or more in struct"));
+                                                                 }
+
+                                                                 insert_struct_attr(type_name, decl->name, $1->name);
+                                                            } else {
+                                                                 // TO-DO: insert in variables table
+                                                            }
+
                                                             free(decl->name);
                                                             free(decl->code);
                                                             decl = decl->next;
                                                        }
 
                                                        $$ = create_record(s, "");
+                                                       free($1->code);
+                                                       free($1->name);
                                                        free(s);
                                                   }
                ;
@@ -111,13 +132,21 @@ const_declaration : CONST var_declaration {
                                         }
               ;
 
-type_declaration : TYPE ID { type_name = strdup($2); } ASSIGNMENT type_compound SEMICOLON {
-                                                                                               char* s = cat(5, "typedef ", $5->code, " ", $2, ";\n");
-                                                                                               free($2);
-                                                                                               free_record($5);
-                                                                                               $$ = create_record(s, "");
-                                                                                               free(s);
-                                                                                          }
+type_declaration : TYPE ID    {
+                                   if (has_type($2)) {
+                                        yyerror(cat(3, "Type '", $2, " already declared"));
+                                   }
+                                   type_name = strdup($2);
+                              }
+                   ASSIGNMENT type_compound SEMICOLON  {
+                                                            char* s = cat(5, "typedef ", $5->code, " ", $2, ";\n");
+                                                            free($2);
+                                                            free_record($5);
+                                                            $$ = create_record(s, "");
+                                                            free(s);
+                                                            free(type_name);
+                                                            type_name = NULL;
+                                                       }
                  ;
 
 declaration_line : declaration_item                         { $$ = $1; }
@@ -184,26 +213,38 @@ allocation : NEW type LBRACKET expr RBRACKET {
                                                   char *s = cat(7,
                                                        "(", $2->code, "*) malloc(sizeof(", $2->code, ") * ", $4->code, ")"
                                                   );
-                                                  free_record($2);
+                                                  free($2->code);
+                                                  free($4->code);
                                                   free_record($4);
                                                   $$ = create_record(s, "");
                                                   free(s);
                                              }
            ;
 
-type_compound : type                                                                                { $$ = $1; }
+type_compound : type     {
+                              insert_alias_type(type_name, $1->name);
+                              $$ = create_record($1->code, "");
+                              free($1->code);
+                         }
               | user_type                                                                           { $$ = $1; }
               ;
 
 type : PRIM_TYPE    {
-                         $$ = create_record($1, "");
+                         $$ = (type_record*) malloc(sizeof(type_record));
+                         $$->code = strdup($1);
+                         $$->name = strdup($1);
                          free($1);
                     }
      | ptr_type                                                                                     { $$ = $1; }
      | map_type     { $$ = $1; }
      | list_type    { $$ = $1; }
      | ID {
-               $$ = create_record($1, "");
+               if (!has_type($1)) {
+                    yyerror(cat(3, "Type '", $1, "' not declared"));
+               }
+               $$ = (type_record*) malloc(sizeof(type_record));
+               $$->code = strdup($1);
+               $$->name = strdup($1);
                free($1);
           }
      ;
@@ -213,27 +254,31 @@ user_type : enum_type    { $$ = $1; }
           ;
 
 ptr_type : PTR ABRACKET_OPEN type ABRACKET_CLOSE       {
-                                                            char *s = cat(2, $3->code, "*");
-                                                            free_record($3);
-                                                            $$ = create_record(s, "");
-                                                            free(s);
+                                                            $$ = (type_record*) malloc(sizeof(type_record));
+                                                            $$->code = cat(2, $3->code, "*");
+                                                            $$->name = cat(3, "ptr<", $3->name, ">");
+                                                            free($3->code);
+                                                            free($3->name);
                                                        }
          ;
 
 map_type : MAP ABRACKET_OPEN type COMMA type ABRACKET_CLOSE  {
-                                                                 char *s = cat(5, "map <", $3->code, ", ", $5->code, ">");
-                                                                 free_record($3);
-                                                                 free_record($5);
-                                                                 $$ = create_record(s, "");
-                                                                 free(s);
+                                                                 $$ = (type_record*) malloc(sizeof(type_record));
+                                                                 $$->code = strdup("map");
+                                                                 $$->name = strdup("");
+                                                                 free($3->code);
+                                                                 free($3->name);
+                                                                 free($5->code);
+                                                                 free($5->name);
                                                              }
          ;
 
 list_type : LIST ABRACKET_OPEN type ABRACKET_CLOSE {
-                                                       char *s = cat(4, "list <", $3->code, ">");
-                                                       free_record($3);
-                                                       $$ = create_record(s, "");
-                                                       free(s);
+                                                       $$ = (type_record*) malloc(sizeof(type_record));
+                                                       $$->code = strdup("list");
+                                                       $$->name = cat(4, "list<", $3->name, ">");
+                                                       free($3->code);
+                                                       free($3->name);
                                                   }
           ;
 
@@ -259,9 +304,9 @@ enum_list : ID {
                                 }
           ;
 
-struct_type : STRUCT LBRACE struct_vars RBRACE {
-                                                       char *s = cat(5, "struct ", type_name, " {", $3->code, "}\n");
-                                                       free_record($3);
+struct_type : STRUCT { insert_struct_type(type_name); } LBRACE struct_vars RBRACE {
+                                                       char *s = cat(5, "struct ", type_name, " {", $4->code, "}\n");
+                                                       free_record($4);
                                                        $$ = create_record(s, "");
                                                        free(s);
                                                }
@@ -281,7 +326,7 @@ subprograms : subprogram                {
                                              char* s = cat(2, $1->code, "\n");
                                              free_record($1);
                                              $$ = create_record(s, "");
-                                             current_fd = NULL; 
+                                             current_fd = NULL;
                                              free(s);
                                         }
             | subprograms subprogram    {
@@ -293,14 +338,15 @@ subprograms : subprogram                {
                                         }
             ;
 
-subprogram : type ID LPAREN   {    push_subprogram(stack, $2, $1->code); 
+subprogram : type ID LPAREN   {    push_subprogram(stack, $2, $1->code);
                                    if(insert_function($2, $1->code, &current_fd) == 1) {
                                         yyerror(cat(3, "Function ", $2, " has already bean declareted."));
-                              } 
+                              }
 
                               } parameters RPAREN LBRACE statements RBRACE {
                                    char *s = cat(8, $1->code, " ", $2, "(", $5->code, ") {\n", $8->code, "\n}\n");
-                                   free_record($1);
+                                   free($1->code);
+                                   free($1->name);
                                    free($2);
                                    free_record($5);
                                    free_record($8);
@@ -309,11 +355,11 @@ subprogram : type ID LPAREN   {    push_subprogram(stack, $2, $1->code);
                                    remove_scope_variables(stack);
                                    pop(stack);
                               }
-           | VOID ID LPAREN   { 
-                                   push_subprogram(stack, $2, "void"); 
+           | VOID ID LPAREN   {
+                                   push_subprogram(stack, $2, "void");
                                    if(insert_function($2, strdup("void"), &current_fd) == 1) {
                                         yyerror(cat(3, "Function ", $2, " has already bean declareted."));
-                                   } 
+                                   }
                               } parameters RPAREN LBRACE statements RBRACE {
                                    char *s = cat(7, "void ", $2, "(", $5->code, ") {\n", $8->code, "\n}\n");
                                    free($2);
@@ -324,14 +370,15 @@ subprogram : type ID LPAREN   {    push_subprogram(stack, $2, $1->code);
                                    remove_scope_variables(stack);
                                    pop(stack);
                               }
-           | type ID LPAREN   { 
-                              push_subprogram(stack, $2, $1->code); 
+           | type ID LPAREN   {
+                              push_subprogram(stack, $2, $1->code);
                               if(insert_function($2, $1->code, &current_fd) == 1) {
                                    yyerror(cat(3, "Function ", $2, " has already bean declareted."));
-                              } 
+                              }
                               } RPAREN LBRACE statements RBRACE  {
                                    char *s = cat(6, $1->code, " ", $2, "() {\n", $7->code, "\n}\n");
-                                   free_record($1);
+                                   free($1->code);
+                                   free($1->name);
                                    free($2);
                                    free_record($7);
                                    $$ = create_record(s, "");
@@ -339,11 +386,11 @@ subprogram : type ID LPAREN   {    push_subprogram(stack, $2, $1->code);
                                    remove_scope_variables(stack);
                                    pop(stack);
                               }
-           | VOID ID LPAREN   { 
-                                   push_subprogram(stack, $2, "void"); 
+           | VOID ID LPAREN   {
+                                   push_subprogram(stack, $2, "void");
                                    if(insert_function($2, strdup("void"), &current_fd) == 1) {
                                         yyerror(cat(3, "Function ", $2, " has already bean declareted."));
-                                   } 
+                                   }
                               } RPAREN LBRACE statements RBRACE  {
                                    char *s = cat(5, "void ", $2, "() {\n", $7->code, "\n}\n");
                                    free($2);
@@ -369,10 +416,11 @@ parameter : type ID {
                          new_param(current_fd, $1->code);
                          if(insert_variable(stack, $2, $1->code, 0) == 1) {
                               yyerror(cat(3, "Variable ", $2, " already declared on scope."));
-                         } 
+                         }
                          //  parametro pode ser constante
                          char *s = cat(3, $1->code, " ", $2);
-                         free_record($1);
+                         free($1->code);
+                         free($1->name);
                          free($2);
                          $$ = create_record(s, "");
                          free(s);
@@ -459,8 +507,8 @@ return_value :                                                                  
              | expr                                                                                 { $$ = $1; }
              ;
 
-if : IF LPAREN expr RPAREN LBRACE  { 
-                                        push(stack, 0, 0); 
+if : IF LPAREN expr RPAREN LBRACE  {
+                                        push(stack, 0, 0);
                                         ScopeNode* top = stack->top;
                                         top->if_end_label = cat(2, top->name, "_end");
                                    } statements RBRACE else_ifs_opt else_opt  {
@@ -477,7 +525,7 @@ if : IF LPAREN expr RPAREN LBRACE  {
                                                   $7->code,
                                                   "goto ", top->if_end_label, ";\n",
                                                   next_else, ":\n",
-                                                  else_chain, "\n", 
+                                                  else_chain, "\n",
                                                   top->if_end_label, ":"
                                              );
                                         } else {
@@ -517,11 +565,11 @@ else_ifs : else_if                                                              
 else_if : ELSEIF LPAREN expr RPAREN LBRACE { push(stack, 0, 0); } statements RBRACE       {
                                                                                                ScopeNode* top = stack->top;
                                                                                                char* next_else = cat(2, top->name, "_next");
-                                                                                               
+
                                                                                                char* s = cat(11,
                                                                                                     "if (!(", $3->code, ")) goto ", next_else, ";\n",
                                                                                                     $7->code,
-                                                                                                    "goto ", top->if_end_label, ";\n", 
+                                                                                                    "goto ", top->if_end_label, ";\n",
                                                                                                     next_else, ":"
                                                                                                );
                                                                                                free_record($3);
@@ -543,12 +591,12 @@ else : ELSE LBRACE { push(stack, 0, 0); } statements RBRACE    {
                                         }
      ;
 
-while : WHILE LPAREN expr RPAREN LBRACE { 
-                                             push(stack, 1, 0); 
+while : WHILE LPAREN expr RPAREN LBRACE {
+                                             push(stack, 1, 0);
                                              ScopeNode* top = stack->top;
                                              top->break_label = cat(2, top->name, "_end");
                                              top->continue_label = strdup(top->name);
-                              
+
                                         } statements RBRACE {
 
                                              ScopeNode* top = stack->top;
@@ -567,8 +615,8 @@ while : WHILE LPAREN expr RPAREN LBRACE {
                                         }
       ;
 
-do_while : DO LBRACE  { 
-                         push(stack, 1, 0); 
+do_while : DO LBRACE  {
+                         push(stack, 1, 0);
                          ScopeNode* top = stack->top;
                          top->break_label = cat(2, top->name, "_end");
                          top->continue_label = strdup(top->name);
@@ -590,23 +638,23 @@ do_while : DO LBRACE  {
                     }
          ;
 
-for : FOR LPAREN for_init expr SEMICOLON assignment RPAREN LBRACE     { 
-                                                                           push(stack, 1, 0); 
+for : FOR LPAREN for_init expr SEMICOLON assignment RPAREN LBRACE     {
+                                                                           push(stack, 1, 0);
                                                                            ScopeNode* top = stack->top;
                                                                            top->break_label = cat(2, top->name, "_end");
                                                                            top->continue_label = cat(2, top->name, "_continue");
-                                                                      
+
                                                                       } statements RBRACE  {
 
                                                                            ScopeNode* top = stack->top;
-                    
+
                                                                            char* s = cat(19,
-                                                                                $3->code, 
+                                                                                $3->code,
                                                                                 top->name, ":\n",
-                                                                                "if (!(", $4->code, ")) goto ", top->break_label, ";\n", 
-                                                                                $10->code, "\n", 
+                                                                                "if (!(", $4->code, ")) goto ", top->break_label, ";\n",
+                                                                                $10->code, "\n",
                                                                                 top->continue_label, ":\n",
-                                                                                $6->code, ";\n", 
+                                                                                $6->code, ";\n",
                                                                                 "goto ", top->name, ";\n",
                                                                                 top->break_label, ":"
                                                                            );
@@ -625,12 +673,12 @@ for_init : assignment_command                                                   
          | var_declaration                                                                          { $$ = $1; }
          ;
 
-switch : SWITCH LPAREN expr RPAREN LBRACE { 
-                                             push(stack, 0, 1); 
+switch : SWITCH LPAREN expr RPAREN LBRACE {
+                                             push(stack, 0, 1);
                                              ScopeNode* top = stack->top;
                                              top->break_label = cat(2, top->name, "_end");
-                                             
-                                        } cases default_opt RBRACE   {               
+
+                                        } cases default_opt RBRACE   {
                                              ScopeNode* top = stack->top;
                                              char *s = cat(10,
                                                   "switch (", $3->code, ") {\n",
@@ -981,6 +1029,7 @@ int main (int argc, char ** argv) {
           exit(0);
      }
 
+     init_types_table();
      init_function_table();
      init_variables_table();
 
@@ -1000,5 +1049,6 @@ int main (int argc, char ** argv) {
 
 int yyerror (char *msg) {
 	fprintf (stderr, "%d: %s at '%s'\n", yylineno, msg, yytext);
-	return 0;
+     exit(0);
+     return 0;
 }

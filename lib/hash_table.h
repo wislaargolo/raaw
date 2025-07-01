@@ -4,7 +4,7 @@
 #define hash_insert_t(ht, key, value, type) do { \
   type* tmp = (type*) malloc(sizeof(tmp));     \
   *tmp = value;                                \
-  hash_insert(ht, key, (void*) tmp);         \
+  hash_insert(ht, key, (void*) tmp);           \
 } while(0)
 
 #define hash_get_t(ht, key, type) (*((type*) hash_get(ht, key)))

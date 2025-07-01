@@ -10,6 +10,13 @@ struct declaration_term_record {
 
 typedef struct declaration_term_record declaration_term_record;
 
+struct type_record {
+	char* code;
+	char* name;
+};
+
+typedef struct type_record type_record;
+
 struct record {
 	char * code;
 	char * type;

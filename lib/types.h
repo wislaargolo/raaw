@@ -1,29 +1,18 @@
 #ifndef TYPES
 #define TYPES
 
-struct struct_attr {
-  int dimension;
-  char* type;
-};
-
-typedef struct struct_attr struct_attr;
+#include "hash_table.h"
 
 union type_info {
   hash_table* struct_attrs;
-  char* list_type;
   char* alias_type;
 };
-
-#define get_struct_attr(st, name) hash_get_t(st, name, struct_attr)
-#define insert_struct_attr(st, name, attr) hash_insert_t(st, name, attr, struct_attr)
-#define has_struct_attr(st, name) hash_has(st, name)
 
 typedef union type_info type_info;
 
 enum type_discriminator {
-  PRIM,
-  LIST,
-  STRUCT,
+  ALIAS_TYPE,
+  STRUCT_TYPE,
 };
 
 typedef enum type_discriminator type_discriminator;
@@ -35,11 +24,16 @@ struct type_data {
 
 typedef struct type_data type_data;
 
-int insert_list_type(char* name, char* type);
-int insert_struct_type(char* name, hash_table* struct_attrs);
+void init_types_table();
 int has_type(char* name);
 type_data get_type_data(char* name);
-void init_types_table();
-void insert_prim_type(char* name);
+void insert_struct_type(char* name);
+int is_struct(char* name);
+void insert_struct_attr(char* struct_name, char* name, char* type);
+int struct_has_attr(char* struct_name, char* name);
+char* get_struct_attr_type(char* struct_name, char* name);
+void insert_alias_type(char* name, char* type);
+int is_list(char* name);
+char* get_list_type(char* name);
 
 #endif

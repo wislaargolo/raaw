@@ -1,10 +1,10 @@
-type Color = enum {
-  red,
-  green,
-  blue
+type Color = struct {
+  int x, y;
 };
 
-void main() {
+int main() {
+  int z;
+
   if (x) {
     print("a");
   } else if (b) {
