@@ -52,10 +52,10 @@ Stack* stack = NULL;
             do_while while else else_opt else_if else_ifs else_ifs_opt if return return_value
             command jump statement const_declaration parameter user_type type_compound subprogram subprograms
             struct_vars struct_type enum_list enum_type initialization
-            initialization_list declaration
+            initialization_list declaration struct_var_declaration
             declarations program default_opt
 
-%type <decl_term> declaration_term declaration_line declaration_item
+%type <decl_term> declaration_term declaration_line declaration_item struct_declaration_line
 
 %type <type_rec> type ptr_type list_type map_type
 
@@ -92,24 +92,10 @@ var_declaration : type declaration_line SEMICOLON  {
 
                                                        declaration_term_record* decl = $2;
 
-                                                       char* type = strdup($1->name);
-
-                                                       for (int i = 0; i < decl->dimension; i++) {
-                                                            char* aux = type;
-                                                            type = cat(3, "ptr<", aux, ">");
-                                                            free(aux);
-                                                       }
-
                                                        while (decl != NULL) {
-                                                            if (type_name != NULL && is_struct(type_name)) {
-                                                                 if (struct_has_attr(type_name, decl->name)) {
-                                                                      yyerror(cat(3, "Attribute '", decl->name, "' declared twice or more in struct"));
-                                                                 }
+                                                            char* type = strdup($1->name);
 
-                                                                 insert_struct_attr(type_name, decl->name, $1->name);
-                                                            } else {
-                                                                 // TO-DO: insert in variables table
-                                                            }
+                                                            // TO-DO: insert in variables table
 
                                                             free(decl->name);
                                                             free(decl->code);
@@ -134,7 +120,7 @@ const_declaration : CONST var_declaration {
 
 type_declaration : TYPE ID    {
                                    if (has_type($2)) {
-                                        yyerror(cat(3, "Type '", $2, " already declared"));
+                                        yyerror(cat(3, "Type '", $2, "' already declared"));
                                    }
                                    type_name = strdup($2);
                               }
@@ -312,8 +298,8 @@ struct_type : STRUCT { insert_struct_type(type_name); } LBRACE struct_vars RBRAC
                                                }
             ;
 
-struct_vars : var_declaration             { $$ = $1; }
-            | struct_vars var_declaration {
+struct_vars : struct_var_declaration             { $$ = $1; }
+            | struct_vars struct_var_declaration {
                                              char *s = cat(2, $1->code, $2->code);
                                              free_record($1);
                                              free_record($2);
@@ -321,6 +307,49 @@ struct_vars : var_declaration             { $$ = $1; }
                                              free(s);
                                           }
             ;
+
+struct_var_declaration : type struct_declaration_line SEMICOLON  {
+                                                       char *s = cat(4, $1->code, " ", $2->code, ";");
+
+                                                       declaration_term_record* decl = $2;
+
+                                                       while (decl != NULL) {
+                                                            char* type = strdup($1->name);
+
+                                                            for (int i = 0; i < decl->dimension; i++) {
+                                                                 char* aux = type;
+                                                                 type = cat(3, "ptr<", aux, ">");
+                                                                 free(aux);
+                                                            }
+
+                                                            if (struct_has_attr(type_name, decl->name)) {
+                                                                 yyerror(cat(3, "Attribute '", decl->name, "' declared twice or more in struct"));
+                                                            }
+
+                                                            insert_struct_attr(type_name, decl->name, type);
+
+                                                            free(decl->name);
+                                                            free(decl->code);
+                                                            decl = decl->next;
+                                                       }
+
+                                                       $$ = create_record(s, "");
+                                                       free($1->code);
+                                                       free($1->name);
+                                                       free(s);
+                                                  }
+               ;
+
+struct_declaration_line : declaration_term                         { $$ = $1; }
+                 | declaration_term COMMA declaration_term  {
+                                                                 char *s = cat(3, $1->code, ", ", $3->code);
+                                                                 free($1->code);
+                                                                 free($3->code);
+                                                                 $$ = $3;
+                                                                 $$->code = s;
+                                                                 $$->next = $1;
+                                                            }
+                 ;
 
 subprograms : subprogram                {
                                              char* s = cat(2, $1->code, "\n");

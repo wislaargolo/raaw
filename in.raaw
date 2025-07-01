@@ -3,7 +3,7 @@ type Color = struct {
 };
 
 int main() {
-  int z;
+  Color z;
 
   if (x) {
     print("a");
