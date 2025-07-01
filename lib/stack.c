@@ -16,6 +16,9 @@ Stack* create_stack() {
   node->return_type = NULL;
   node->parent = NULL;
   node->count = 0;
+  node->break_label = NULL;
+  node->continue_label = NULL;
+  node->if_end_label = NULL;
   stack->top = node;
   return stack;
 }
@@ -35,6 +38,9 @@ void push_subprogram(Stack* stack, char* name, char* return_type) {
   node->is_switch = 0;
   node->return_type = strdup(return_type);
   node->parent = stack->top;
+  node->break_label = NULL;
+  node->continue_label = NULL;
+  node->if_end_label = NULL;
   stack->top = node;
 }
 
@@ -60,11 +66,20 @@ void push(Stack* stack, int is_loop, int is_switch) {
 
   ScopeNode* node = (ScopeNode*) malloc(sizeof(ScopeNode));
 
-  if (node == NULL)
-  {
+  if (node == NULL) {
     printf("NO NODE!!! >.<\n");
     return;
   }
+
+  if (is_loop || is_switch) {
+        node->break_label = NULL;
+        node->continue_label = NULL;
+    } else {
+        node->break_label = parent->break_label ? strdup(parent->break_label) : NULL;
+        node->continue_label = parent->continue_label ? strdup(parent->continue_label) : NULL;
+  }
+
+  node->if_end_label = parent->if_end_label ? strdup(parent->if_end_label) : NULL;
 
   node->name = name;
   node->count = 0;
@@ -86,6 +101,9 @@ void pop(Stack* stack) {
 
   if (top->name) free(top->name);
   if (top->return_type) free(top->return_type);
+  if (top->break_label) free(top->break_label);
+  if (top->continue_label) free(top->continue_label);
+  if (top->if_end_label) free(top->if_end_label);
 
   stack->top = top->parent;
   free(top);

@@ -8,6 +8,9 @@ typedef struct ScopeNode {
   int is_switch;
   char* return_type;
   int count;
+  char* break_label;
+  char* continue_label;
+  char* if_end_label;
 } ScopeNode;
 
 typedef struct Stack {

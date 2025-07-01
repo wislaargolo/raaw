@@ -110,6 +110,9 @@ void* hash_get(hash_table* ht, char* key) {
 }
 
 void hash_resize(hash_table* ht, int new_capacity) {
+  if(ht == NULL || new_capacity <= ht->capacity) {
+    return;
+  }
   hash_node** new_nodes = (hash_node**) calloc(new_capacity, sizeof(hash_node*));
   int old_capacity = ht->capacity;
   ht->capacity = new_capacity;

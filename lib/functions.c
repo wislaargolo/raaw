@@ -17,28 +17,44 @@ void init_function_table() {
 
 int insert_function(char* name, char* return_type, function_data** current) {
 
-    if(has_function(name)) return 1; 
+    if(has_function(name)) { 
+        if(current) *current = hash_get(functions_table, name);
+        return 1;
+    }
+     
     
     function_data* data = malloc(sizeof(function_data));
     data->return_type = strdup(return_type);
     data->params = NULL;
+    data->last_param = NULL; 
     data->num_params = 0;
 
     if (current) *current = data;
+    
 
     hash_insert(functions_table, name, data);
 
     return 0;
 }
 
-int new_param(function_data* function,char* type) {
+int new_param(function_data* function, char* type) {
+
     if (function == NULL) return -1;
 
     function_param* param = malloc(sizeof(function_param));
     param->type = strdup(type);
-    param->next = function->params; 
-    function->params = param;
     function->num_params++;
+
+    if (function->params == NULL) {
+        function->params = param;
+        function->last_param = param;
+    } else {
+        function->last_param->next = param;
+        function->last_param = param;
+    }
+    param->next = NULL;
+
+    return 0;
 }
 
 int has_function(char* name) {
@@ -68,7 +84,6 @@ void free_function_table() {
             if (data) {
                 free(data->return_type);
                 free_params(data->params);
-                free(data);
             }
             node = node->next;
         }
@@ -90,14 +105,15 @@ void print_function_table() {
         }
 
         while (node) {
+            
             function_data fd = *(function_data *)node->value;
             printf("['%s' -> ret:%s, n=%d", node->key, fd.return_type, fd.num_params);
             if(fd.num_params > 0) printf(", params: ");
 
-            while(fd.params != NULL) {
-                printf("%s", fd.params->type);
-                fd.params = fd.params->next;
-                if (fd.params != NULL) {
+            function_param* param = fd.params;
+            while(param != NULL) {
+                param = param->next;
+                if (param != NULL) {
                     printf(", ");
                 }
             }

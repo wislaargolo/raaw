@@ -11,6 +11,7 @@ typedef struct {
     char* return_type;
     int num_params;   
     function_param* params; 
+    function_param* last_param; 
 } function_data;
 
 void init_function_table(); 

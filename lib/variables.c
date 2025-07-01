@@ -34,7 +34,7 @@ int insert_variable(Stack* stack, char* name, char* type, int is_const) {
     return 0;
 }
 
-static char* make_key(char* name, char* scope) {
+char* make_key(char* name, char* scope) {
     char* key = (char*) malloc(strlen(name) + strlen(scope) + 2);
 
     sprintf(key, "%s#%s", scope, name);
@@ -72,10 +72,8 @@ void free_variables_table() {
         while (node != NULL) {
             variable_data* data = (variable_data*) node->value;
 
-            if (data) {
-                free(data->type); 
-                free(data);        
-            }
+            if (data) free(data->type);     
+            
 
             node = node->next;
         }

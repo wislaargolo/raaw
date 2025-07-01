@@ -10,7 +10,7 @@ typedef struct variable_data variable_data;
 
 void init_variables_table();
 int insert_variable(Stack* stack, char* name, char* type, int is_const);
-static char* make_key(char* name, char* scope);
+char* make_key(char* name, char* scope);
 int exists_in_scope(Stack* stack, char* name);
 variable_data get_variable(Stack* stack, char* name);
 void print_variable_table();
