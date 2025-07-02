@@ -13,7 +13,7 @@ int insert_variable(Stack* stack, char* name, char* type, int is_const);
 char* make_key(char* name, char* scope);
 int exists_in_scope(Stack* stack, char* name);
 int exists_scope_parent(Stack* stack, char* name);
-variable_data get_variable(Stack* stack, char* name);
+variable_data *get_variable(Stack *stack, const char *name);
 void print_variable_table();
 void free_variables_table();
 int remove_scope_variables(Stack* stack);

@@ -79,6 +79,7 @@ void hash_delete(hash_table* ht, char* key) {
     prev_node = curr_node;
     curr_node = curr_node->next;
   }
+
 }
 
 int hash_has(hash_table* ht, char* key) {

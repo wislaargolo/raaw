@@ -72,16 +72,46 @@ int exists_scope_parent(Stack* stack, char* name) {
 }
 
 
-variable_data get_variable(Stack* stack, char* name) {
-    char* key = make_key(name, stack->top->name);
-    variable_data data = hash_get_t(variables_table, key, variable_data);
-    free(key);
-    return data;
+variable_data *get_variable(Stack *stack, const char *name) {
+    if (!stack || !stack->top)                 
+        return NULL;
+
+    ScopeNode *node = stack->top;              
+    while (node != NULL) {                           
+        char *key = make_key((char *)name, node->name);   
+
+        if (hash_has(variables_table, key)) {  
+            variable_data *data = (variable_data *) hash_get(variables_table, key);
+            free(key);
+            return data;                         
+        }
+
+        free(key);                             
+        node = node->parent;
+    }
+
+    return NULL;                              
 }
+
 
 void print_variable_table() {
 
-    print_hash_table(variables_table);
+    printf("\n[ESTADO ATUAL DA TABELA DE VARIÁVEIS]\n");
+    printf("Capacidade: %d | Elementos: %d\n", variables_table->capacity, variables_table->num_elements);
+    
+    for (int i = 0; i < variables_table->capacity; i++) {
+        hash_node* node = variables_table->nodes[i];
+        printf("Bucket %d: ", i);
+        if (node == NULL) {
+            printf("(vazio)\n");
+            continue;
+        }
+        while (node != NULL) {
+            variable_data vd = *(variable_data *)node->value;
+            printf("['%s' -> type: %s, const: %d] -> ", node->key, vd.type, vd.is_const);
+            node = node->next;
+        }
+    }
 }
 
 void free_variables_table() {
@@ -92,8 +122,8 @@ void free_variables_table() {
         while (node != NULL) {
             variable_data* data = (variable_data*) node->value;
 
-            if (data) free(data->type);     
-            
+            if (data) free(data->type);   
+            hash_delete(variables_table, node->key); 
 
             node = node->next;
         }
@@ -108,27 +138,16 @@ int remove_scope_variables(Stack* stack) {
     char* scope = stack->top->name;
     for (int i = 0; i < variables_table->capacity; i++) {
         hash_node* node = variables_table->nodes[i];
-        hash_node* prev = NULL;
 
-        while (node != NULL) {
+        while(node != NULL) {
             hash_node* next = node->next; 
-
             if (strncmp(node->key, scope, strlen(scope)) == 0 && node->key[strlen(scope)] == '#') {
-                if (prev == NULL) {
-                    variables_table->nodes[i] = next;
-                } else {
-                    prev->next = next;
-                }
-                free(node->key);
                 variable_data* data = (variable_data*) node->value;
-                if(data){
-                  free(data->type);
-                  free(data);
-                }
-                free(node);
-            } else {
-                prev = node;
-            }
+                if (data) free(data->type);
+
+                hash_delete(variables_table, node->key);
+                
+            } 
             node = next;
         }
     }

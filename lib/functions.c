@@ -18,7 +18,7 @@ void init_function_table() {
 int insert_function(char* name, char* return_type, function_data** current) {
 
     if(has_function(name)) { 
-        if(current) *current = hash_get(functions_table, name);
+        if(current != NULL) *current = hash_get(functions_table, name);
         return 1;
     }
      
@@ -99,12 +99,12 @@ void print_function_table() {
     for (int i = 0; i < functions_table->capacity; i++) {
         printf("Bucket %d: ", i);
         hash_node *node = functions_table->nodes[i];
-        if (!node) { 
-            printf("(vazio)\n"); 
-            continue; 
+        if (node == NULL) {
+            printf("(vazio)\n");
+            continue;
         }
 
-        while (node) {
+        while (node != NULL) {
             
             function_data fd = *(function_data *)node->value;
             printf("['%s' -> ret:%s, n=%d", node->key, fd.return_type, fd.num_params);

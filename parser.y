@@ -117,6 +117,7 @@ var_declaration : type declaration_line SEMICOLON  {
                                                        free($1->code);
                                                        free($1->name);
                                                        free(s);
+                                                       const_mode = 0;
                                                   }
                ;
 
@@ -147,9 +148,8 @@ type_declaration : TYPE ID    {
                  ;
 
 declaration_line : declaration_item                         { $$ = $1; }
-                 | declaration_line COMMA declaration_item  {
+                 | declaration_line COMMA declaration_item  {    
                                                                  char *s = cat(3, $1->code, ", ", $3->code);
-                                                                 free($1->code);
                                                                  free($3->code);
                                                                  $$ = $3;
                                                                  $$->code = s;
@@ -865,7 +865,7 @@ identifier_ref : ID                                    {
                                                             if (!exists_scope_parent(stack, $1)) {
                                                                  yyerror(cat(3, "Variable '", $1, "' is not declared"));
                                                             }
-                                                            //$$ = create_record($1, get_variable(stack, $1).type);
+                                                            $$ = create_record($1, get_variable(stack, $1)->type);
                                                             $$ = create_record($1, "");
                                                             free($1);
                                                        }
