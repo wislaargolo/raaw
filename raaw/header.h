@@ -6,8 +6,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "input.h" 
-
 typedef bool boolean;
 
 #endif 

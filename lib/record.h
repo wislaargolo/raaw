@@ -1,6 +1,14 @@
 #ifndef RECORD
 #define RECORD
 
+struct parameter_record {
+    char* code;   
+    char* type;
+    struct parameter_record* next;
+};
+
+typedef struct parameter_record parameter_record;
+
 struct declaration_term_record {
 	char* code;
 	char* name;
@@ -26,5 +34,8 @@ typedef struct record record;
 
 void free_record(record *);
 record * create_record(char *, char *);
+void free_param(parameter_record *);
+parameter_record * create_param(char *, char *);
+parameter_record * add_param(parameter_record *, parameter_record *);
 
 #endif

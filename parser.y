@@ -30,6 +30,7 @@ Stack* stack = NULL;
      struct record * rec;
      struct declaration_term_record* decl_term;
      struct type_record* type_rec;
+     struct parameter_record* param;
 };
 
 %token <sValue> ID PRIM_TYPE INTEGER STRING BOOL REAL CHAR
@@ -47,7 +48,7 @@ Stack* stack = NULL;
 
 %type <rec> literal target base expr val function_call postfix_expr cast prefix_expr term
             identifier_ref arithmetic_expr relational_expr eq_expr and_expr or_expr deletion
-            assignment_expr assignment_command allocation assignment assignable parameters_call
+            assignment_expr assignment_command allocation assignment assignable 
             parameters cases case case_item default statements switch for_init for var_declaration type_declaration
             do_while while else else_opt else_if else_ifs else_ifs_opt if return return_value
             command jump statement const_declaration parameter user_type type_compound subprogram subprograms
@@ -58,6 +59,8 @@ Stack* stack = NULL;
 %type <decl_term> declaration_term declaration_line declaration_item struct_declaration_line
 
 %type <type_rec> type ptr_type list_type map_type
+
+%type <param> parameters_call
 
 %start program
 
@@ -787,27 +790,30 @@ case_item : expr COLON statements       {
 
 
 function_call : ID LPAREN RPAREN   {
-                                        char *s = cat(3, $1, "(", ")");
-                                        free($1);
-                                        $$ = create_record(s, "");
-                                        free(s);
+
+                                        if (!strcmp($1,"print") || !strcmp($1,"printLine")) {
+                                             $$ = build_printf(NULL, !strcmp($1,"printLine"));
+                                        } else {
+                                             $$ = build_function_call($1, NULL);
+                                        }
                                    }
               | ID LPAREN parameters_call RPAREN  {
-                                                       char *s = cat(4, $1, "(", $3->code, ")");
-                                                       free($1);
-                                                       free_record($3);
-                                                       $$ = create_record(s, "");
-                                                       free(s);
+
+                                                       if (!strcmp($1,"print") || !strcmp($1,"printLine")) {
+                                                            $$ = build_printf($3, !strcmp($1,"printLine"));
+                                                       } else {
+                                                            $$ = build_function_call($1, $3);
+                                                       }
                                                   }
               ;
 
-parameters_call : expr                                       { $$ = $1; }
-                | parameters_call COMMA expr                 {
-                                                                 char *s = cat(3, $1->code, ", ", $3->code);
+parameters_call : expr                                       { 
+                                                                 $$ = create_param($1->code, strdup("string")); 
                                                                  free_record($1);
-                                                                 free_record($3);
-                                                                 $$ = create_record(s, "");
-                                                                 free(s);
+                                                             }
+                | parameters_call COMMA expr                 {
+                                                                 $$ = add_param($1, create_param($3->code, strdup("string")));
+                                                                 free_record($3); 
                                                              }
                 ;
 
@@ -870,6 +876,7 @@ identifier_ref : ID                                    {
                                                             free($1);
                                                        }
                | identifier_ref LBRACKET expr RBRACKET {
+                                                            printf("var: %s - %s\n", $1->type, $1->code);
                                                             if (!is_ptr($1->type)) {
                                                                  yyerror(cat(2, "Invalid type: expected ptr, received ", $3->type));
                                                             }
