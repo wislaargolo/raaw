@@ -20,6 +20,9 @@ int insert_variable(Stack* stack, char* name, char* type, int is_const) {
         return -1; 
     }
 
+    printf("\nInserting variable '%s' of type '%s' in scope '%s'\n", name, type, stack->top->name);
+    print_variable_table();
+
     if(exists_in_scope(stack, name)) return 1;
     
     char* scope = stack->top->name;
@@ -30,7 +33,11 @@ int insert_variable(Stack* stack, char* name, char* type, int is_const) {
     data->is_const = is_const;
 
     hash_insert(variables_table, key, data);
-    free(key);
+    if(key) free(key);
+
+    //printf("\nVariable '%s' of type '%s' inserted successfully in scope '%s'\n", name, type, scope);
+    //print_variable_table();
+
 
     return 0;
 }
@@ -72,16 +79,19 @@ int exists_scope_parent(Stack* stack, char* name) {
 }
 
 
-variable_data* get_variable(Stack* stack, char* name) {
-    if (!stack || !stack->top)                 
-        return NULL;
+variable_data get_variable(Stack* stack, char* name) {
+    if (!stack || !stack->top || name == NULL) {
+        fprintf(stderr, "Invalid stack or variable name\n");
+        return (variable_data){NULL, 0};
+    }
 
     ScopeNode *node = stack->top;              
     while (node != NULL) {                           
-        char *key = make_key((char *)name, node->name);   
+        char *key = make_key(name, node->name);   
 
         if (hash_has(variables_table, key)) { 
-            variable_data *data = (variable_data *) hash_get(variables_table, key);
+            variable_data data = hash_get_t(variables_table, key, variable_data);
+
             free(key);
             return data;                         
         }
@@ -90,14 +100,14 @@ variable_data* get_variable(Stack* stack, char* name) {
         node = node->parent;
     }
 
-    return NULL;                              
+    return (variable_data){NULL, 0};
 }
 
 char* get_variable_type(Stack* stack, char* name) {
-    variable_data* data = get_variable(stack, name);
-    if (data == NULL) return NULL;
+    variable_data data = get_variable(stack, name);
+    if (data.type == NULL) return NULL;
 
-    return data->type; 
+    return strdup(data.type); 
 }
 
 

@@ -12,6 +12,10 @@ void free_record(record * r){
 }
 
 record * create_record(char * c1, char * c2){
+  if(c1 == NULL || c2 == NULL) {
+    fprintf(stderr, "Invalid parameters for record creation\n");
+    return NULL;
+  }
   record * r = (record *) malloc(sizeof(record));
 
   if (!r) {
@@ -26,6 +30,12 @@ record * create_record(char * c1, char * c2){
 }
 
 parameter_record * create_param(char * c1, char * c2){
+
+  if(c1 == NULL || c2 == NULL) {
+    fprintf(stderr, "Invalid parameters for parameter_record creation\n");
+    return NULL;
+  }
+  
   parameter_record * r = (parameter_record *) malloc(sizeof(parameter_record));
 
   if (!r) {

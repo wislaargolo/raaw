@@ -70,8 +70,6 @@ program : { stack = create_stack(); } declarations subprograms   {
                                                                       fprintf(yyout,"#include \"./raaw/header.h\"\n\n%s%s", $2->code, $3->code);
                                                                       free_record($2);
                                                                       free_record($3);
-                                                                      print_function_table();
-                                                                      print_variable_table();
                                                                       free_stack(stack);
                                                                  }
         ;
@@ -97,6 +95,7 @@ var_declaration : type declaration_line SEMICOLON  {
 
                                                        declaration_term_record* decl = $2;
 
+
                                                        while (decl != NULL) {
                                                             char* type = strdup($1->name);
 
@@ -119,6 +118,7 @@ var_declaration : type declaration_line SEMICOLON  {
                                                        $$ = create_record(s, "");
                                                        free($1->code);
                                                        free($1->name);
+                                                       //free($2);
                                                        free(s);
                                                        const_mode = 0;
                                                   }
@@ -180,7 +180,7 @@ declaration_term : ID                                       {
                                                             }
                  | declaration_term LBRACKET expr RBRACKET  {
                                                                  char *s = cat(4, $1->code, "[", $3->code,"]");
-                                                                 free($1->code);
+                                                                 free($1->code); 
                                                                  free_record($3);
                                                                  $$ = $1;
                                                                  $$->dimension++;
@@ -213,7 +213,6 @@ allocation : NEW type LBRACKET expr RBRACKET {
                                                        "(", $2->code, "*) malloc(sizeof(", $2->code, ") * ", $4->code, ")"
                                                   );
                                                   free($2->code);
-                                                  free($4->code);
                                                   free_record($4);
                                                   $$ = create_record(s, "");
                                                   free(s);
@@ -386,9 +385,11 @@ subprogram : type ID LPAREN   {    push_subprogram(stack, $2);
                                    }
 
                               } parameters RPAREN LBRACE statements RBRACE {
+
                                    char *s = cat(8, $1->code, " ", $2, "(", $5->code, ") {\n", $8->code, "\n}\n");
                                    free($1->code);
                                    free($1->name);
+                                   //free($1);
                                    free($2);
                                    free_record($5);
                                    free_record($8);
@@ -455,17 +456,19 @@ parameter_type : parameter                   { $$ = $1; }
                ;
 
 parameter : type ID {
-
+                         
                          if(insert_variable(stack, $2, $1->name, const_mode) == 1) {
                               yyerror(cat(3, "Variable ", $2, " already declared on scope."));
                          }
 
-                         printf("PARAMETRO: %s - %s\n", $1->name, $2);
+
+
                          new_param(current_fd, $1->name);
                          //  parametro pode ser constante
                          char *s = cat(3, $1->code, " ", $2);  
                          free($1->code);
                          free($1->name);
+                         //free($1);
                          free($2);
                          $$ = create_record(s, "");
                          const_mode = 0;
@@ -813,16 +816,17 @@ function_call : ID LPAREN RPAREN   {
               ;
 
 parameters_call : expr                                       { 
-                                                                 $$ = create_param(strdup($1->code), strdup("string")); 
+                                                                 $$ = create_param($1->code, strdup("string")); 
                                                                  free_record($1);
                                                              }
                 | parameters_call COMMA expr                 {
-                                                                 $$ = add_param($1, create_param(strdup($3->code), strdup("string")));
+                                                                 $$ = add_param($1, create_param($3->code, strdup("string")));
                                                                  free_record($3); 
                                                              }
                 ;
 
 assignment : assignable assignment_operator assignment_expr  {
+                                                                 
                                                                  char *s = cat(3, $1->code, $2, $3->code);
                                                                  free_record($1);
                                                                  free($2);
@@ -850,12 +854,13 @@ val : VAL LPAREN target RPAREN     {
                                         char* type = $3->type;
 
                                         if(!is_ptr(type)) {
-                                             yyerror(cat(2, "Invalid type: expected ptr, received ", $3->type));
+                                             yyerror(cat(2, "Invalid type: expected ptr, received ", type));
                                         } else {
                                              type = get_ptr_type(type);
                                         }
 
-                                        $$ = create_record(s, strdup(type));
+
+                                        $$ = create_record(s, type);
                                         free_record($3);
                                         free(s);
                                    }
@@ -885,8 +890,8 @@ identifier_ref : ID                                    {
                                                             if (!exists_scope_parent(stack, $1)) {
                                                                  yyerror(cat(3, "Variable '", $1, "' is not declared"));
                                                             }
-                                                            $$ = create_record($1, get_variable(stack, $1)->type);
-                                                            $$ = create_record($1, "");
+                                                            print_variable_table();
+                                                            $$ = create_record($1, get_variable(stack, $1).type);
                                                             free($1);
                                                        }
                | identifier_ref LBRACKET expr RBRACKET {
@@ -1042,17 +1047,20 @@ postfix_expr : target    { $$ = $1; }
              ;
 
 base : ID                     {
+
                                    if (!exists_scope_parent(stack, $1)) {
                                         yyerror(cat(3, "Variable '", $1, "' is not declared"));
                                    }
+
                                    char* type = get_variable_type(stack, $1);
 
-                                   $$ = create_record($1, strdup(type));
+                                   $$ = create_record($1, type);
                                    free(type);
                                    free($1);
                               }
      | val                    { $$ = $1; }
      | LPAREN expr RPAREN     {
+                                   printf("em (expr) %s", $2->code);
                                    char * s = cat(3,"(", $2->code,")");
                                    free_record($2);
                                    $$ = create_record(s, "");
@@ -1078,7 +1086,7 @@ target : base                           { $$ = $1; }
                                              }
                                              
                                              char * s = cat(3, $1->code, ".", $3);
-                                             $$ = create_record(s, strdup(get_struct_attr_type($1->type, $3)));
+                                             $$ = create_record(s, get_struct_attr_type($1->type, $3));
                                              free_record($1);
                                              free($3);
                                              free(s);
@@ -1140,6 +1148,6 @@ int main (int argc, char ** argv) {
 
 int yyerror (char *msg) {
 	fprintf (stderr, "%d: %s at '%s'\n", yylineno, msg, yytext);
-     exit(0);
+    // exit(0);
      return 0;
 }

@@ -54,8 +54,6 @@ int new_param(function_data* function, char* type) {
     }
     param->next = NULL;
 
-    printf("New parameter added: %s\n", type);
-
     return 0;
 }
 
