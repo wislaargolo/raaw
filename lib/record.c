@@ -56,7 +56,11 @@ void free_param(parameter_record * r) {
   if (r) {
     if (r->code != NULL) free(r->code);
     if (r->type != NULL) free(r->type);
-    free(r);
+    while(r->next != NULL) {
+      parameter_record * next = r->next;
+      free(r);
+      r = next;
+    }
   }
 }
 

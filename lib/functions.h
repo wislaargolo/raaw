@@ -18,6 +18,7 @@ void init_function_table();
 int insert_function(char* name, char* return_type, function_data** current);
 int has_function(char* name);
 function_data get_function(char* name);
+char* get_function_return_type(char* name);
 int new_param(function_data* function, char* type);
 
 void free_function_table();

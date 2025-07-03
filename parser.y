@@ -455,10 +455,13 @@ parameter_type : parameter                   { $$ = $1; }
                ;
 
 parameter : type ID {
-                         new_param(current_fd, $1->name);
+
                          if(insert_variable(stack, $2, $1->name, const_mode) == 1) {
                               yyerror(cat(3, "Variable ", $2, " already declared on scope."));
                          }
+
+                         printf("PARAMETRO: %s - %s\n", $1->name, $2);
+                         new_param(current_fd, $1->name);
                          //  parametro pode ser constante
                          char *s = cat(3, $1->code, " ", $2);  
                          free($1->code);
@@ -795,6 +798,7 @@ function_call : ID LPAREN RPAREN   {
                                              $$ = build_printf(NULL, !strcmp($1,"printLine"));
                                         } else {
                                              $$ = build_function_call($1, NULL);
+                                             $$->type = get_function_return_type($1);
                                         }
                                    }
               | ID LPAREN parameters_call RPAREN  {
@@ -803,16 +807,17 @@ function_call : ID LPAREN RPAREN   {
                                                             $$ = build_printf($3, !strcmp($1,"printLine"));
                                                        } else {
                                                             $$ = build_function_call($1, $3);
+                                                            $$->type = get_function_return_type($1);
                                                        }
                                                   }
               ;
 
 parameters_call : expr                                       { 
-                                                                 $$ = create_param($1->code, strdup("string")); 
+                                                                 $$ = create_param(strdup($1->code), strdup("string")); 
                                                                  free_record($1);
                                                              }
                 | parameters_call COMMA expr                 {
-                                                                 $$ = add_param($1, create_param($3->code, strdup("string")));
+                                                                 $$ = add_param($1, create_param(strdup($3->code), strdup("string")));
                                                                  free_record($3); 
                                                              }
                 ;
@@ -841,8 +846,17 @@ assignable : identifier_ref                                                     
 
 val : VAL LPAREN target RPAREN     {
                                         char *s = cat(3, "*(", $3->code, ")");
+
+                                        char* type = $3->type;
+
+                                        if(!is_ptr(type)) {
+                                             yyerror(cat(2, "Invalid type: expected ptr, received ", $3->type));
+                                        } else {
+                                             type = get_ptr_type(type);
+                                        }
+
+                                        $$ = create_record(s, strdup(type));
                                         free_record($3);
-                                        $$ = create_record(s, "");
                                         free(s);
                                    }
     ;
@@ -1031,8 +1045,10 @@ base : ID                     {
                                    if (!exists_scope_parent(stack, $1)) {
                                         yyerror(cat(3, "Variable '", $1, "' is not declared"));
                                    }
+                                   char* type = get_variable_type(stack, $1);
 
-                                   $$ = create_record($1, "");
+                                   $$ = create_record($1, strdup(type));
+                                   free(type);
                                    free($1);
                               }
      | val                    { $$ = $1; }
@@ -1055,11 +1071,19 @@ target : base                           { $$ = $1; }
                                              free(s);
                                         }
        | target DOT ID                  {
+                                             if(!is_struct($1->type)) {
+                                                  yyerror(cat(2, "Invalid type: expected struct, received ", $1->type));
+                                             } else if(struct_has_attr($1->type, $3)) {
+                                                  yyerror(cat(2, "Invalid: struct não tem esse atributo", $1->type));
+                                             }
+                                             
                                              char * s = cat(3, $1->code, ".", $3);
+                                             $$ = create_record(s, strdup(get_struct_attr_type($1->type, $3)));
                                              free_record($1);
                                              free($3);
-                                             $$ = create_record(s, "");
                                              free(s);
+
+                                             // struct.name.txt
                                         }
        ;
 

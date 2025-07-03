@@ -39,7 +39,7 @@ int insert_function(char* name, char* return_type, function_data** current) {
 
 int new_param(function_data* function, char* type) {
 
-    if (function == NULL) return -1;
+    if (function == NULL || type == NULL) return -1;
 
     function_param* param = malloc(sizeof(function_param));
     param->type = strdup(type);
@@ -54,6 +54,8 @@ int new_param(function_data* function, char* type) {
     }
     param->next = NULL;
 
+    printf("New parameter added: %s\n", type);
+
     return 0;
 }
 
@@ -63,6 +65,11 @@ int has_function(char* name) {
 
 function_data get_function(char* name) {
     return hash_get_t(functions_table, name, function_data);
+}
+
+char* get_function_return_type(char* name) {
+    function_data data = get_function(name);
+    return data.return_type;
 }
 
 void free_params(function_param* params) {
@@ -112,10 +119,12 @@ void print_function_table() {
 
             function_param* param = fd.params;
             while(param != NULL) {
+                    printf("%s", param->type);
+                    if (param->next != NULL) {
+                        printf(", ");
+                    }
+                
                 param = param->next;
-                if (param != NULL) {
-                    printf(", ");
-                }
             }
             printf("] -> ");
             

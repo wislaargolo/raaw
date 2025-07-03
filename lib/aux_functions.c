@@ -72,13 +72,13 @@ record* build_printf(parameter_record* params, int is_line) {
           char* args_txt = (!strcmp(param->type, "boolean")) ? cat(3, "bool_to_string(", param->code, ")") : strdup(param->code);
 
           if (first) {
-               free(args);                         
+               if(args) free(args);
                args = args_txt;
                first = 0;
           } else {
                temp = cat(3, args, ", ", args_txt);
-               free(args);
-               free(args_txt);
+               if(args) free(args);
+               if(args_txt) free(args_txt);
                args = temp;
         }
      }
@@ -94,11 +94,11 @@ record* build_printf(parameter_record* params, int is_line) {
           printf_code = cat(5, "printf(", format_type, ", ", args, ")");
      }
 
-     record *r = create_record(printf_code, "");
+     record *r = create_record(printf_code, "void");
 
-     free(format_type);
-     free(args);
-     free(printf_code);
+     if(format_type) free(format_type);
+     if(args) free(args);
+     if(printf_code) free(printf_code);
      if (params) free_param(params);
 
     return r;
@@ -129,9 +129,8 @@ record* build_function_call(char* name, parameter_record* params) {
 
     record *r = create_record(call_code, "");
 
-    free(args);
-    free(call_code);
-    free(name);
+    if(args) free(args);
+    if(call_code) free(call_code);
     if(params) free_param(params);
 
     return r;

@@ -72,19 +72,16 @@ int exists_scope_parent(Stack* stack, char* name) {
 }
 
 
-variable_data *get_variable(Stack* stack, char* name) {
+variable_data* get_variable(Stack* stack, char* name) {
     if (!stack || !stack->top)                 
         return NULL;
-
-    printf("Searching for variable '%s'\n", name);
 
     ScopeNode *node = stack->top;              
     while (node != NULL) {                           
         char *key = make_key((char *)name, node->name);   
 
-        if (hash_has(variables_table, key)) {  
+        if (hash_has(variables_table, key)) { 
             variable_data *data = (variable_data *) hash_get(variables_table, key);
-            printf("Found variable '%s' in scope '%s'\n", name, node->name);
             free(key);
             return data;                         
         }
@@ -94,6 +91,13 @@ variable_data *get_variable(Stack* stack, char* name) {
     }
 
     return NULL;                              
+}
+
+char* get_variable_type(Stack* stack, char* name) {
+    variable_data* data = get_variable(stack, name);
+    if (data == NULL) return NULL;
+
+    return data->type; 
 }
 
 
