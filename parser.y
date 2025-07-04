@@ -18,6 +18,7 @@ extern FILE * yyin, * yyout;
 
 
 char* type_name;
+int ptr_count = 0;
 function_data *current_fd = NULL;
 int const_mode = 0;
 
@@ -48,7 +49,7 @@ Stack* stack = NULL;
 
 %type <rec> literal target base expr val function_call postfix_expr cast prefix_expr term
             identifier_ref arithmetic_expr relational_expr eq_expr and_expr or_expr deletion
-            assignment_expr assignment_command allocation assignment assignable 
+            assignment_expr assignment_command allocation assignment assignable
             parameters cases case case_item default statements switch for_init for var_declaration type_declaration
             do_while while else else_opt else_if else_ifs else_ifs_opt if return return_value
             command jump statement const_declaration parameter user_type type_compound subprogram subprograms
@@ -95,7 +96,6 @@ var_declaration : type declaration_line SEMICOLON  {
 
                                                        declaration_term_record* decl = $2;
 
-
                                                        while (decl != NULL) {
                                                             char* type = strdup($1->name);
 
@@ -108,7 +108,6 @@ var_declaration : type declaration_line SEMICOLON  {
                                                             if(insert_variable(stack, decl->name, type, const_mode) == 1) {
                                                                  yyerror(cat(4, "Variable '", decl->name, "' already declared in scope ", stack->top->name));
                                                             }
-
 
                                                             free(decl->name);
                                                             free(decl->code);
@@ -151,7 +150,7 @@ type_declaration : TYPE ID    {
                  ;
 
 declaration_line : declaration_item                         { $$ = $1; }
-                 | declaration_line COMMA declaration_item  {    
+                 | declaration_line COMMA declaration_item  {
                                                                  char *s = cat(3, $1->code, ", ", $3->code);
                                                                  free($3->code);
                                                                  $$ = $3;
@@ -180,7 +179,7 @@ declaration_term : ID                                       {
                                                             }
                  | declaration_term LBRACKET expr RBRACKET  {
                                                                  char *s = cat(4, $1->code, "[", $3->code,"]");
-                                                                 free($1->code); 
+                                                                 free($1->code);
                                                                  free_record($3);
                                                                  $$ = $1;
                                                                  $$->dimension++;
@@ -237,8 +236,14 @@ type : PRIM_TYPE    {
      | map_type     { $$ = $1; }
      | list_type    { $$ = $1; }
      | ID {
-               if (!has_type($1)) {
-                    yyerror(cat(3, "Type '", $1, "' not declared"));
+               if (type_name != NULL && strcmp(type_name, $1) == 0) {
+                    if (ptr_count == 0) {
+                         yyerror(cat(3, "Forbidden recursive reference without ptr on type '", $1, "'"));
+                    }
+               } else {
+                    if (!has_type($1)) {
+                         yyerror(cat(3, "Type '", $1, "' not declared"));
+                    }
                }
                $$ = (type_record*) malloc(sizeof(type_record));
                $$->code = strdup($1);
@@ -251,12 +256,13 @@ user_type : enum_type    { $$ = $1; }
           | struct_type  { $$ = $1; }
           ;
 
-ptr_type : PTR ABRACKET_OPEN type ABRACKET_CLOSE       {
+ptr_type : PTR { ptr_count += 1; } ABRACKET_OPEN type ABRACKET_CLOSE       {
                                                             $$ = (type_record*) malloc(sizeof(type_record));
-                                                            $$->code = cat(2, $3->code, "*");
-                                                            $$->name = cat(3, "ptr<", $3->name, ">");
-                                                            free($3->code);
-                                                            free($3->name);
+                                                            $$->code = cat(2, $4->code, "*");
+                                                            $$->name = cat(3, "ptr<", $4->name, ">");
+                                                            free($4->code);
+                                                            free($4->name);
+                                                            ptr_count -= 1;
                                                        }
          ;
 
@@ -451,12 +457,12 @@ parameters : parameter_type                  { $$ = $1; }
                                         }
            ;
 
-parameter_type : parameter                   { $$ = $1; }    
+parameter_type : parameter                   { $$ = $1; }
                | const_parameter             { $$ = $1; }
                ;
 
 parameter : type ID {
-                         
+
                          if(insert_variable(stack, $2, $1->name, const_mode) == 1) {
                               yyerror(cat(3, "Variable ", $2, " already declared on scope."));
                          }
@@ -465,7 +471,7 @@ parameter : type ID {
 
                          new_param(current_fd, $1->name);
                          //  parametro pode ser constante
-                         char *s = cat(3, $1->code, " ", $2);  
+                         char *s = cat(3, $1->code, " ", $2);
                          free($1->code);
                          free($1->name);
                          //free($1);
@@ -474,13 +480,13 @@ parameter : type ID {
                          const_mode = 0;
                          free(s);
                     }
-          ; 
+          ;
 
 const_parameter : CONST {const_mode = 1; } parameter  {
                                                             char *s = cat(2, "const ", $3->code);
                                                             free($3->code);
                                                             $$ = create_record(s, "");
-                                                            free(s);  
+                                                            free(s);
                                                        }
                 ;
 
@@ -815,18 +821,18 @@ function_call : ID LPAREN RPAREN   {
                                                   }
               ;
 
-parameters_call : expr                                       { 
-                                                                 $$ = create_param($1->code, strdup("string")); 
+parameters_call : expr                                       {
+                                                                 $$ = create_param($1->code, strdup("string"));
                                                                  free_record($1);
                                                              }
                 | parameters_call COMMA expr                 {
                                                                  $$ = add_param($1, create_param($3->code, strdup("string")));
-                                                                 free_record($3); 
+                                                                 free_record($3);
                                                              }
                 ;
 
 assignment : assignable assignment_operator assignment_expr  {
-                                                                 
+
                                                                  char *s = cat(3, $1->code, $2, $3->code);
                                                                  free_record($1);
                                                                  free($2);
@@ -1084,7 +1090,7 @@ target : base                           { $$ = $1; }
                                              } else if(struct_has_attr($1->type, $3)) {
                                                   yyerror(cat(2, "Invalid: struct não tem esse atributo", $1->type));
                                              }
-                                             
+
                                              char * s = cat(3, $1->code, ".", $3);
                                              $$ = create_record(s, get_struct_attr_type($1->type, $3));
                                              free_record($1);

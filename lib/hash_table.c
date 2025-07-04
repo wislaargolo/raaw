@@ -10,6 +10,10 @@ hash_table* create_hash_table() {
   ht->num_elements = 0;
   ht->nodes = (hash_node**) malloc(sizeof(hash_node*) * ht->capacity);
 
+  for (int i = 0; i < ht->capacity; i++) {
+    ht->nodes[i] = NULL;
+  }
+
   return ht;
 }
 
@@ -41,7 +45,7 @@ void hash_insert(hash_table* ht, char* key, void* value) {
 
   while (node != NULL) {
     if (strcmp(node->key, key) == 0) {
-      free(node->value);  
+      free(node->value);
       node->value = value;
       return;
     }
@@ -54,7 +58,6 @@ void hash_insert(hash_table* ht, char* key, void* value) {
   new_node->next = ht->nodes[index];
   ht->nodes[index] = new_node;
   ht->num_elements++;
-
 }
 
 void hash_delete(hash_table* ht, char* key) {
@@ -85,12 +88,13 @@ void hash_delete(hash_table* ht, char* key) {
 int hash_has(hash_table* ht, char* key) {
 
   if(ht == NULL || key == NULL) {
-    return 0; 
+    return 0;
   }
-  
+
   int index = hash_function(ht, key);
 
   hash_node* node = ht->nodes[index];
+
   while (node != NULL) {
     if (strcmp(node->key, key) == 0) {
       return 1;
@@ -124,6 +128,10 @@ void hash_resize(hash_table* ht, int new_capacity) {
   int old_capacity = ht->capacity;
   ht->capacity = new_capacity;
 
+  for (int i = 0; i < new_capacity; i++) {
+    new_nodes[i] = NULL;
+  }
+
   for (int i = 0; i < old_capacity; i++) {
     hash_node* node = ht->nodes[i];
     while (node) {
@@ -150,16 +158,16 @@ void free_hash(hash_table* ht) {
     while (node) {
       hash_node* next = node->next;
 
-      free(node->key);     
-      free(node->value);   
-      free(node);          
+      free(node->key);
+      free(node->value);
+      free(node);
 
       node = next;
     }
   }
 
-  free(ht->nodes);   
-  free(ht);          
+  free(ht->nodes);
+  free(ht);
 }
 
 
