@@ -20,9 +20,6 @@ int insert_variable(Stack* stack, char* name, char* type, int is_const) {
         return -1; 
     }
 
-    printf("\nInserting variable '%s' of type '%s' in scope '%s'\n", name, type, stack->top->name);
-    print_variable_table();
-
     if(exists_in_scope(stack, name)) return 1;
     
     char* scope = stack->top->name;

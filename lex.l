@@ -29,7 +29,7 @@ else[ \r?\n\t]+if                   { return(ELSEIF); }
 "ref"                               { return(REF); }
 "val"                               { return(VAL); }
 
-int|long|float|double|boolean|char|string|file { yylval.sValue = strdup(yytext); return (PRIM_TYPE); }
+int|float|boolean|char|string|file { yylval.sValue = strdup(yytext); return (PRIM_TYPE); }
 
 "const"                             { return(CONST); }
 "void"                              { return(VOID); }

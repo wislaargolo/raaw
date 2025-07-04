@@ -44,8 +44,8 @@ char *cat(int count, ...) {
 }
 
 char* print_type(char* t) {
-    if (!strcmp(t,"int"))      return "%ld";
-    if (!strcmp(t,"double"))   return "%lf";
+    if (!strcmp(t,"int"))      return "%d";
+    if (!strcmp(t,"float"))    return "%f";
     if (!strcmp(t,"string"))   return "%s";
     if (!strcmp(t,"char"))     return "%c";
     if (!strcmp(t,"boolean"))  return "%s";
@@ -61,6 +61,7 @@ record* build_printf(parameter_record* params, int is_line) {
      char* format_type = strdup("\"");
      int first = 1;
      char *args = strdup("");
+
 
      for(parameter_record* param = params; param != NULL; param = param->next) {
           

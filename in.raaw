@@ -1,22 +1,12 @@
-type Color = struct {
-  int x, y;
-};
 
 int main() {
-  Color z;
 
-  if (x) {
-    print("a");
-  } else if (b) {
-    print("c");
-  } else {
-    print("d");
-  }
+  int i;
 
-  switch (x) {
-    case 1:
-      print("1");
-    default:
-      print("100");
-  }
+  printLine(2, 3232);
+  i = readInt();
+
+  print(i);
+
+
 }

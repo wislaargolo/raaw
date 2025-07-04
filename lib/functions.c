@@ -9,10 +9,19 @@ int yyerror(char *msg);
 
 hash_table* functions_table;
 
-void init_function_table() {
-    functions_table = create_hash_table();
+void initial_functions() {
     insert_function("print", "void", NULL);
     insert_function("printLine", "void", NULL);
+    insert_function("readInt", "int", NULL);
+    insert_function("readFloat", "float", NULL);
+    insert_function("readChar", "char", NULL);
+    insert_function("readString", "string", NULL);
+    insert_function("readBoolean", "boolean", NULL);
+}
+
+void init_function_table() {
+    functions_table = create_hash_table();
+    initial_functions();
 }
 
 int insert_function(char* name, char* return_type, function_data** current) {

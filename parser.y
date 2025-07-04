@@ -10,6 +10,7 @@
 #include "./lib/aux_functions.h"
 #include "./lib/types.h"
 
+
 int yylex(void);
 int yyerror(char *s);
 extern int yylineno;
@@ -34,6 +35,7 @@ Stack* stack = NULL;
      struct parameter_record* param;
 };
 
+
 %token <sValue> ID PRIM_TYPE INTEGER STRING BOOL REAL CHAR
 %token IF ELSE ELSEIF SWITCH CASE DEFAULT
        DO WHILE FOR BREAK CONTINUE RETURN
@@ -43,6 +45,7 @@ Stack* stack = NULL;
        EQUALITY DIFFERENCE ABRACKET_OPEN ABRACKET_CLOSE LESS_THAN_EQUALS MORE_THAN_EQUALS
        ASSIGNMENT ASSIGNMENT_MUL ASSIGNMENT_DIV ASSIGNMENT_MOD ASSIGNMENT_ADD ASSIGNMENT_SUB
        AND ANDC OR ORC NOT PLUS MINUS TIMES SLASH MOD
+
 
 %type <sValue> unary_operator mult_operator add_operator ineq_operator eq_operator
                and_operator or_operator assignment_operator
@@ -558,7 +561,7 @@ jump : CONTINUE                                                                 
      | return                                                                                       { $$ = $1; }
      ;
 
-return : RETURN return_value {
+return : RETURN return_value  {
                                    char *s = cat(2, "return ", $2->code);
                                    free_record($2);
                                    $$ = create_record(s, "");
@@ -809,6 +812,10 @@ function_call : ID LPAREN RPAREN   {
                                              $$ = build_function_call($1, NULL);
                                              $$->type = get_function_return_type($1);
                                         }
+
+                                        
+
+                                        
                                    }
               | ID LPAREN parameters_call RPAREN  {
 
@@ -818,15 +825,17 @@ function_call : ID LPAREN RPAREN   {
                                                             $$ = build_function_call($1, $3);
                                                             $$->type = get_function_return_type($1);
                                                        }
+
+                                                       free($1);
                                                   }
               ;
 
 parameters_call : expr                                       {
-                                                                 $$ = create_param($1->code, strdup("string"));
+                                                                 $$ = create_param($1->code, strdup("int"));
                                                                  free_record($1);
                                                              }
                 | parameters_call COMMA expr                 {
-                                                                 $$ = add_param($1, create_param($3->code, strdup("string")));
+                                                                 $$ = add_param($1, create_param($3->code, strdup("int")));
                                                                  free_record($3);
                                                              }
                 ;
@@ -1097,13 +1106,12 @@ target : base                           { $$ = $1; }
                                              free($3);
                                              free(s);
 
-                                             // struct.name.txt
                                         }
        ;
 
 
 literal : INTEGER   {
-                         $$ = create_record($1, "long");
+                         $$ = create_record($1, "int");
                          free($1);
                     }
         | CHAR      {
@@ -1115,7 +1123,7 @@ literal : INTEGER   {
                          free($1);
                     }
         | REAL      {
-                         $$ = create_record($1, "double");
+                         $$ = create_record($1, "float");
                          free($1);
                     }
         | BOOL      {
