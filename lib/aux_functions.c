@@ -69,7 +69,7 @@ record* build_printf(parameter_record* params, int is_line) {
 
           char* args_txt;
           if (!strcmp(param->type, "boolean")) {
-               args_txt = cat(5, "(", param->code, " ? \"true\" : \"false\"", ")");
+               args_txt = cat(4, "(", param->code, " ? \"true\" : \"false\"", ")");
           } else {
                args_txt = strdup(param->code);
           }

@@ -82,7 +82,7 @@ true|false                          { yylval.sValue = strdup(yytext); return(BOO
 [0-9]+\.[0-9]+                      { yylval.sValue = strdup(yytext); return(REAL); }
 [0-9]+                              { yylval.sValue = strdup(yytext); return(INTEGER); }
 \'.\'                               { yylval.sValue = strdup(yytext); return(CHAR); }
-\"(?:(?:[^"\\\n\r]|\\.)*[^\\])?\"   { yylval.sValue = strdup(yytext); return(STRING); }
+\"(?:[^"\\]|\\.)*\"                 { yylval.sValue = strdup(yytext); return(STRING); }
 
 [a-zA-Z][a-zA-Z0-9\_]*	            { yylval.sValue = strdup(yytext); return (ID); }
 "//".*                              { /* ignora comentário de linha */ }
