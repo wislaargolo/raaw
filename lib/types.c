@@ -139,3 +139,7 @@ int is_ptr(char* name) {
 char* get_ptr_type(char* name) {
   return get_inner_type(name, "ptr");
 }
+
+int is_string(char* name) {
+  return is_of_type(name, "string");
+}

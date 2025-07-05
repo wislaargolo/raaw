@@ -13,24 +13,33 @@ void init_function_table() {
     functions_table = create_hash_table();
     insert_function("print", "void", NULL);
     insert_function("printLine", "void", NULL);
+    insert_function("strCopy", "void", NULL);
+    insert_function("strConcat", "void", NULL);
+    insert_function("strCompSize", "void", NULL);
+    insert_function("strNCopy", "void", NULL);
+    insert_function("strDup", "void", NULL);
+    insert_function("toUpper", "void", NULL);
+    insert_function("toLower", "void", NULL);
+    insert_function("freeString", "void", NULL);
+    insert_function("isEquals", "void", NULL);
 }
 
 int insert_function(char* name, char* return_type, function_data** current) {
 
-    if(has_function(name)) { 
+    if(has_function(name)) {
         if(current != NULL) *current = hash_get(functions_table, name);
         return 1;
     }
-     
-    
+
+
     function_data* data = malloc(sizeof(function_data));
     data->return_type = strdup(return_type);
     data->params = NULL;
-    data->last_param = NULL; 
+    data->last_param = NULL;
     data->num_params = 0;
 
     if (current) *current = data;
-    
+
 
     hash_insert(functions_table, name, data);
 
@@ -68,7 +77,7 @@ function_data get_function(char* name) {
 void free_params(function_param* params) {
     while (params != NULL) {
         function_param* next = params->next;
-        free(params->type); 
+        free(params->type);
         free(params);
         params = next;
     }
@@ -105,7 +114,7 @@ void print_function_table() {
         }
 
         while (node != NULL) {
-            
+
             function_data fd = *(function_data *)node->value;
             printf("['%s' -> ret:%s, n=%d", node->key, fd.return_type, fd.num_params);
             if(fd.num_params > 0) printf(", params: ");
@@ -118,7 +127,7 @@ void print_function_table() {
                 }
             }
             printf("] -> ");
-            
+
             node = node->next;
         }
         printf("NULL\n");
