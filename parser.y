@@ -968,7 +968,7 @@ eq_expr : relational_expr                                                       
         | eq_expr eq_operator relational_expr     {
                                                         char *s;
 
-                                                        if (is_string($1->type) == 0 && is_string(($3->type) == 0) {
+                                                        if (is_string($1->type) == 0 && is_string(($3->type) == 0)) {
 
                                                             if (strcmp($2, " == ") == 0) {
                                                                 s = cat(4, "isEquals(", $1->code, ", ", $3->code, ")");
