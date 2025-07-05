@@ -33,6 +33,8 @@ void insert_struct_type(char* name) {
 }
 
 int is_struct(char* name) {
+  if(!has_type(name)) return 0;
+  
   type_data data = get_type_data(name);
 
   if (data.discriminator == ALIAS_TYPE) {
@@ -43,16 +45,21 @@ int is_struct(char* name) {
 }
 
 void insert_struct_attr(char* struct_name, char* name, char* type) {
-  type_data data = get_type_data(struct_name);
+  if(has_type(struct_name)) {
+    type_data data = get_type_data(struct_name);
 
-  if (data.discriminator == ALIAS_TYPE) {
-    return insert_struct_attr(data.info.alias_type, name, type);
+    if (data.discriminator == ALIAS_TYPE) {
+      return insert_struct_attr(data.info.alias_type, name, type);
+    }
+
+    hash_insert_t(data.info.struct_attrs, name, strdup(type), char*);
   }
-
-  hash_insert_t(data.info.struct_attrs, name, strdup(type), char*);
 }
 
 int struct_has_attr(char* struct_name, char* name) {
+
+  if(!has_type(struct_name)) return 0;
+
   type_data data = get_type_data(struct_name);
 
   if (data.discriminator == ALIAS_TYPE) {
@@ -63,6 +70,8 @@ int struct_has_attr(char* struct_name, char* name) {
 }
 
 char* get_struct_attr_type(char* struct_name, char* name) {
+  if(!has_type(struct_name)) return strdup("");
+  
   type_data data = get_type_data(struct_name);
 
   if (data.discriminator == ALIAS_TYPE) {
@@ -171,6 +180,8 @@ void insert_enum_type(char* name) {
 }
 
 int is_enum(char* name) {
+  if(!has_type(name)) return 0;
+
   type_data data = get_type_data(name);
 
   if (data.discriminator == ALIAS_TYPE) {
@@ -181,16 +192,21 @@ int is_enum(char* name) {
 }
 
 void insert_enum_attr(char* enum_name, char* name) {
-  type_data data = get_type_data(enum_name);
 
-  if (data.discriminator == ALIAS_TYPE) {
-    return insert_enum_attr(data.info.alias_type, name);
+  if(has_type(enum_name)) {
+    type_data data = get_type_data(enum_name);
+
+    if (data.discriminator == ALIAS_TYPE) {
+      return insert_enum_attr(data.info.alias_type, name);
+    }
+
+    hash_insert_t(data.info.struct_attrs, name, 1, int);
   }
-
-  hash_insert_t(data.info.struct_attrs, name, 1, int);
 }
 
 int enum_has_attr(char* enum_name, char* name) {
+  if(!has_type(enum_name)) return 0;
+
   type_data data = get_type_data(enum_name);
 
   if (data.discriminator == ALIAS_TYPE) {
@@ -206,9 +222,4 @@ int is_enum_group(char* name) {
 
 char* get_enum_group_name(char* name) {
   return get_inner_type(name, "enum_group");
-}
-
-
-int is_string(char* name) {
-  return is_of_type(name, "string");
 }

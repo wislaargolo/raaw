@@ -37,5 +37,6 @@ record * create_record(char *, char *);
 void free_param(parameter_record *);
 parameter_record * create_param(char *, char *);
 parameter_record * add_param(parameter_record *, parameter_record *);
+int num_params(parameter_record*);
 
 #endif

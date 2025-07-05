@@ -74,3 +74,12 @@ void free_param(parameter_record * r) {
   }
 }
 
+int num_params(parameter_record* p) {
+  int n = 0;
+  while (p != NULL) {
+      n++;
+      p = p->next;
+  }
+  return n;
+}
+

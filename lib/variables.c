@@ -103,7 +103,6 @@ variable_data get_variable(Stack* stack, char* name) {
 char* get_variable_type(Stack* stack, char* name) {
     variable_data data = get_variable(stack, name);
     if (data.type == NULL) return NULL;
-
     return strdup(data.type); 
 }
 
@@ -167,4 +166,10 @@ int remove_scope_variables(Stack* stack) {
     }
 
     return 0;
+}
+
+int is_const_variable(Stack* stack, char* name) {
+    variable_data data = get_variable(stack, name);
+
+    return data.is_const;
 }

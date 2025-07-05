@@ -52,10 +52,6 @@ char* print_type(char* t) {
     return "%p";
 }
 
-char* boolean_to_string(int b) {
-    return b ? "true" : "false";
-}
-
 record* build_printf(parameter_record* params, int is_line) {
 
      char* format_type = strdup("\"");
@@ -67,10 +63,17 @@ record* build_printf(parameter_record* params, int is_line) {
           
           char* type = print_type(param->type);
           char* temp = cat(2, format_type, type);
+
           free(format_type);
           format_type = temp;
 
-          char* args_txt = (!strcmp(param->type, "boolean")) ? cat(3, "bool_to_string(", param->code, ")") : strdup(param->code);
+          char* args_txt;
+          if (!strcmp(param->type, "boolean")) {
+               args_txt = cat(5, "(", param->code, " ? \"true\" : \"false\"", ")");
+          } else {
+               args_txt = strdup(param->code);
+          }
+
 
           if (first) {
                if(args) free(args);

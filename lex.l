@@ -77,6 +77,7 @@ int|float|boolean|char|string|file { yylval.sValue = strdup(yytext); return (PRI
 "/"                                 { return(SLASH); }
 "%"                                 { return(MOD); }
 
+null                                { return(NULLISH); }
 true|false                          { yylval.sValue = strdup(yytext); return(BOOL); }
 [0-9]+\.[0-9]+                      { yylval.sValue = strdup(yytext); return(REAL); }
 [0-9]+                              { yylval.sValue = strdup(yytext); return(INTEGER); }

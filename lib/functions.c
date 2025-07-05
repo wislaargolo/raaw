@@ -85,7 +85,7 @@ function_data get_function(char* name) {
 
 char* get_function_return_type(char* name) {
     function_data data = get_function(name);
-    return data.return_type;
+    return strdup(data.return_type);
 }
 
 void free_params(function_param* params) {

@@ -44,7 +44,7 @@ Stack* stack = NULL;
        LPAREN RPAREN LBRACE RBRACE LBRACKET RBRACKET SEMICOLON COLON COMMA DOT
        EQUALITY DIFFERENCE ABRACKET_OPEN ABRACKET_CLOSE LESS_THAN_EQUALS MORE_THAN_EQUALS
        ASSIGNMENT ASSIGNMENT_MUL ASSIGNMENT_DIV ASSIGNMENT_MOD ASSIGNMENT_ADD ASSIGNMENT_SUB
-       AND ANDC OR ORC NOT PLUS MINUS TIMES SLASH MOD
+       AND ANDC OR ORC NOT PLUS MINUS TIMES SLASH MOD NULLISH
 
 
 %type <sValue> unary_operator mult_operator add_operator ineq_operator eq_operator
@@ -52,7 +52,6 @@ Stack* stack = NULL;
 
 %type <rec> literal target base expr val function_call postfix_expr cast prefix_expr term
             identifier_ref arithmetic_expr relational_expr eq_expr and_expr or_expr deletion
-            assignment_expr assignment_command allocation assignment assignable
             assignment_expr assignment_command allocation assignment assignable
             parameters cases case case_item default statements switch for_init for var_declaration type_declaration
             do_while while else else_opt else_if else_ifs else_ifs_opt if return return_value
@@ -155,7 +154,6 @@ type_declaration : TYPE ID    {
 
 declaration_line : declaration_item                         { $$ = $1; }
                  | declaration_line COMMA declaration_item  {
-                 | declaration_line COMMA declaration_item  {
                                                                  char *s = cat(3, $1->code, ", ", $3->code);
                                                                  free($3->code);
                                                                  $$ = $3;
@@ -237,7 +235,7 @@ type : PRIM_TYPE    {
                          $$->name = strdup($1);
                          free($1);
                     }
-     | ptr_type                                                                                     { $$ = $1; }
+     | ptr_type     { $$ = $1; }
      | map_type     { $$ = $1; }
      | list_type    { $$ = $1; }
      | ID {
@@ -476,7 +474,6 @@ parameters : parameter_type                  { $$ = $1; }
            ;
 
 parameter_type : parameter                   { $$ = $1; }
-parameter_type : parameter                   { $$ = $1; }
                | const_parameter             { $$ = $1; }
                ;
 
@@ -490,7 +487,6 @@ parameter : type ID {
 
                          new_param(current_fd, $1->name);
                          //  parametro pode ser constante
-                         char *s = cat(3, $1->code, " ", $2);
                          char *s = cat(3, $1->code, " ", $2);
                          free($1->code);
                          free($1->name);
@@ -813,7 +809,8 @@ default : DEFAULT COLON statements {
                                    }
         ;
 
-case_item : expr COLON statements       {
+//verificar o tipo de literal com o tipo global que é definido no witch
+case_item : literal COLON statements       {
                                              char *s = cat(3, $1->code, ":", $3->code);
                                              free_record($1);
                                              free_record($3);
@@ -832,8 +829,7 @@ function_call : ID LPAREN RPAREN   {
                                              $$->type = get_function_return_type($1);
                                         }
 
-
-
+                                        free($1);
 
                                    }
               | ID LPAREN parameters_call RPAREN  {
@@ -841,58 +837,87 @@ function_call : ID LPAREN RPAREN   {
                                                        if (!strcmp($1,"print") || !strcmp($1,"printLine")) {
                                                             $$ = build_printf($3, !strcmp($1,"printLine"));
                                                        } else {
+
+                                                            function_data fdata = get_function($1);
+
+                                                            if (fdata.num_params != num_params($3)) {         
+                                                                 yyerror(cat(3, "Invalid call: incompatible number of arguments for function ", $1, "."));
+                                                            } else {
+                                                                 function_param* formal = fdata.params;
+                                                                 parameter_record* curr = $3;
+                                                                 int pos = 0;
+
+                                                                 while(formal != NULL && curr != NULL) {
+                                                                      char pos_str[12];  
+                                                                      sprintf(pos_str, "%d", pos);
+
+                                                                      if(strcmp(formal->type, curr->type) != 0){ 
+                                                                           yyerror(cat(8, "Invalid call: argument ", pos_str,  " of function ", $1, " expected ", formal->type, ", received ", curr->type));
+                                                                      }
+                                                                      formal = formal->next;
+                                                                      curr = curr->next;
+                                                                      pos++;
+                                                                 }
+                                                                 
+                                                            }
+
                                                             $$ = build_function_call($1, $3);
                                                             $$->type = get_function_return_type($1);
                                                        }
-
                                                        free($1);
+                                                       
+
                                                   }
               ;
 
 parameters_call : expr                                       {
-                                                                 $$ = create_param($1->code, strdup("int"));
+                                                                 $$ = create_param($1->code, $1->type);
                                                                  free_record($1);
                                                              }
                 | parameters_call COMMA expr                 {
-                                                                 $$ = add_param($1, create_param($3->code, strdup("int")));
+                                                                 $$ = add_param($1, create_param($3->code, $3->type));
                                                                  free_record($3);
                                                              }
                 ;
 
 assignment : assignable assignment_operator assignment_expr  {
+
+                                                                if(is_const_variable(stack, $1->code)) {
+                                                                      yyerror(cat(3, "Invalid operator: cannot assign to constant variable ", $1->code, "."));
+                                                                }
+
                                                                 char * s_code;
                                                                 char * assigned_type = strdup($1->type);
 
                                                                 if (strcmp(assigned_type, "string") == 0) {
 
                                                                     if (strcmp($2, " = ") == 0) {
-
-                                                                        if (strcmp($3->type, "string") == 0) {
-
-                                                                            s_code = cat(5, $1->code, " = raaw_str_concat(", $3->code, ", \"\")");
-                                                                        } else {
-                                                                            yyerror(cat(3, "Atribuição inválida: não é possível atribuir '", $3->type, "' a uma variável 'string'."));
-                                                                            s_code = strdup("");
-                                                                        }
+                                                                      s_code = cat(5, "strCopy(", $1->code, ", ", $3->code, ")");
                                                                     }
 
                                                                     else if (strcmp($2, " += ") == 0) {
-
-                                                                        if (strcmp($3->type, "string") == 0) {
-                                                                            s_code = cat(5, $1->code, " = raaw_str_concat(", $1->code, ", ", $3->code, ")");
-                                                                        } else {
-                                                                            yyerror(cat(3, "Atribuição inválida: não é possível concatenar '", $3->type, "' a uma variável 'string'."));
-                                                                            s_code = strdup("");
-                                                                        }
+                                                                      s_code = cat(6, $1->code, " = strConcat(", $1->code, ", ", $3->code, ")");
                                                                     }
                                                                     else {
-                                                                        yyerror(cat(3, "Operador '", $2, "' inválido para atribuição de string."));
-                                                                        s_code = strdup("");
+                                                                      yyerror(cat(3, "Invalid operator '", $2, "' for string assignment."));
+                                                                      s_code = strdup("");
                                                                     }
-                                                                }
-                                                                else {
+                                                                } else {
+                                                                    if (strcmp($2, " = ") != 0) {
+                                                                      if (strcmp(assigned_type, "int") != 0 && strcmp(assigned_type, "float") != 0) {
+                                                                           yyerror(cat(2, "Invalid type: expected int or float, received ", $1->type));
+                                                                      }
+                                                                    }
+     
                                                                     s_code = cat(3, $1->code, $2, $3->code);
                                                                 }
+
+                                                                int has_null = strcmp($1->type, "null") || strcmp($3->type, "null");
+                                                                int is_null_comp = has_null && (is_ptr($1->type) || is_ptr($3->type));
+                                                                 
+                                                                if (!is_null_comp && strcmp($1->type, $3->type) != 0) {
+                                                                      yyerror(cat(4, "Invalid type: expected ", $1->type , " , received ", $3->type));
+                                                                 }
 
                                                                 $$ = create_record(s_code, assigned_type);
                                                                 free_record($1);
@@ -956,13 +981,13 @@ deletion : DELETE LPAREN identifier_ref RPAREN SEMICOLON    {
 identifier_ref : ID                                    {
                                                             if (!exists_scope_parent(stack, $1)) {
                                                                  yyerror(cat(3, "Variable '", $1, "' is not declared"));
-                                                            }
+                                                            } 
+
                                                             print_variable_table();
                                                             $$ = create_record($1, get_variable(stack, $1).type);
                                                             free($1);
                                                        }
                | identifier_ref LBRACKET expr RBRACKET {
-                                                            printf("var: %s - %s\n", $1->type, $1->code);
                                                             if (!is_ptr($1->type)) {
                                                                  yyerror(cat(2, "Invalid type: expected ptr, received ", $3->type));
                                                             }
@@ -974,25 +999,43 @@ identifier_ref : ID                                    {
                                                        }
                | identifier_ref DOT ID  {
                                              char * s = cat(3, $1->code, ".", $3);
+
+                                             if(!is_struct($1->type)) {
+                                                  yyerror(cat(2, "Invalid type: expected struct, received ", $1->type));
+                                                  $$ = create_record(s, "");
+                                             } else if(!struct_has_attr($1->type, $3)) {
+                                                  yyerror(cat(2, "Invalid: struct does not have the attribute ", $1->type));
+                                                  $$ = create_record(s, "");
+                                             } else {
+                                                  char * s = cat(3, $1->code, ".", $3);
+                                                  $$ = create_record(s, get_struct_attr_type($1->type, $3));
+                                                  free(s);
+                                             }
+
                                              free_record($1);
                                              free($3);
-                                             $$ = create_record(s, "");
                                              free(s);
                                         }
                ;
 
-expr : or_expr  {
-                  $$ = $1;
-                }
+expr : or_expr  { $$ = $1;}
      ;
 
-or_expr : and_expr                                                                                  {$$ = $1;}
+or_expr : and_expr                     { $$ = $1;}
         | or_expr or_operator and_expr {
+                                             if (strcmp($1->type, "boolean") != 0) {
+                                                  yyerror(cat(2, "Invalid type: expected boolean, received ", $1->type));
+                                             }
+                                             
+                                             if (strcmp($1->type, $3->type) != 0) {
+                                                  yyerror(cat(4, "Invalid type: expected ", $1->type , " , received ", $3->type));
+                                             }
+                                                  
                                              char * s = cat(3, $1->code, $2, $3->code);
                                              free_record($1);
                                              free($2);
                                              free_record($3);
-                                             $$ = create_record(s, "");
+                                             $$ = create_record(s, "boolean");
                                              free(s);
                                         }
         ;
@@ -1003,11 +1046,19 @@ or_operator : OR                                                                
 
 and_expr : eq_expr                                {$$ = $1;}
          | and_expr and_operator eq_expr    {
+                                                  if (strcmp($1->type, "boolean") != 0) {
+                                                       yyerror(cat(2, "Invalid type: expected boolean, received ", $1->type));
+                                                  }
+                                                  
+                                                  if (strcmp($1->type, $3->type) != 0) {
+                                                       yyerror(cat(4, "Invalid type: expected ", $1->type , " , received ", $3->type));
+                                                  }
+                                                                      
                                                   char * s = cat(3, $1->code, $2, $3->code);
                                                   free_record($1);
                                                   free($2);
                                                   free_record($3);
-                                                  $$ = create_record(s, "");
+                                                  $$ = create_record(s, "boolean");
                                                   free(s);
                                              }
           ;
@@ -1020,7 +1071,7 @@ eq_expr : relational_expr                                                       
         | eq_expr eq_operator relational_expr     {
                                                         char *s;
 
-                                                        if (is_string($1->type) == 0 && is_string(($3->type) == 0)) {
+                                                        if (strcmp($1->type, "string") == 0) {
 
                                                             if (strcmp($2, " == ") == 0) {
                                                                 s = cat(4, "isEquals(", $1->code, ", ", $3->code, ")");
@@ -1030,14 +1081,20 @@ eq_expr : relational_expr                                                       
                                                                 s = cat(5, "!", "isEquals(", $1->code, ", ", $3->code, ")");
                                                                 $$ = create_record(s, "boolean");
 
-                                                            } else {
-                                                                yyerror(cat(2, "Operador inválido para comparação de strings: ", $2));
                                                             }
                                                         } else {
 
                                                             s = cat(3, $1->code, $2, $3->code);
                                                             $$ = create_record(s, "boolean");
                                                         }
+
+                                                       int has_null = strcmp($1->type, "null") || strcmp($3->type, "null");
+                                                       int is_null_comp = has_null && (is_ptr($1->type) || is_ptr($3->type));
+                                                       
+                                                       if (!is_null_comp && strcmp($1->type, $3->type) != 0) {
+                                                            yyerror(cat(4, "Invalid type: expected ", $1->type , " , received ", $3->type));
+                                                       }
+
                                                         free_record($1);
                                                         free($2);
                                                         free_record($3);
@@ -1051,6 +1108,14 @@ eq_operator : EQUALITY                                                          
 
 relational_expr : arithmetic_expr                               { $$ = $1; }
                 | relational_expr ineq_operator arithmetic_expr {
+
+                                                                      if (strcmp($1->type, "int") != 0 && strcmp($1->type, "float") != 0) {
+                                                                           yyerror(cat(2, "Invalid type: expected int or float, received ", $1->type));
+                                                                      }
+                                                                       if (strcmp($1->type, $3->type) != 0) {
+                                                                           yyerror(cat(4, "Invalid type: expected ", $1->type , " , received ", $3->type));
+                                                                      }
+                                             
                                                                       char * s = cat(3, $1->code, $2, $3->code);
                                                                       free_record($1);
                                                                       free($2);
@@ -1071,10 +1136,16 @@ arithmetic_expr : term                                                          
                                                         char * s_code;
                                                         char * result_type = strdup($1->type);
 
-                                                        if (strcmp($1->type, "string") == 0 && strcmp($3->type, "string") == 0 && strcmp($2, " + ") == 0) {
-                                                            s_code = cat(4, "raaw_str_concat(", $1->code, ", ", $3->code, ")");
-                                                        } else {
+                                                        if (strcmp($1->type, "string") == 0 && strcmp($2, " + ") == 0) {
+                                                            s_code = cat(4, "strConcat(", $1->code, ", ", $3->code, ")");
+                                                        } else if (strcmp($1->type,  "int") == 0 || strcmp($1->type, "float") == 0) {
                                                             s_code = cat(3, $1->code, $2, $3->code);
+                                                        } else {
+                                                            yyerror(cat(2, "Invalid type: expected int or float, received ", $1->type));
+                                                        }
+
+                                                        if (strcmp($1->type, $3->type) != 0) {
+                                                            yyerror(cat(4, "Invalid type: expected ", $1->type , " , received ", $3->type));
                                                         }
 
                                                         $$ = create_record(s_code, result_type);
@@ -1082,16 +1153,31 @@ arithmetic_expr : term                                                          
                                                         free($2);
                                                         free_record($3);
                                                         free(s_code);
+                                                        free(result_type);
                                                     }
                 ;
 
 term : prefix_expr                                                                               { $$ = $1; }
      | term mult_operator prefix_expr   {
+                                             if (strcmp($2, " * ") == 0 || strcmp($2, " / ") == 0) {
+                                                  if (strcmp($1->type, "int") != 0 && strcmp($1->type, "float") != 0) {
+                                                       yyerror(cat(2, "Invalid type: expected int or float, received ", $1->type));
+                                                  }
+                                             } else {
+                                                  if (strcmp($1->type, "int") != 0) {
+                                                       yyerror(cat(2, "Invalid type: expected int, received ", $1->type));
+                                                  }
+                                             }
+
+                                             if (strcmp($1->type, $3->type) != 0) {
+                                                  yyerror(cat(4, "Invalid type: expected ", $1->type , " , received ", $3->type));
+                                             }
+
                                              char * s = cat(3, $1->code, $2, $3->code);
+                                             $$ = create_record(s, $1->type);
                                              free_record($1);
                                              free($2);
                                              free_record($3);
-                                             $$ = create_record(s, "");
                                              free(s);
                                         }
      ;
@@ -1101,29 +1187,56 @@ mult_operator : TIMES    { $$ = strdup(" * "); }
               | MOD      { $$ = strdup(" % "); }
               ;
 
-prefix_expr : postfix_expr                                                                          { $$ = $1; }
+prefix_expr : postfix_expr                        { $$ = $1; }
             | unary_operator postfix_expr         {
+                                                       if (strcmp($1, " + ") == 0 || strcmp($1, " - ") == 0) {
+                                                            if (strcmp($2->type, "int") != 0 && strcmp($2->type, "float") != 0) {
+                                                                 yyerror(cat(2, "Invalid type: expected int or float, received ", $2->type));
+                                                            }
+                                                       } else {
+                                                            if (strcmp($2->type, "boolean") != 0) {
+                                                                 yyerror(cat(2, "Invalid type: expected boolean, received ", $2->type));
+                                                            }
+                                                       }
+
                                                        char * s = cat(2, $1, $2->code);
+                                                       $$ = create_record(s, $2->type);
                                                        free($1);
                                                        free_record($2);
-                                                       $$ = create_record(s, "");
                                                        free(s);
                                                   }
             | REF LPAREN identifier_ref RPAREN   {
+                                                       if(is_const_variable(stack, $3->code)) {
+                                                            yyerror(cat(3, "Invalid operator: cannot assign to constant variable ", $3->code, "."));
+                                                       }
+
                                                        char * s = cat(4,"&","(", $3->code,")");
+                                                       char* type = cat(3, "ptr<", $3->type, ">");
                                                        free_record($3);
-                                                       $$ = create_record(s, "");
+                                                       $$ = create_record(s, type);
                                                        free(s);
+                                                       free(type);
                                                   }
             | cast                                                                                    { $$ = $1; }
             ;
 
 cast : LPAREN PRIM_TYPE RPAREN postfix_expr  {
-                                                  char * s = cat(4,"(", $2,")", $4->code);
+                                                  if (strcmp($2, "float") == 0) {
+                                                       if (strcmp($4->type, "int") == 0) {
+                                                            char * s = cat(2,"(float) ", $4->code);
+                                                            $$ = create_record(s, "float");
+                                                            free(s);
+                                                       } else {
+                                                            yyerror(cat(3, "Invalid cast from ", $4->type, " to float"));
+                                                       }
+                                                  } else if (strcmp($2, $4->type) == 0) {
+                                                       $$ = create_record($4->code, $4->type);
+                                                  } else{
+                                                       yyerror(cat(2, "Invalid cast to ", $2));
+                                                  }
+
                                                   free($2);
                                                   free_record($4);
-                                                  $$ = create_record(s, "");
-                                                  free(s);
                                              }
      ;
 
@@ -1161,7 +1274,7 @@ base : ID                     {
                                    printf("em (expr) %s", $2->code);
                                    char * s = cat(3,"(", $2->code,")");
                                    free_record($2);
-                                   $$ = create_record(s, "");
+                                   $$ = create_record(s, $2->type);
                                    free(s);
                               }
      ;
@@ -1169,12 +1282,30 @@ base : ID                     {
 
 target : base                           { $$ = $1; }
        | function_call                  { $$ = $1; }
-       | target LBRACKET expr RBRACKET  {
-                                             char * s = cat(4, $1->code, "[", $3->code,"]");
+       | target LBRACKET expr RBRACKET  { 
+                                             if (strcmp($3->type, "int") != 0) {
+                                                  yyerror(cat(2, "Invalid type: expected int, received ", $1->type));
+                                             }
+
+                                             if (is_list($1->type)) {
+                                                 // traduzir para list
+                                             } else if (strcmp($1->type, "string") == 0) {
+                                                  char * s = cat(4, $1->code, "[", $3->code,"]");
+                                                  $$ = create_record(s, "char");
+                                                  free(s);
+                                             } else if (is_ptr($1->type)) {
+                                                  char * s = cat(4, $1->code, "[", $3->code,"]");
+                                                  char* type = get_ptr_type($1->type);
+                                                  $$ = create_record(s, type);
+                                                  free(s);
+                                                  free(type);
+                                             } else {
+                                                  yyerror(cat(2, "Invalid type: expected ptr, list, or string, received ", $1->type));
+                                             }
+
                                              free_record($1);
                                              free_record($3);
-                                             $$ = create_record(s, "");
-                                             free(s);
+
                                         }
        | target DOT ID                  {
                                              if (is_enum_group($1->type)) {
@@ -1193,8 +1324,8 @@ target : base                           { $$ = $1; }
                                                   free(s);
                                              } else if(!is_struct($1->type)) {
                                                   yyerror(cat(2, "Invalid type: expected struct, received ", $1->type));
-                                             } else if(struct_has_attr($1->type, $3)) {
-                                                  yyerror(cat(2, "Invalid: struct não tem esse atributo", $1->type));
+                                             } else if(!struct_has_attr($1->type, $3)) {
+                                                  yyerror(cat(2, "Invalid: struct does not have the attribute ", $1->type));
                                              } else {
                                                   char * s = cat(3, $1->code, ".", $3);
 
@@ -1229,6 +1360,9 @@ literal : INTEGER   {
         | BOOL      {
                          $$ = create_record($1, "boolean");
                          free($1);
+                    }
+        | NULLISH   {
+                         $$ = create_record("NULL", "null");
                     }
         ;
 

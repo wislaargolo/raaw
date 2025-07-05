@@ -106,6 +106,7 @@ int hash_has(hash_table* ht, char* key) {
 }
 
 void* hash_get(hash_table* ht, char* key) {
+
   int index = hash_function(ht, key);
 
   hash_node* node = ht->nodes[index];

@@ -18,6 +18,7 @@ char* get_variable_type(Stack* stack, char* name);
 void print_variable_table();
 void free_variables_table();
 int remove_scope_variables(Stack* stack);
+int is_const_variable(Stack* stack, char* name);
 
 //void insert_const_variable(Stack* stack, char* name, char* type);
 //bool is_const_variable(Stack* stack, char* name);
