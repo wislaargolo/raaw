@@ -84,6 +84,24 @@ void insert_alias_type(char* name, char* type) {
   insert_type(name, data);
 }
 
+int is_alias_for(char* name, char* type) {
+  if (has_type(name)) {
+    type_data data = get_type_data(name);
+
+    if (data.discriminator != ALIAS_TYPE) {
+      return 0;
+    }
+
+    return is_alias_for(data.info.alias_type, type);
+  }
+
+  return strcmp(name, type) == 0;
+}
+
+int is_numeric(char* name) {
+  return is_alias_for(name, "int") || is_alias_for(name, "float");
+}
+
 int is_of_type(char* name, char* type) {
   if (has_type(name)) {
     type_data data = get_type_data(name);
@@ -138,4 +156,54 @@ int is_ptr(char* name) {
 
 char* get_ptr_type(char* name) {
   return get_inner_type(name, "ptr");
+}
+
+void insert_enum_type(char* name) {
+  type_data data;
+  type_info info;
+
+  info.struct_attrs = create_hash_table();
+
+  data.discriminator = ENUM_TYPE;
+  data.info = info;
+
+  insert_type(name, data);
+}
+
+int is_enum(char* name) {
+  type_data data = get_type_data(name);
+
+  if (data.discriminator == ALIAS_TYPE) {
+    return is_struct(data.info.alias_type);
+  }
+
+  return data.discriminator == ENUM_TYPE;
+}
+
+void insert_enum_attr(char* enum_name, char* name) {
+  type_data data = get_type_data(enum_name);
+
+  if (data.discriminator == ALIAS_TYPE) {
+    return insert_enum_attr(data.info.alias_type, name);
+  }
+
+  hash_insert_t(data.info.struct_attrs, name, 1, int);
+}
+
+int enum_has_attr(char* enum_name, char* name) {
+  type_data data = get_type_data(enum_name);
+
+  if (data.discriminator == ALIAS_TYPE) {
+    return enum_has_attr(data.info.alias_type, name);
+  }
+
+  return hash_has(data.info.struct_attrs, name);
+}
+
+int is_enum_group(char* name) {
+  return is_of_type(name, "enum_group");
+}
+
+char* get_enum_group_name(char* name) {
+  return get_inner_type(name, "enum_group");
 }

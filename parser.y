@@ -22,7 +22,7 @@ char* type_name;
 int ptr_count = 0;
 function_data *current_fd = NULL;
 int const_mode = 0;
-
+int inside_struct = 0;
 
 Stack* stack = NULL;
 %}
@@ -240,17 +240,25 @@ type : PRIM_TYPE    {
      | list_type    { $$ = $1; }
      | ID {
                if (type_name != NULL && strcmp(type_name, $1) == 0) {
-                    if (ptr_count == 0) {
+                    if (!inside_struct) {
+                         yyerror(cat(3, "Forbidden recursive reference outside struct on type '", $1, "'"));
+                    } else if (ptr_count == 0) {
                          yyerror(cat(3, "Forbidden recursive reference without ptr on type '", $1, "'"));
                     }
+
+                    $$ = (type_record*) malloc(sizeof(type_record));
+                    $$->code = cat(2, "struct ", $1);
+                    $$->name = strdup($1);
                } else {
                     if (!has_type($1)) {
                          yyerror(cat(3, "Type '", $1, "' not declared"));
                     }
+
+                    $$ = (type_record*) malloc(sizeof(type_record));
+                    $$->code = strdup($1);
+                    $$->name = strdup($1);
                }
-               $$ = (type_record*) malloc(sizeof(type_record));
-               $$->code = strdup($1);
-               $$->name = strdup($1);
+
                free($1);
           }
      ;
@@ -289,21 +297,25 @@ list_type : LIST ABRACKET_OPEN type ABRACKET_CLOSE {
                                                   }
           ;
 
-enum_type : ENUM LBRACE enum_list RBRACE     {
-                                                  char *s = cat(5, "enum ", type_name," {", $3->code, "}\n");
-                                                  free_record($3);
+enum_type : ENUM { insert_enum_type(type_name); } LBRACE enum_list RBRACE     {
+                                                  char *s = cat(5, "enum ", type_name," {", $4->code, "}\n");
+                                                  free_record($4);
                                                   $$ = create_record(s, "");
                                                   free(s);
                                              }
           ;
 
 enum_list : ID {
-                    $$ = create_record($1, "");
+                    insert_enum_attr(type_name, $1);
+                    char* s = cat(3, type_name, "__", $1);
+                    $$ = create_record(s, "");
+                    free(s);
                     free($1);
                }
 
           | enum_list COMMA ID  {
-                                   char *s = cat(3, $1->code, ",", $3);
+                                   insert_enum_attr(type_name, $3);
+                                   char *s = cat(5, $1->code, ", ", type_name, "__", $3);
                                    free_record($1);
                                    free($3);
                                    $$ = create_record(s, "");
@@ -311,11 +323,12 @@ enum_list : ID {
                                 }
           ;
 
-struct_type : STRUCT { insert_struct_type(type_name); } LBRACE struct_vars RBRACE {
+struct_type : STRUCT { insert_struct_type(type_name); inside_struct = 1; } LBRACE struct_vars RBRACE {
                                                        char *s = cat(5, "struct ", type_name, " {", $4->code, "}\n");
                                                        free_record($4);
                                                        $$ = create_record(s, "");
                                                        free(s);
+                                                       inside_struct = 0;
                                                }
             ;
 
@@ -813,9 +826,9 @@ function_call : ID LPAREN RPAREN   {
                                              $$->type = get_function_return_type($1);
                                         }
 
-                                        
 
-                                        
+
+
                                    }
               | ID LPAREN parameters_call RPAREN  {
 
@@ -1062,15 +1075,20 @@ postfix_expr : target    { $$ = $1; }
              ;
 
 base : ID                     {
+                                   if (is_enum($1)) {
+                                        char* type = cat(3, "enum_group<", $1, ">");
 
-                                   if (!exists_scope_parent(stack, $1)) {
+                                        $$ = create_record($1, type);
+                                        free(type);
+                                   } else if (!exists_scope_parent(stack, $1)) {
                                         yyerror(cat(3, "Variable '", $1, "' is not declared"));
+                                   } else {
+                                        char* type = get_variable_type(stack, $1);
+
+                                        $$ = create_record($1, type);
+                                        free(type);
                                    }
 
-                                   char* type = get_variable_type(stack, $1);
-
-                                   $$ = create_record($1, type);
-                                   free(type);
                                    free($1);
                               }
      | val                    { $$ = $1; }
@@ -1094,17 +1112,34 @@ target : base                           { $$ = $1; }
                                              free(s);
                                         }
        | target DOT ID                  {
-                                             if(!is_struct($1->type)) {
+                                             if (is_enum_group($1->type)) {
+                                                  char* type = get_enum_group_name($1->type);
+
+                                                  if (!enum_has_attr(type, $3)) {
+                                                       yyerror(cat(5, "Invalid enum value '", $3, "' for enum '", type, "'"));
+                                                  }
+
+                                                  char* s = cat(3, type, "__", $3);
+
+                                                  $$ = create_record(s, type);
+
+                                                  free(type);
+
+                                                  free(s);
+                                             } else if(!is_struct($1->type)) {
                                                   yyerror(cat(2, "Invalid type: expected struct, received ", $1->type));
                                              } else if(struct_has_attr($1->type, $3)) {
                                                   yyerror(cat(2, "Invalid: struct não tem esse atributo", $1->type));
+                                             } else {
+                                                  char * s = cat(3, $1->code, ".", $3);
+
+                                                  $$ = create_record(s, get_struct_attr_type($1->type, $3));
+
+                                                  free(s);
                                              }
 
-                                             char * s = cat(3, $1->code, ".", $3);
-                                             $$ = create_record(s, get_struct_attr_type($1->type, $3));
                                              free_record($1);
                                              free($3);
-                                             free(s);
 
                                         }
        ;
