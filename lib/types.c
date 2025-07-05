@@ -207,3 +207,8 @@ int is_enum_group(char* name) {
 char* get_enum_group_name(char* name) {
   return get_inner_type(name, "enum_group");
 }
+
+
+int is_string(char* name) {
+  return is_of_type(name, "string");
+}

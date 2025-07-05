@@ -40,6 +40,7 @@ int is_numeric(char* name);
 int is_list(char* name);
 char* get_list_type(char* name);
 int is_ptr(char* name);
+int is_string(char* name);
 char* get_ptr_type(char* name);
 void insert_enum_type(char* name);
 int is_enum(char* name);

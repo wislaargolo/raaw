@@ -53,6 +53,7 @@ Stack* stack = NULL;
 %type <rec> literal target base expr val function_call postfix_expr cast prefix_expr term
             identifier_ref arithmetic_expr relational_expr eq_expr and_expr or_expr deletion
             assignment_expr assignment_command allocation assignment assignable
+            assignment_expr assignment_command allocation assignment assignable
             parameters cases case case_item default statements switch for_init for var_declaration type_declaration
             do_while while else else_opt else_if else_ifs else_ifs_opt if return return_value
             command jump statement const_declaration parameter user_type type_compound subprogram subprograms
@@ -153,6 +154,7 @@ type_declaration : TYPE ID    {
                  ;
 
 declaration_line : declaration_item                         { $$ = $1; }
+                 | declaration_line COMMA declaration_item  {
                  | declaration_line COMMA declaration_item  {
                                                                  char *s = cat(3, $1->code, ", ", $3->code);
                                                                  free($3->code);
@@ -474,6 +476,7 @@ parameters : parameter_type                  { $$ = $1; }
            ;
 
 parameter_type : parameter                   { $$ = $1; }
+parameter_type : parameter                   { $$ = $1; }
                | const_parameter             { $$ = $1; }
                ;
 
@@ -488,6 +491,7 @@ parameter : type ID {
                          new_param(current_fd, $1->name);
                          //  parametro pode ser constante
                          char *s = cat(3, $1->code, " ", $2);
+                         char *s = cat(3, $1->code, " ", $2);
                          free($1->code);
                          free($1->name);
                          //free($1);
@@ -497,11 +501,13 @@ parameter : type ID {
                          free(s);
                     }
           ;
+          ;
 
 const_parameter : CONST {const_mode = 1; } parameter  {
                                                             char *s = cat(2, "const ", $3->code);
                                                             free($3->code);
                                                             $$ = create_record(s, "");
+                                                            free(s);
                                                             free(s);
                                                        }
                 ;
@@ -854,13 +860,46 @@ parameters_call : expr                                       {
                 ;
 
 assignment : assignable assignment_operator assignment_expr  {
+                                                                char * s_code;
+                                                                char * assigned_type = strdup($1->type);
 
-                                                                 char *s = cat(3, $1->code, $2, $3->code);
-                                                                 free_record($1);
-                                                                 free($2);
-                                                                 free_record($3);
-                                                                 $$ = create_record(s, "");
-                                                                 free(s);
+                                                                if (strcmp(assigned_type, "string") == 0) {
+
+                                                                    if (strcmp($2, " = ") == 0) {
+
+                                                                        if (strcmp($3->type, "string") == 0) {
+
+                                                                            s_code = cat(5, $1->code, " = raaw_str_concat(", $3->code, ", \"\")");
+                                                                        } else {
+                                                                            yyerror(cat(3, "Atribuição inválida: não é possível atribuir '", $3->type, "' a uma variável 'string'."));
+                                                                            s_code = strdup("");
+                                                                        }
+                                                                    }
+
+                                                                    else if (strcmp($2, " += ") == 0) {
+
+                                                                        if (strcmp($3->type, "string") == 0) {
+                                                                            s_code = cat(5, $1->code, " = raaw_str_concat(", $1->code, ", ", $3->code, ")");
+                                                                        } else {
+                                                                            yyerror(cat(3, "Atribuição inválida: não é possível concatenar '", $3->type, "' a uma variável 'string'."));
+                                                                            s_code = strdup("");
+                                                                        }
+                                                                    }
+                                                                    else {
+                                                                        yyerror(cat(3, "Operador '", $2, "' inválido para atribuição de string."));
+                                                                        s_code = strdup("");
+                                                                    }
+                                                                }
+                                                                else {
+                                                                    s_code = cat(3, $1->code, $2, $3->code);
+                                                                }
+
+                                                                $$ = create_record(s_code, assigned_type);
+                                                                free_record($1);
+                                                                free($2);
+                                                                free_record($3);
+                                                                free(s_code);
+                                                                free(assigned_type);
                                                              }
            ;
 
@@ -979,12 +1018,30 @@ and_operator : AND                                                              
 
 eq_expr : relational_expr                                                                           {$$ = $1;}
         | eq_expr eq_operator relational_expr     {
-                                                       char * s = cat(3, $1->code, $2, $3->code);
-                                                       free_record($1);
-                                                       free($2);
-                                                       free_record($3);
-                                                       $$ = create_record(s, "");
-                                                       free(s);
+                                                        char *s;
+
+                                                        if (is_string($1->type) == 0 && is_string(($3->type) == 0)) {
+
+                                                            if (strcmp($2, " == ") == 0) {
+                                                                s = cat(4, "isEquals(", $1->code, ", ", $3->code, ")");
+                                                                $$ = create_record(s, "boolean");
+
+                                                            } else if (strcmp($2, " != ") == 0) {
+                                                                s = cat(5, "!", "isEquals(", $1->code, ", ", $3->code, ")");
+                                                                $$ = create_record(s, "boolean");
+
+                                                            } else {
+                                                                yyerror(cat(2, "Operador inválido para comparação de strings: ", $2));
+                                                            }
+                                                        } else {
+
+                                                            s = cat(3, $1->code, $2, $3->code);
+                                                            $$ = create_record(s, "boolean");
+                                                        }
+                                                        free_record($1);
+                                                        free($2);
+                                                        free_record($3);
+                                                        free(s);
                                                   }
           ;
 
@@ -1011,13 +1068,21 @@ ineq_operator : ABRACKET_OPEN                   { $$ = strdup(" < "); }
 
 arithmetic_expr : term                                                                              { $$ = $1; }
                 | arithmetic_expr add_operator term {
-                                                       char * s = cat(3, $1->code, $2, $3->code);
-                                                       free_record($1);
-                                                       free($2);
-                                                       free_record($3);
-                                                       $$ = create_record(s, "");
-                                                       free(s);
-                                                     }
+                                                        char * s_code;
+                                                        char * result_type = strdup($1->type);
+
+                                                        if (strcmp($1->type, "string") == 0 && strcmp($3->type, "string") == 0 && strcmp($2, " + ") == 0) {
+                                                            s_code = cat(4, "raaw_str_concat(", $1->code, ", ", $3->code, ")");
+                                                        } else {
+                                                            s_code = cat(3, $1->code, $2, $3->code);
+                                                        }
+
+                                                        $$ = create_record(s_code, result_type);
+                                                        free_record($1);
+                                                        free($2);
+                                                        free_record($3);
+                                                        free(s_code);
+                                                    }
                 ;
 
 term : prefix_expr                                                                               { $$ = $1; }
