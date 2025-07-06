@@ -2,7 +2,7 @@
 #define RECORD
 
 struct parameter_record {
-    char* code;   
+    char* code;
     char* type;
     struct parameter_record* next;
 };
@@ -12,6 +12,7 @@ typedef struct parameter_record parameter_record;
 struct declaration_term_record {
 	char* code;
 	char* name;
+	char* init_type;
 	int dimension;
 	struct declaration_term_record* next;
 };
@@ -31,6 +32,14 @@ struct record {
 };
 
 typedef struct record record;
+
+struct initialization_record {
+  char* code;
+  char* type;
+  int dimension;
+};
+
+typedef struct initialization_record initialization_record;
 
 void free_record(record *);
 record * create_record(char *, char *);

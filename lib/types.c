@@ -34,12 +34,8 @@ void insert_struct_type(char* name) {
 
 int is_struct(char* name) {
   if(!has_type(name)) return 0;
-  
-  type_data data = get_type_data(name);
 
-  if (data.discriminator == ALIAS_TYPE) {
-    return is_struct(data.info.alias_type);
-  }
+  type_data data = get_type_data(name);
 
   return data.discriminator == STRUCT_TYPE;
 }
@@ -47,10 +43,6 @@ int is_struct(char* name) {
 void insert_struct_attr(char* struct_name, char* name, char* type) {
   if(has_type(struct_name)) {
     type_data data = get_type_data(struct_name);
-
-    if (data.discriminator == ALIAS_TYPE) {
-      return insert_struct_attr(data.info.alias_type, name, type);
-    }
 
     hash_insert_t(data.info.struct_attrs, name, strdup(type), char*);
   }
@@ -62,10 +54,6 @@ int struct_has_attr(char* struct_name, char* name) {
 
   type_data data = get_type_data(struct_name);
 
-  if (data.discriminator == ALIAS_TYPE) {
-    return struct_has_attr(data.info.alias_type, name);
-  }
-
   return hash_has(data.info.struct_attrs, name);
 }
 
@@ -74,52 +62,10 @@ char* get_struct_attr_type(char* struct_name, char* name) {
 
   type_data data = get_type_data(struct_name);
 
-  if (data.discriminator == ALIAS_TYPE) {
-    return get_struct_attr_type(data.info.alias_type, name);
-  }
-
   return hash_get_t(data.info.struct_attrs, name, char*);
 }
 
-void insert_alias_type(char* name, char* type) {
-  type_data data;
-  type_info info;
-
-  info.alias_type = type;
-
-  data.discriminator = ALIAS_TYPE;
-  data.info = info;
-
-  insert_type(name, data);
-}
-
-int is_alias_for(char* name, char* type) {
-  if (has_type(name)) {
-    type_data data = get_type_data(name);
-
-    if (data.discriminator != ALIAS_TYPE) {
-      return 0;
-    }
-
-    return is_alias_for(data.info.alias_type, type);
-  }
-
-  return strcmp(name, type) == 0;
-}
-
-int is_numeric(char* name) {
-  return is_alias_for(name, "int") || is_alias_for(name, "float");
-}
-
 int is_of_type(char* name, char* type) {
-  if (has_type(name)) {
-    type_data data = get_type_data(name);
-
-    if (data.discriminator == ALIAS_TYPE) {
-      return is_of_type(data.info.alias_type, type);
-    }
-  }
-
   size_t len = strlen(name);
 
   if (len < strlen(type) + 2) {
@@ -134,14 +80,6 @@ int is_of_type(char* name, char* type) {
 }
 
 char* get_inner_type(char* name, char* type) {
-  if (has_type(name)) {
-    type_data data = get_type_data(name);
-
-    if (data.discriminator == ALIAS_TYPE) {
-      return get_inner_type(data.info.alias_type, type);
-    }
-  }
-
   size_t len = strlen(name);
   size_t inner_len = len - strlen(type) - 2;
   char* result = malloc(inner_len + 1);
@@ -184,21 +122,12 @@ int is_enum(char* name) {
 
   type_data data = get_type_data(name);
 
-  if (data.discriminator == ALIAS_TYPE) {
-    return is_struct(data.info.alias_type);
-  }
-
   return data.discriminator == ENUM_TYPE;
 }
 
 void insert_enum_attr(char* enum_name, char* name) {
-
   if(has_type(enum_name)) {
     type_data data = get_type_data(enum_name);
-
-    if (data.discriminator == ALIAS_TYPE) {
-      return insert_enum_attr(data.info.alias_type, name);
-    }
 
     hash_insert_t(data.info.struct_attrs, name, 1, int);
   }
@@ -209,10 +138,6 @@ int enum_has_attr(char* enum_name, char* name) {
 
   type_data data = get_type_data(enum_name);
 
-  if (data.discriminator == ALIAS_TYPE) {
-    return enum_has_attr(data.info.alias_type, name);
-  }
-
   return hash_has(data.info.struct_attrs, name);
 }
 
@@ -222,6 +147,22 @@ int is_enum_group(char* name) {
 
 char* get_enum_group_name(char* name) {
   return get_inner_type(name, "enum_group");
+}
+
+int type_check(char* t1, char* t2) {
+  if (strcmp(t1, "_") == 0 || strcmp(t2, "_") == 0) {
+    return 1;
+  }
+
+  if (is_ptr(t1) && is_ptr(t2)) {
+    return type_check(get_ptr_type(t1), get_ptr_type(t2));
+  }
+
+  if (is_list(t1) && is_list(t2)) {
+    return type_check(get_list_type(t1), get_list_type(t2));
+  }
+
+  return strcmp(t1, t2) == 0;
 }
 
 void print_types_table() {
@@ -261,11 +202,6 @@ void print_types_table() {
                             enum_node = enum_node->next;
                         }
                     }
-                    break;
-
-                case ALIAS_TYPE:
-                    printf("  Categoria: alias\n");
-                    printf("  Aponta para: %s\n", data->info.alias_type);
                     break;
 
                 default:
