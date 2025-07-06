@@ -103,7 +103,6 @@ record* build_printf(parameter_record* params, int is_line) {
      if(format_type) free(format_type);
      if(args) free(args);
      if(printf_code) free(printf_code);
-     if (params) free_param(params);
 
     return r;
 }
@@ -135,8 +134,7 @@ record* build_function_call(char* name, parameter_record* params) {
 
     if(args) free(args);
     if(call_code) free(call_code);
-    if(params) free_param(params);
-
+    
     return r;
 }
   

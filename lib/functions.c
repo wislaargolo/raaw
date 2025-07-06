@@ -80,7 +80,10 @@ int has_function(char* name) {
 }
 
 function_data get_function(char* name) {
-    return hash_get_t(functions_table, name, function_data);
+    if(has_function(name)) {
+        return hash_get_t(functions_table, name, function_data);
+    }
+    return (function_data){NULL, 0, NULL, NULL};
 }
 
 char* get_function_return_type(char* name) {

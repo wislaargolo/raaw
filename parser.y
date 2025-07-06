@@ -852,18 +852,30 @@ case_item : literal COLON statements       {
 
 
 function_call : ID LPAREN RPAREN   {
-
-                                        if (!strcmp($1,"print") || !strcmp($1,"printLine")) {
-                                             $$ = build_printf(NULL, !strcmp($1,"printLine"));
+                                        if(!has_function($1)) {
+                                             char *s = cat(2, $1, "()");
+                                             yyerror(cat(3, "Invalid call: ", $1, " is not declared"));
+                                             $$ = create_record(s, "");
+                                             free(s);
                                         } else {
-                                             $$ = build_function_call($1, NULL);
-                                             $$->type = get_function_return_type($1);
+                                             if (!strcmp($1,"print") || !strcmp($1,"printLine")) {
+                                                  $$ = build_printf(NULL, !strcmp($1,"printLine"));
+                                             } else {
+                                                  $$ = build_function_call($1, NULL);
+                                                  $$->type = get_function_return_type($1);
+                                             }
                                         }
 
                                         free($1);
 
                                    }
               | ID LPAREN parameters_call RPAREN  {
+                                                  if(!has_function($1)) {
+                                                       char *s = cat(4, $1, "(", $3->code, ")");
+                                                       yyerror(cat(3, "Invalid call: ", $1, " is not declared"));
+                                                       $$ = create_record(s, "");
+                                                       free(s);
+                                                  } else {
 
                                                        if (!strcmp($1,"print") || !strcmp($1,"printLine")) {
                                                             $$ = build_printf($3, !strcmp($1,"printLine"));
@@ -895,7 +907,9 @@ function_call : ID LPAREN RPAREN   {
                                                             $$ = build_function_call($1, $3);
                                                             $$->type = get_function_return_type($1);
                                                        }
-                                                       free($1);
+                                                  }
+                                                  free($1);
+                                                  if ($3) free_param($3);
                                                        
 
                                                   }
