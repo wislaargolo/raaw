@@ -903,10 +903,19 @@ function_call : ID LPAREN RPAREN   {
               ;
 
 parameters_call : expr                                       {
+                                                                 if(is_enum_group($1->type)) {
+                                                                      yyerror(cat(3, "Variable ", $1->code, " is not declared"));
+                                                                 }
+
                                                                  $$ = create_param($1->code, $1->type);
                                                                  free_record($1);
                                                              }
                 | parameters_call COMMA expr                 {
+
+                                                                 if(is_enum_group($3->type)) {
+                                                                     yyerror(cat(3, "Variable ", $3->code, " is not declared"));
+                                                                 }
+
                                                                  $$ = add_param($1, create_param($3->code, $3->type));
                                                                  free_record($3);
                                                              }
