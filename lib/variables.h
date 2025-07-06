@@ -4,12 +4,13 @@
 struct variable_data {
     char* type;  
     int is_const;
+    int dimension;
 };
 
 typedef struct variable_data variable_data;
 
 void init_variables_table();
-int insert_variable(Stack* stack, char* name, char* type, int is_const);
+int insert_variable(Stack* stack, char* name, char* type, int is_const, int dimension);
 char* make_key(char* name, char* scope);
 int exists_in_scope(Stack* stack, char* name);
 int exists_scope_parent(Stack* stack, char* name);

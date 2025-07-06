@@ -13,7 +13,7 @@ void init_variables_table() {
     variables_table = create_hash_table();
 }
 
-int insert_variable(Stack* stack, char* name, char* type, int is_const) {
+int insert_variable(Stack* stack, char* name, char* type, int is_const, int dimension) {
     
     if (stack == NULL || stack->top == NULL) {
         fprintf(stderr, "Stack is empty or not initialized\n");
@@ -28,6 +28,7 @@ int insert_variable(Stack* stack, char* name, char* type, int is_const) {
     variable_data* data = malloc(sizeof(variable_data));
     data->type = strdup(type);
     data->is_const = is_const;
+    data->dimension = dimension;
 
     hash_insert(variables_table, key, data);
     if(key) free(key);
@@ -80,7 +81,7 @@ int exists_scope_parent(Stack* stack, char* name) {
 variable_data get_variable(Stack* stack, char* name) {
     if (!stack || !stack->top || name == NULL) {
         fprintf(stderr, "Invalid stack or variable name\n");
-        return (variable_data){NULL, 0};
+        return (variable_data){NULL, 0, 0};
     }
 
     ScopeNode *node = stack->top;              
@@ -98,7 +99,7 @@ variable_data get_variable(Stack* stack, char* name) {
         node = node->parent;
     }
 
-    return (variable_data){NULL, 0};
+    return (variable_data){NULL, 0, 0};
 }
 
 char* get_variable_type(Stack* stack, char* name) {

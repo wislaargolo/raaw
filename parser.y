@@ -119,7 +119,7 @@ var_declaration : type declaration_line SEMICOLON  {
                                                                  yyerror(cat(3, "Type ", decl->name, " has already bean declareted."));
                                                             }
 
-                                                            if(insert_variable(stack, decl->name, type, const_mode) == 1) {
+                                                            if(insert_variable(stack, decl->name, type, const_mode, decl->dimension) == 1) {
                                                                  yyerror(cat(4, "Variable '", decl->name, "' already declared in scope ", stack->top->name));
                                                             }
 
@@ -550,7 +550,7 @@ parameter : type ID {
                               yyerror(cat(3, "Type ", $2, " has already bean declareted."));
                          }
 
-                         if(insert_variable(stack, $2, $1->name, const_mode) == 1) {
+                         if(insert_variable(stack, $2, $1->name, const_mode, 0) == 1) {
                               yyerror(cat(3, "Variable ", $2, " already declared on scope."));
                          }
 
@@ -969,6 +969,11 @@ assignment : assignable assignment_operator assignment_expr  {
 
                                                                 if(is_const_variable(stack, $1->code)) {
                                                                       yyerror(cat(3, "Invalid operator: cannot assign to constant variable ", $1->code, "."));
+                                                                      s_code = strdup("");
+                                                                }
+
+                                                                if(get_variable(stack, $1->code).dimension > 0) {
+                                                                      yyerror(cat(3, "Invalid operator: variable ", $1->code, " has dimensions and cannot be assigned directly."));
                                                                       s_code = strdup("");
                                                                 }
 
