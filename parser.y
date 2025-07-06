@@ -536,7 +536,6 @@ const_parameter : CONST {const_mode = 1; } parameter  {
                                                             free($3->code);
                                                             $$ = create_record(s, "");
                                                             free(s);
-                                                            free(s);
                                                        }
                 ;
 
@@ -922,13 +921,14 @@ parameters_call : expr                                       {
                 ;
 
 assignment : assignable assignment_operator assignment_expr  {
+                                                                 
+                                                                char * s_code;
+                                                                char * assigned_type = strdup($1->type);
 
                                                                 if(is_const_variable(stack, $1->code)) {
                                                                       yyerror(cat(3, "Invalid operator: cannot assign to constant variable ", $1->code, "."));
+                                                                      s_code = strdup("");
                                                                 }
-
-                                                                char * s_code;
-                                                                char * assigned_type = strdup($1->type);
 
                                                                 if (strcmp(assigned_type, "string") == 0) {
 
@@ -1025,7 +1025,7 @@ identifier_ref : ID                                    {
                                                                  yyerror(cat(3, "Variable '", $1, "' is not declared"));
                                                                  type = strdup("");
                                                             } else {
-                                                                 type = get_variable(stack, $1).type;
+                                                                 type = strdup(get_variable(stack, $1).type);
                                                             }
 
                                                             $$ = create_record($1, type);
@@ -1187,10 +1187,12 @@ arithmetic_expr : term                                                          
                                                             s_code = cat(3, $1->code, $2, $3->code);
                                                         } else {
                                                             yyerror(cat(2, "Invalid type: expected int or float, received ", $1->type));
+                                                            s_code = strdup("");
                                                         }
 
                                                         if (strcmp($1->type, $3->type) != 0) {
                                                             yyerror(cat(4, "Invalid type: expected ", $1->type , " , received ", $3->type));
+                                                            s_code = strdup("");
                                                         }
 
                                                         $$ = create_record(s_code, result_type);
