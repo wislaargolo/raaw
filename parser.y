@@ -95,7 +95,7 @@ declaration : var_declaration                                                   
             ;
 
 var_declaration : type declaration_line SEMICOLON  {
-                                                       char *s = cat(4, $1->code, " ", $2->code, ";");
+                                                       char *s = cat(4, $1->code, " ", $2->code, ";\n");
 
                                                        declaration_term_record* decl = $2;
 
@@ -108,6 +108,10 @@ var_declaration : type declaration_line SEMICOLON  {
                                                                  free(aux);
                                                             }
 
+                                                            if(strcmp(stack->top->name, "") == 0 & has_type(decl->name)) {
+                                                                 yyerror(cat(3, "Type ", decl->name, " has already bean declareted."));
+                                                            }
+                                                            
                                                             if(insert_variable(stack, decl->name, type, const_mode) == 1) {
                                                                  yyerror(cat(4, "Variable '", decl->name, "' already declared in scope ", stack->top->name));
                                                             }
@@ -138,6 +142,8 @@ const_declaration : CONST { const_mode = 1; } var_declaration {
 type_declaration : TYPE ID    {
                                    if (has_type($2)) {
                                         yyerror(cat(3, "Type '", $2, "' already declared"));
+                                   } else if(exists_in_scope(stack, $2) == 1) {
+                                        yyerror(cat(3, "Variable '", $2, "' already declared"));
                                    }
                                    type_name = strdup($2);
                               }
@@ -323,12 +329,17 @@ enum_list : ID {
                                 }
           ;
 
-struct_type : STRUCT { insert_struct_type(type_name); inside_struct = 1; } LBRACE struct_vars RBRACE {
-                                                       char *s = cat(5, "struct ", type_name, " {", $4->code, "}\n");
-                                                       free_record($4);
-                                                       $$ = create_record(s, "");
-                                                       free(s);
-                                                       inside_struct = 0;
+struct_type : STRUCT { 
+
+                         insert_struct_type(type_name); 
+                         inside_struct = 1; 
+                         
+                    } LBRACE struct_vars RBRACE {
+                                                  char *s = cat(5, "struct ", type_name, " {", $4->code, "}\n");
+                                                  free_record($4);
+                                                  $$ = create_record(s, "");
+                                                  free(s);
+                                                  inside_struct = 0;
                                                }
             ;
 
@@ -401,10 +412,15 @@ subprograms : subprogram                {
                                         }
             ;
 
-subprogram : type ID LPAREN   {    push_subprogram(stack, $2);
-                                   if(insert_function($2, $1->code, &current_fd) == 1) {
+subprogram : type ID LPAREN   {    
+                                   if(exists_in_scope(stack, $2)) {
+                                        yyerror(cat(3, "Variable ", $2, " has already bean declareted."));
+                                   } else if(has_type($2)) {
+                                        yyerror(cat(3, "Type ", $2, " has already bean declareted."));
+                                   } else if(insert_function($2, $1->code, &current_fd) == 1) {
                                         yyerror(cat(3, "Function ", $2, " has already bean declareted."));
                                    }
+                                   push_subprogram(stack, $2);
 
                               } parameters RPAREN LBRACE statements RBRACE {
 
@@ -420,10 +436,14 @@ subprogram : type ID LPAREN   {    push_subprogram(stack, $2);
                                    pop(stack);
                               }
            | VOID ID LPAREN   {
-                                   push_subprogram(stack, $2);
-                                   if(insert_function($2, strdup("void"), &current_fd) == 1) {
+                                   if(exists_in_scope(stack, $2)) {
+                                        yyerror(cat(3, "Variable ", $2, " has already bean declareted."));
+                                   } else if(has_type($2)) {
+                                        yyerror(cat(3, "Type ", $2, " has already bean declareted."));
+                                   } else if(insert_function($2, strdup("void"), &current_fd) == 1) {
                                         yyerror(cat(3, "Function ", $2, " has already bean declareted."));
-                                   }
+                                   } 
+                                   push_subprogram(stack, $2);
                               } parameters RPAREN LBRACE statements RBRACE {
                                    char *s = cat(7, "void ", $2, "(", $5->code, ") {\n", $8->code, "\n}\n");
                                    free($2);
@@ -434,10 +454,16 @@ subprogram : type ID LPAREN   {    push_subprogram(stack, $2);
                                    pop(stack);
                               }
            | type ID LPAREN   {
-                              push_subprogram(stack, $2);
-                              if(insert_function($2, $1->code, &current_fd) == 1) {
+
+                              if(exists_in_scope(stack, $2)) {
+                                   yyerror(cat(3, "Variable ", $2, " has already bean declareted."));
+                              } else if(has_type($2)) {
+                                   yyerror(cat(3, "Type ", $2, " has already bean declareted."));
+                              } else if(insert_function($2, $1->code, &current_fd) == 1) {
                                    yyerror(cat(3, "Function ", $2, " has already bean declareted."));
                               }
+
+                              push_subprogram(stack, $2);
                               } RPAREN LBRACE statements RBRACE  {
                                    char *s = cat(6, $1->code, " ", $2, "() {\n", $7->code, "\n}\n");
                                    free($1->code);
@@ -449,10 +475,15 @@ subprogram : type ID LPAREN   {    push_subprogram(stack, $2);
                                    pop(stack);
                               }
            | VOID ID LPAREN   {
-                                   push_subprogram(stack, $2);
-                                   if(insert_function($2, strdup("void"), &current_fd) == 1) {
+                                   if(exists_in_scope(stack, $2)) {
+                                        yyerror(cat(3, "Variable ", $2, " has already bean declareted."));
+                                   } else if(has_type($2)) {
+                                        yyerror(cat(3, "Type ", $2, " has already bean declareted."));
+                                   } else if(insert_function($2, strdup("void"), &current_fd) == 1) {
                                         yyerror(cat(3, "Function ", $2, " has already bean declareted."));
                                    }
+
+                                   push_subprogram(stack, $2);
                               } RPAREN LBRACE statements RBRACE  {
                                    char *s = cat(5, "void ", $2, "() {\n", $7->code, "\n}\n");
                                    free($2);
@@ -478,12 +509,13 @@ parameter_type : parameter                   { $$ = $1; }
                ;
 
 parameter : type ID {
-
+                         if(has_type($2)) {
+                              yyerror(cat(3, "Type ", $2, " has already bean declareted."));
+                         }
+                         
                          if(insert_variable(stack, $2, $1->name, const_mode) == 1) {
                               yyerror(cat(3, "Variable ", $2, " already declared on scope."));
                          }
-
-
 
                          new_param(current_fd, $1->name);
                          //  parametro pode ser constante
@@ -979,13 +1011,17 @@ deletion : DELETE LPAREN identifier_ref RPAREN SEMICOLON    {
          ;
 
 identifier_ref : ID                                    {
+                                                            char* type;
                                                             if (!exists_scope_parent(stack, $1)) {
                                                                  yyerror(cat(3, "Variable '", $1, "' is not declared"));
-                                                            } 
+                                                                 type = strdup("");
+                                                            } else {
+                                                                 type = get_variable(stack, $1).type;
+                                                            }
 
-                                                            print_variable_table();
-                                                            $$ = create_record($1, get_variable(stack, $1).type);
+                                                            $$ = create_record($1, type);
                                                             free($1);
+                                                            free(type);
                                                        }
                | identifier_ref LBRACKET expr RBRACKET {
                                                             if (!is_ptr($1->type)) {
@@ -1253,13 +1289,14 @@ postfix_expr : target    { $$ = $1; }
              ;
 
 base : ID                     {
-                                   if (is_enum($1)) {
+                                   if (is_enum($1) & !exists_scope_parent(stack, $1)) {
                                         char* type = cat(3, "enum_group<", $1, ">");
 
                                         $$ = create_record($1, type);
                                         free(type);
                                    } else if (!exists_scope_parent(stack, $1)) {
                                         yyerror(cat(3, "Variable '", $1, "' is not declared"));
+                                        $$ = create_record($1, "");
                                    } else {
                                         char* type = get_variable_type(stack, $1);
 

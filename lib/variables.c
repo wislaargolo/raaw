@@ -42,7 +42,8 @@ int insert_variable(Stack* stack, char* name, char* type, int is_const) {
 char* make_key(char* name, char* scope) {
     char* key = (char*) malloc(strlen(name) + strlen(scope) + 2);
 
-    sprintf(key, "%s#%s", scope, name);
+    if(strcmp(scope, "") == 0) sprintf(key, "%s", name);
+    else sprintf(key, "%s#%s", scope, name);
     return key;
 }
 

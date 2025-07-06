@@ -88,7 +88,7 @@ void hash_delete(hash_table* ht, char* key) {
 int hash_has(hash_table* ht, char* key) {
 
   if(ht == NULL || key == NULL) {
-    return 0;
+    return -1;
   }
 
   int index = hash_function(ht, key);

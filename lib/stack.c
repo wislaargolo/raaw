@@ -11,7 +11,7 @@ Stack* create_stack() {
     printf("NO MEMORY!!!\n");
     return NULL;
   }
-  node->name = strdup("global");
+  node->name = strdup("");
   node->is_loop = 0;
   node->is_switch = 0;
   node->parent = NULL;
@@ -43,6 +43,7 @@ void push_subprogram(Stack* stack, char* name) {
 }
 
 void push(Stack* stack, int is_loop, int is_switch) {
+
   ScopeNode* parent = stack->top;
 
   char* parent_name = parent->name;
@@ -85,6 +86,8 @@ void push(Stack* stack, int is_loop, int is_switch) {
   node->parent = parent;
   parent->count++;
   stack->top = node;
+
+  printf("novo elemento: %s\n", name);
 }
 
 void pop(Stack* stack) {

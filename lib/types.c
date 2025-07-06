@@ -71,7 +71,7 @@ int struct_has_attr(char* struct_name, char* name) {
 
 char* get_struct_attr_type(char* struct_name, char* name) {
   if(!has_type(struct_name)) return strdup("");
-  
+
   type_data data = get_type_data(struct_name);
 
   if (data.discriminator == ALIAS_TYPE) {
@@ -222,4 +222,59 @@ int is_enum_group(char* name) {
 
 char* get_enum_group_name(char* name) {
   return get_inner_type(name, "enum_group");
+}
+
+void print_types_table() {
+    printf("=== TABELA DE TIPOS ===\n");
+
+    for (int i = 0; i < types_table->capacity; i++) {
+        hash_node* node = types_table->nodes[i];
+
+        while (node != NULL) {
+            char* name = node->key;
+            type_data* data = (type_data*) node->value;
+
+            printf("Tipo: %s\n", name);
+
+            switch (data->discriminator) {
+                case STRUCT_TYPE:
+                    printf("  Categoria: struct\n");
+                    printf("  Atributos:\n");
+                    for (int j = 0; j < data->info.struct_attrs->capacity; j++) {
+                        hash_node* attr_node = data->info.struct_attrs->nodes[j];
+                        while (attr_node != NULL) {
+                            char* attr_name = attr_node->key;
+                            char* attr_type = (char*) attr_node->value;
+                            printf("    %s: %s\n", attr_name, attr_type);
+                            attr_node = attr_node->next;
+                        }
+                    }
+                    break;
+
+                case ENUM_TYPE:
+                    printf("  Categoria: enum\n");
+                    printf("  Valores:\n");
+                    for (int j = 0; j < data->info.enum_attrs->capacity; j++) {
+                        hash_node* enum_node = data->info.enum_attrs->nodes[j];
+                        while (enum_node != NULL) {
+                            printf("    %s\n", enum_node->key);
+                            enum_node = enum_node->next;
+                        }
+                    }
+                    break;
+
+                case ALIAS_TYPE:
+                    printf("  Categoria: alias\n");
+                    printf("  Aponta para: %s\n", data->info.alias_type);
+                    break;
+
+                default:
+                    printf("  Categoria: desconhecida\n");
+                    break;
+            }
+
+            printf("\n");
+            node = node->next;
+        }
+    }
 }

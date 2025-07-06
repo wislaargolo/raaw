@@ -48,5 +48,6 @@ void insert_enum_attr(char* enum_name, char* name);
 int enum_has_attr(char* enum_name, char* name);
 int is_enum_group(char* name);
 char* get_enum_group_name(char* name);
+void print_types_table();
 
 #endif
