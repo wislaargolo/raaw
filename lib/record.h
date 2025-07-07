@@ -33,13 +33,23 @@ struct record {
 
 typedef struct record record;
 
-struct initialization_record {
+struct dimensional_record {
   char* code;
   char* type;
   int dimension;
 };
 
-typedef struct initialization_record initialization_record;
+typedef struct dimensional_record dimensional_record;
+
+struct identifier_ref_record {
+  char* code;
+  char* type;
+  int dimension;
+	char* setter_code;
+	char* ref_code;
+};
+
+typedef struct identifier_ref_record identifier_ref_record;
 
 void free_record(record *);
 record * create_record(char *, char *);

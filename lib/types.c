@@ -40,16 +40,19 @@ int is_struct(char* name) {
   return data.discriminator == STRUCT_TYPE;
 }
 
-void insert_struct_attr(char* struct_name, char* name, char* type) {
+void insert_struct_attr(char* struct_name, char* name, char* type, int dimension) {
   if(has_type(struct_name)) {
     type_data data = get_type_data(struct_name);
 
-    hash_insert_t(data.info.struct_attrs, name, strdup(type), char*);
+    struct_attr attr;
+    attr.type = type;
+    attr.dimension = dimension;
+
+    hash_insert_t(data.info.struct_attrs, name, attr, struct_attr);
   }
 }
 
 int struct_has_attr(char* struct_name, char* name) {
-
   if(!has_type(struct_name)) return 0;
 
   type_data data = get_type_data(struct_name);
@@ -57,12 +60,12 @@ int struct_has_attr(char* struct_name, char* name) {
   return hash_has(data.info.struct_attrs, name);
 }
 
-char* get_struct_attr_type(char* struct_name, char* name) {
-  if(!has_type(struct_name)) return strdup("");
+struct_attr get_struct_attr(char* struct_name, char* name) {
+  if(!has_type(struct_name)) return (struct_attr) {strdup(""), 0};
 
   type_data data = get_type_data(struct_name);
 
-  return hash_get_t(data.info.struct_attrs, name, char*);
+  return hash_get_t(data.info.struct_attrs, name, struct_attr);
 }
 
 int is_of_type(char* name, char* type) {

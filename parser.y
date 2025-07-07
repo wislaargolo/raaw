@@ -34,7 +34,8 @@ Stack* stack = NULL;
      struct declaration_term_record* decl_term;
      struct type_record* type_rec;
      struct parameter_record* param;
-     struct initialization_record* init_rec;
+     struct dimensional_record* dimensional_rec;
+     struct identifier_ref_record* identifier_ref_rec;
 };
 
 
@@ -53,15 +54,17 @@ Stack* stack = NULL;
                and_operator or_operator assignment_operator
 
 %type <rec> literal target base expr val function_call postfix_expr cast prefix_expr term
-            identifier_ref arithmetic_expr relational_expr eq_expr and_expr or_expr deletion
-            assignment_expr assignment_command allocation assignment assignable
+          arithmetic_expr relational_expr eq_expr and_expr or_expr deletion
+            assignment_expr assignment_command allocation assignment
             parameters cases case case_item default statements switch for_init for var_declaration type_declaration
             do_while while else else_opt else_if else_ifs else_ifs_opt if return return_value
             command jump statement const_declaration parameter user_type subprogram subprograms
             struct_vars struct_type enum_list enum_type declaration struct_var_declaration
             declarations program default_opt const_parameter parameter_type
 
-%type <init_rec> initialization initialization_list
+%type <dimensional_rec> initialization initialization_list
+
+%type <identifier_ref_rec> identifier_ref assignable
 
 %type <decl_term> declaration_term declaration_line declaration_item struct_declaration_line
 
@@ -212,14 +215,14 @@ declaration_term : ID                                       {
                  ;
 
 initialization : expr    {
-                              $$ = (initialization_record*) malloc(sizeof(initialization_record));
+                              $$ = (dimensional_record*) malloc(sizeof(dimensional_record));
                               $$->code = strdup($1->code);
                               $$->type = strdup($1->type);
                               $$->dimension = 0;
                               free_record($1);
                          }
                | LBRACE initialization_list RBRACE  {
-                         $$ = (initialization_record*) malloc(sizeof(initialization_record));
+                         $$ = (dimensional_record*) malloc(sizeof(dimensional_record));
                          char *s = cat(3, "{", $2->code, "}\n");
                          $$->code = s;
                          $$->type = strdup($2->type);
@@ -229,7 +232,7 @@ initialization : expr    {
                     }
                | allocation                                                                         {
                     non_constant_expr("allocation");
-                    $$ = (initialization_record*) malloc(sizeof(initialization_record));
+                    $$ = (dimensional_record*) malloc(sizeof(dimensional_record));
                     $$->code = strdup($1->code);
                     $$->type = strdup($1->type);
                     $$->dimension = 0;
@@ -247,7 +250,7 @@ initialization_list : initialization                                            
                                                                            yyerror("Invalid dimension in variable initialization");
                                                                       }
 
-                                                                      $$ = (initialization_record*) malloc(sizeof(initialization_record));
+                                                                      $$ = (dimensional_record*) malloc(sizeof(dimensional_record));
                                                                       char *s = cat(3, $1->code, ", ", $3->code);
                                                                       $$->code = s;
                                                                       $$->type = strdup($1->type);
@@ -334,7 +337,7 @@ map_type : MAP ABRACKET_OPEN type COMMA type ABRACKET_CLOSE  {
 list_type : LIST ABRACKET_OPEN type ABRACKET_CLOSE {
                                                        $$ = (type_record*) malloc(sizeof(type_record));
                                                        $$->code = strdup("list");
-                                                       $$->name = cat(4, "list<", $3->name, ">");
+                                                       $$->name = cat(3, "list<", $3->name, ">");
                                                        free($3->code);
                                                        free($3->name);
                                                   }
@@ -408,7 +411,7 @@ struct_var_declaration : type struct_declaration_line SEMICOLON  {
                                                                  yyerror(cat(3, "Attribute '", decl->name, "' declared twice or more in struct"));
                                                             }
 
-                                                            insert_struct_attr(type_name, decl->name, type);
+                                                            insert_struct_attr(type_name, decl->name, type, decl->dimension);
 
                                                             free(decl->name);
                                                             free(decl->code);
@@ -913,10 +916,15 @@ function_call : ID LPAREN RPAREN   {
                                                        $$ = create_record(s, "");
                                                        free(s);
                                                   } else {
-
                                                        if (!strcmp($1,"print") || !strcmp($1,"printLine")) {
                                                             $$ = build_printf($3, !strcmp($1,"printLine"));
                                                        } else {
+                                                            int is_gen_list_function = is_list_function($1, $3);
+                                                            char* gen_type = NULL;
+
+                                                            if (is_gen_list_function) {
+                                                                 gen_type = get_list_type($3->type);
+                                                            }
 
                                                             function_data fdata = get_function($1);
 
@@ -930,19 +938,26 @@ function_call : ID LPAREN RPAREN   {
                                                                  while(formal != NULL && curr != NULL) {
                                                                       char pos_str[12];
                                                                       sprintf(pos_str, "%d", pos);
+                                                                      char* formal_type = formal->type;
 
-                                                                      if(!type_check(formal->type, curr->type)) {
-                                                                           yyerror(cat(8, "Invalid call: argument ", pos_str,  " of function ", $1, " expected ", formal->type, ", received ", curr->type));
+                                                                      if (gen_type != NULL && strcmp(formal_type, "_") == 0) {
+                                                                           formal_type = gen_type;
+                                                                      }
+
+                                                                      if(!type_check(formal_type, curr->type)) {
+                                                                           yyerror(cat(8, "Invalid call: argument ", pos_str,  " of function ", $1, " expected ", formal_type, ", received ", curr->type));
                                                                       }
                                                                       formal = formal->next;
                                                                       curr = curr->next;
                                                                       pos++;
                                                                  }
-
                                                             }
+
 
                                                             $$ = build_function_call($1, $3);
                                                             $$->type = get_function_return_type($1);
+
+                                                            free(gen_type);
                                                        }
                                                   }
                                                   free($1);
@@ -972,11 +987,6 @@ assignment : assignable assignment_operator assignment_expr  {
                                                                       s_code = strdup("");
                                                                 }
 
-                                                                if(get_variable(stack, $1->code).dimension > 0) {
-                                                                      yyerror(cat(3, "Invalid operator: variable ", $1->code, " has dimensions and cannot be assigned directly."));
-                                                                      s_code = strdup("");
-                                                                }
-
                                                                 if (type_check(assigned_type, "string")) {
 
                                                                     if (strcmp($2, " = ") == 0) {
@@ -995,9 +1005,12 @@ assignment : assignable assignment_operator assignment_expr  {
                                                                       if (!type_check(assigned_type, "int") && !type_check(assigned_type, "float")) {
                                                                            yyerror(cat(2, "Invalid type: expected int or float, received ", $1->type));
                                                                       }
+                                                                    } else if ($1->setter_code != NULL) {
+                                                                      s_code = cat(5, $1->setter_code, $3->code, ", ", translate_type($3->type), ")");
+                                                                      free($1->setter_code);
+                                                                    } else {
+                                                                      s_code = cat(3, $1->code, $2, $3->code);
                                                                     }
-
-                                                                    s_code = cat(3, $1->code, $2, $3->code);
                                                                 }
 
                                                                 if (!type_check($1->type, $3->type)) {
@@ -1005,7 +1018,8 @@ assignment : assignable assignment_operator assignment_expr  {
                                                                  }
 
                                                                 $$ = create_record(s_code, assigned_type);
-                                                                free_record($1);
+                                                                free($1->code);
+                                                                free($1->type);
                                                                 free($2);
                                                                 free_record($3);
                                                                 free(s_code);
@@ -1021,8 +1035,26 @@ assignment_command : assignment SEMICOLON {
                                           }
                    ;
 
-assignable : identifier_ref                                                                         { $$ = $1; }
-            | val                                                                                   { $$ = $1; }
+assignable : identifier_ref        {
+                                         $$ = $1;
+
+                                        if ($1->ref_code != NULL) {
+                                             free($$->ref_code);
+                                        }
+
+                                         if ($1->dimension > 0) {
+                                              yyerror("Invalid assignment to array");
+                                         }
+                                   }
+            | val                  {
+                                        $$ = (identifier_ref_record*) malloc(sizeof(identifier_ref_record));
+                                        $$->code = strdup($1->code);
+                                        $$->type = strdup($1->type);
+                                        $$->dimension = 0;
+                                        $$->ref_code = NULL;
+                                        $$->setter_code = NULL;
+                                        free_record($1);
+                                   }
             ;
 
 val : VAL LPAREN target RPAREN     {
@@ -1057,7 +1089,8 @@ assignment_expr : expr                                                          
 
 deletion : DELETE LPAREN identifier_ref RPAREN SEMICOLON    {
                                                                  char * s = cat(5, "free", "(,", $3->code, ")", ";");
-                                                                 free_record($3);
+                                                                 free($3->code);
+                                                                 free($3->type);
                                                                  $$ = create_record(s, "");
                                                                  free(s);
                                                             }
@@ -1065,45 +1098,81 @@ deletion : DELETE LPAREN identifier_ref RPAREN SEMICOLON    {
 
 identifier_ref : ID                                    {
                                                             char* type;
+                                                            int dimension = 0;
                                                             if (!exists_scope_parent(stack, $1)) {
                                                                  yyerror(cat(3, "Variable '", $1, "' is not declared"));
                                                                  type = strdup("");
                                                             } else {
-                                                                 type = strdup(get_variable(stack, $1).type);
+                                                                 variable_data var = get_variable(stack, $1);
+                                                                 type = strdup(var.type);
+                                                                 dimension = var.dimension;
                                                             }
 
-                                                            $$ = create_record($1, type);
+                                                            $$ = (identifier_ref_record*) malloc(sizeof(identifier_ref_record));
+                                                            $$->code = strdup($1);
+                                                            $$->type = type;
+                                                            $$->dimension = dimension;
+                                                            $$->setter_code = NULL;
+                                                            $$->ref_code = NULL;
                                                             free($1);
-                                                            free(type);
                                                        }
                | identifier_ref LBRACKET expr RBRACKET {
-                                                            if (!is_ptr($1->type)) {
-                                                                 yyerror(cat(2, "Invalid type: expected ptr, received ", $3->type));
+                                                            char* s;
+                                                            char* setter_code = NULL;
+                                                            char* ref_code = NULL;
+                                                            char* type;
+                                                            int dimension = 0;
+                                                            if (is_list($1->type)) {
+                                                                 s = cat(5, "_listGet(", $1->code, ", ", $3->code, ")");
+                                                                 setter_code = cat(5, "_listSet(&", $1->code, ", ", $3->code, ", ");
+                                                                 type = get_list_type($1->type);
+                                                                 char* translated_type = translate_type(type);
+                                                                 ref_code = cat(7, "((", translated_type, "*)", $1->code, ".data[", $3->code, "])");
+                                                                 free(translated_type);
+                                                            } else if (is_ptr($1->type)) {
+                                                                 s = cat(4, $1->code, "[", $3->code, "]");
+                                                                 type = get_ptr_type($1->type);
+                                                                 dimension = $1->dimension - 1;
+                                                            } else {
+                                                                 yyerror(cat(2, "Invalid type: expected ptr or list, received ", $3->type));
                                                             }
-                                                            char * s = cat(4, $1->code, "[", $3->code, "]");
-                                                            $$ = create_record(s, get_ptr_type($3->type));
-                                                            free_record($1);
+                                                            $$ = (identifier_ref_record*) malloc(sizeof(identifier_ref_record));
+                                                            $$->code = s;
+                                                            $$->setter_code = setter_code;
+                                                            $$->ref_code = ref_code;
+                                                            $$->type = type;
+                                                            $$->dimension = dimension;
+                                                            free($1->code);
+                                                            free($1->type);
                                                             free_record($3);
-                                                            free(s);
                                                        }
                | identifier_ref DOT ID  {
                                              char * s = cat(3, $1->code, ".", $3);
+                                             char * type;
+                                             int dimension = 0;
 
                                              if(!is_struct($1->type)) {
                                                   yyerror(cat(2, "Invalid type: expected struct, received ", $1->type));
-                                                  $$ = create_record(s, "");
+                                                  type = strdup("");
                                              } else if(!struct_has_attr($1->type, $3)) {
                                                   yyerror(cat(2, "Invalid: struct does not have the attribute ", $1->type));
-                                                  $$ = create_record(s, "");
+                                                  type = strdup("");
                                              } else {
-                                                  char * s = cat(3, $1->code, ".", $3);
-                                                  $$ = create_record(s, get_struct_attr_type($1->type, $3));
-                                                  free(s);
+                                                  struct_attr attr = get_struct_attr($1->type, $3);
+                                                  type = strdup(attr.type);
+                                                  dimension = attr.dimension;
                                              }
 
-                                             free_record($1);
+                                             $$ = (identifier_ref_record*) malloc(sizeof(identifier_ref_record));
+                                             $$->code = s;
+                                             $$->type = type;
+                                             $$->dimension = dimension;
+                                             $$->setter_code = NULL;
+                                             $$->ref_code = NULL;
+
+                                             free($1->code);
+                                             free($1->type);
                                              free($3);
-                                             free(s);
                                         }
                ;
 
@@ -1299,9 +1368,22 @@ prefix_expr : postfix_expr                        { $$ = $1; }
                                                             yyerror(cat(3, "Invalid operator: cannot assign to constant variable ", $3->code, "."));
                                                        }
 
-                                                       char * s = cat(4,"&","(", $3->code,")");
+                                                       char * s;
+
+                                                       if ($3->ref_code != NULL) {
+                                                            s = strdup($3->ref_code);
+                                                            free($3->ref_code);
+                                                       } else {
+                                                            s = cat(4,"&","(", $3->code,")");
+                                                       }
+
+                                                       if ($3->setter_code != NULL) {
+                                                            free($3->setter_code);
+                                                       }
+
                                                        char* type = cat(3, "ptr<", $3->type, ">");
-                                                       free_record($3);
+                                                       free($3->code);
+                                                       free($3->type);
                                                        $$ = create_record(s, type);
                                                        free(s);
                                                        free(type);
@@ -1389,7 +1471,11 @@ target : base                           { $$ = $1; }
                                              }
 
                                              if (is_list($1->type)) {
-                                                 // traduzir para list
+                                                 char* type = get_list_type($1->type);
+                                                 char * s = cat(7, "_listGet(&", $1->code, ", ", $3->code, ", ", translate_type(type), ")");
+                                                 $$ = create_record(s, type);
+                                                 free(s);
+                                                 free(type);
                                              } else if (type_check($1->type, "string")) {
                                                   char * s = cat(4, $1->code, "[", $3->code,"]");
                                                   $$ = create_record(s, "char");
@@ -1430,7 +1516,7 @@ target : base                           { $$ = $1; }
                                              } else {
                                                   char * s = cat(3, $1->code, ".", $3);
 
-                                                  $$ = create_record(s, get_struct_attr_type($1->type, $3));
+                                                  $$ = create_record(s, get_struct_attr($1->type, $3).type);
 
                                                   free(s);
                                              }

@@ -7,7 +7,8 @@
 #include <stdbool.h>
 
 #include "scan.h"
+#include "list.h"
 
 typedef bool boolean;
 
-#endif 
+#endif

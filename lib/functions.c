@@ -26,6 +26,36 @@ void initial_functions() {
     insert_function("toLower", "void", NULL);
     insert_function("freeString", "void", NULL);
     insert_function("isEquals", "void", NULL);
+
+    function_data* fdata;
+
+    insert_function("listPush", "void", &fdata);
+    new_param(fdata, "list<_>");
+    new_param(fdata, "_");
+
+    insert_function("listPop", "void", &fdata);
+    new_param(fdata, "list<_>");
+
+    insert_function("listInsert", "void", &fdata);
+    new_param(fdata, "list<_>");
+    new_param(fdata, "int");
+    new_param(fdata, "_");
+
+    insert_function("listRemove", "void", &fdata);
+    new_param(fdata, "list<_>");
+    new_param(fdata, "int");
+
+    insert_function("listClear", "void", &fdata);
+    new_param(fdata, "list<_>");
+
+    insert_function("listSize", "int", &fdata);
+    new_param(fdata, "list<_>");
+
+    insert_function("listInit", "void", &fdata);
+    new_param(fdata, "list<_>");
+    new_param(fdata, "int");
+    new_param(fdata, "_");
+
 }
 
 void init_function_table() {
@@ -35,20 +65,20 @@ void init_function_table() {
 
 int insert_function(char* name, char* return_type, function_data** current) {
 
-    if(has_function(name)) { 
+    if(has_function(name)) {
         if(current != NULL) *current = hash_get(functions_table, name);
         return 1;
     }
-     
-    
+
+
     function_data* data = malloc(sizeof(function_data));
     data->return_type = strdup(return_type);
     data->params = NULL;
-    data->last_param = NULL; 
+    data->last_param = NULL;
     data->num_params = 0;
 
     if (current) *current = data;
-    
+
 
     hash_insert(functions_table, name, data);
 
@@ -94,7 +124,7 @@ char* get_function_return_type(char* name) {
 void free_params(function_param* params) {
     while (params != NULL) {
         function_param* next = params->next;
-        free(params->type); 
+        free(params->type);
         free(params);
         params = next;
     }
@@ -131,7 +161,7 @@ void print_function_table() {
         }
 
         while (node != NULL) {
-            
+
             function_data fd = *(function_data *)node->value;
             printf("['%s' -> ret:%s, n=%d", node->key, fd.return_type, fd.num_params);
             if(fd.num_params > 0) printf(", params: ");
@@ -142,11 +172,11 @@ void print_function_table() {
                     if (param->next != NULL) {
                         printf(", ");
                     }
-                
+
                 param = param->next;
             }
             printf("] -> ");
-            
+
             node = node->next;
         }
         printf("NULL\n");

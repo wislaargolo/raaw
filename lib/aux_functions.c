@@ -1,7 +1,8 @@
 #include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <string.h>
+#include "./types.h"
 #include "./aux_functions.h"
 
 char *cat(int count, ...) {
@@ -52,6 +53,18 @@ char* print_type(char* t) {
     return "%p";
 }
 
+char* translate_type(char* t) {
+     if (is_list(t)) {
+          return strdup("list");
+     } else if (is_ptr(t)) {
+          return cat(2, translate_type(get_ptr_type(t)), "*");
+     } else if (strcmp(t, "string") == 0) {
+          return strdup("char*");
+     } else {
+          return strdup(t);
+     }
+}
+
 record* build_printf(parameter_record* params, int is_line) {
 
      char* format_type = strdup("\"");
@@ -60,7 +73,7 @@ record* build_printf(parameter_record* params, int is_line) {
 
 
      for(parameter_record* param = params; param != NULL; param = param->next) {
-          
+
           char* type = print_type(param->type);
           char* temp = cat(2, format_type, type);
 
@@ -107,19 +120,50 @@ record* build_printf(parameter_record* params, int is_line) {
     return r;
 }
 
+int is_list_function(char* name, parameter_record* params) {
+     return (
+          !strcmp(name, "listPush") ||
+          !strcmp(name, "listPop") ||
+          !strcmp(name, "listInsert") ||
+          !strcmp(name, "listRemove") ||
+          !strcmp(name, "listClear") ||
+          !strcmp(name, "listInit") ||
+          !strcmp(name, "listSize")
+     ) && params != NULL && is_list(params->type);
+}
+
 record* build_function_call(char* name, parameter_record* params) {
     char* args = NULL;
 
+    int check_list_function = is_list_function(name, params);
+
+    if (check_list_function) {
+        char* newCode = cat(2, "&", params->code);
+        free(params->code);
+        params->code = newCode;
+    }
+
     for(parameter_record* param = params; param != NULL; param = param->next) {
-     
+
           char *arg_code = (!strcmp(param->type, "boolean")) ? cat(3, "bool_to_string(", param->code, ")") : strdup(param->code);
 
           char *tmp = args ? cat(3, args, ", ", arg_code) : strdup(arg_code);
 
-          free(args);          
+          free(args);
           free(arg_code);
           args = tmp;
-          
+
+    }
+
+    if (check_list_function) {
+         char* list_type = get_list_type(params->type);
+         char* translated_type = translate_type(list_type);
+         free(list_type);
+         char *tmp = args ? cat(3, args, ", ", translated_type) : strdup(translated_type);
+
+         free(args);
+         free(translated_type);
+         args = tmp;
     }
 
     char* call_code;
@@ -134,7 +178,7 @@ record* build_function_call(char* name, parameter_record* params) {
 
     if(args) free(args);
     if(call_code) free(call_code);
-    
+
     return r;
 }
-  
+
