@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "list.h"
 #include "scan.h"
 
 typedef bool boolean;

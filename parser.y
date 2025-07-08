@@ -457,7 +457,7 @@ subprogram : type ID LPAREN   {
                                         yyerror(cat(3, "Variable ", $2, " has already bean declareted."));
                                    } else if(has_type($2)) {
                                         yyerror(cat(3, "Type ", $2, " has already bean declareted."));
-                                   } else if(insert_function($2, $1->code, &current_fd) == 1) {
+                                   } else if(insert_function($2, $1->name, &current_fd) == 1) {
                                         yyerror(cat(3, "Function ", $2, " has already bean declareted."));
                                    }
                                    push_subprogram(stack, $2);
@@ -499,7 +499,7 @@ subprogram : type ID LPAREN   {
                                    yyerror(cat(3, "Variable ", $2, " has already bean declareted."));
                               } else if(has_type($2)) {
                                    yyerror(cat(3, "Type ", $2, " has already bean declareted."));
-                              } else if(insert_function($2, $1->code, &current_fd) == 1) {
+                              } else if(insert_function($2, $1->name, &current_fd) == 1) {
                                    yyerror(cat(3, "Function ", $2, " has already bean declareted."));
                               }
 
@@ -799,7 +799,6 @@ for : FOR LPAREN {
                     top->continue_label = cat(2, top->name, "_continue");
 
                } for_init expr SEMICOLON assignment RPAREN LBRACE statements RBRACE  {
-
                     ScopeNode* top = stack->top;
 
                     char* s = cat(20,"\n{\n",
@@ -978,7 +977,6 @@ parameters_call : expr                                       {
                 ;
 
 assignment : assignable assignment_operator assignment_expr  {
-
                                                                 char * s_code;
                                                                 char * assigned_type = strdup($1->type);
 
@@ -1005,6 +1003,7 @@ assignment : assignable assignment_operator assignment_expr  {
                                                                       if (!type_check(assigned_type, "int") && !type_check(assigned_type, "float")) {
                                                                            yyerror(cat(2, "Invalid type: expected int or float, received ", $1->type));
                                                                       }
+                                                                      s_code = cat(3, $1->code, $2, $3->code);
                                                                     } else if ($1->setter_code != NULL) {
                                                                       s_code = cat(5, $1->setter_code, $3->code, ", ", translate_type($3->type), ")");
                                                                       free($1->setter_code);
@@ -1451,7 +1450,6 @@ base : ID                     {
                                    $$ = $1;
                               }
      | LPAREN expr RPAREN     {
-                                   printf("em (expr) %s", $2->code);
                                    char * s = cat(3,"(", $2->code,")");
                                    free_record($2);
                                    $$ = create_record(s, $2->type);
