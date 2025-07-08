@@ -649,13 +649,31 @@ jump : CONTINUE                                                                 
 
 return : RETURN return_value  {
                                    char *s = cat(2, "return ", $2->code);
+                                   if (current_fd == NULL) {
+                                        yyerror("'return' statement outside a function.");
+                                   } else {
+                                        char* expected_type = current_fd->return_type;
+                                        char* actual_type = $2->type;
+
+                                        if (type_check(expected_type, "void")) {
+                                            if (!type_check(actual_type, "void")) {
+                                                yyerror("Function declared as 'void' should not return a value.");
+                                            }
+                                        } else {
+                                            if (type_check(actual_type, "void")) {
+                                                yyerror(cat(3, "Function returning '", expected_type, "' requires a return value, but none was provided."));
+                                            } else if (!type_check(actual_type, expected_type)) {
+                                                yyerror(cat(5, "Incompatible return type. Expected '", expected_type, "', found '", actual_type, "'."));
+                                            }
+                                        }
+                                   }
                                    free_record($2);
                                    $$ = create_record(s, "");
                                    free(s);
                               }
        ;
 
-return_value :                                                                                      { $$ = create_record("", ""); }
+return_value :                                                                                      { $$ = create_record("", "void"); }
              | expr                                                                                 { $$ = $1; }
              ;
 
@@ -663,6 +681,11 @@ if : IF LPAREN expr RPAREN LBRACE  {
                                         push(stack, 0, 0);
                                         ScopeNode* top = stack->top;
                                         top->if_end_label = cat(2, top->name, "_end");
+
+                                        if (!type_check($3->type, "boolean")) {
+                                            yyerror(cat(3, "Condition 'if' requires boolean type, but '",  $3->type, "' was found."));
+                                        }
+
                                    } statements RBRACE else_ifs_opt else_opt  {
 
                                         ScopeNode* top = stack->top;
@@ -715,6 +738,10 @@ else_ifs : else_if                                                              
          ;
 
 else_if : ELSEIF LPAREN expr RPAREN LBRACE { push(stack, 0, 0); } statements RBRACE       {
+                                                                                               if (!type_check($3->type, "boolean")) {
+                                                                                                    yyerror(cat(3, "Condition 'else if' requires boolean type, but '", $3->type, "' was found."));
+                                                                                               }
+
                                                                                                ScopeNode* top = stack->top;
                                                                                                char* next_else = cat(2, top->name, "_next");
 
@@ -751,6 +778,9 @@ while : WHILE LPAREN expr RPAREN LBRACE {
                                              top->break_label = cat(2, top->name, "_end");
                                              top->continue_label = strdup(top->name);
 
+                                             if (!type_check($3->type, "boolean")) {
+                                                yyerror(cat(3, "Condition 'while' requires boolean type, but '", $3->type, "' was found."));
+                                             }
                                         } statements RBRACE {
 
                                              ScopeNode* top = stack->top;
@@ -776,6 +806,10 @@ do_while : DO LBRACE  {
                          top->continue_label = strdup(top->name);
                     } statements RBRACE WHILE LPAREN expr RPAREN  {
 
+                         if (!type_check($8->type, "boolean")) {
+                             yyerror(cat(3, "Condition 'do-while' requires boolean type, but '", $8->type, "' was found."));
+                         }
+
                          ScopeNode* top = stack->top;
                          char *s = cat(13,
                               "\n", top->name, ":\n",
@@ -800,6 +834,9 @@ for : FOR LPAREN {
 
                } for_init expr SEMICOLON assignment RPAREN LBRACE statements RBRACE  {
 
+                    if (!type_check($5->type, "boolean")) {
+                        yyerror(cat(3, "Condition 'for' requires boolean type, but '", $5->type, "' was found."));
+                    }
                     ScopeNode* top = stack->top;
 
                     char* s = cat(20,"\n{\n",
@@ -1275,7 +1312,7 @@ relational_expr : arithmetic_expr                               { $$ = $1; }
                                                                       free_record($1);
                                                                       free($2);
                                                                       free_record($3);
-                                                                      $$ = create_record(s, "");
+                                                                      $$ = create_record(s, "boolean");
                                                                       free(s);
                                                                  }
                 ;
