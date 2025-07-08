@@ -36,7 +36,7 @@ char* readString() {
     char *buffer = malloc(cap);
     if (!buffer) {
         fprintf(stderr, "Memory allocation failed in readString");
-        return NULL;
+        return strdup("");
     }
 
     size_t len = 0;
@@ -48,7 +48,7 @@ char* readString() {
             if (!new_buffer) {
                 free(buffer);
                 fprintf(stderr, "Memory allocation failed in readString");
-                return NULL;
+                return strdup("");
             }
             buffer = new_buffer;
         }
