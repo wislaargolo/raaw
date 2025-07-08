@@ -77,6 +77,10 @@ Stack* stack = NULL;
 
 %%
 program : { stack = create_stack(); } declarations subprograms   {
+                                                                      if(!has_function("main")) {
+                                                                           yyerror("Program must define a ‘main’ function as its entry point");
+                                                                      } 
+
                                                                       fprintf(yyout,"#include \"./raaw/header.h\"\n\n%s%s", $2->code, $3->code);
                                                                       free_record($2);
                                                                       free_record($3);
@@ -104,9 +108,8 @@ var_declaration : type declaration_line SEMICOLON  {
                                                        char *s = cat(4, $1->code, " ", $2->code, ";\n");
 
                                                        declaration_term_record* decl = $2;
-
+                                                       char* type = strdup($1->name);
                                                        while (decl != NULL) {
-                                                            char* type = strdup($1->name);
 
                                                             if ($2->init_type != NULL && !type_check(type, $2->init_type)) {
                                                                  yyerror(cat(4, "Invalid type: expected ", type, ", received ", $2->init_type));
@@ -131,7 +134,7 @@ var_declaration : type declaration_line SEMICOLON  {
                                                             decl = decl->next;
                                                        }
 
-                                                       $$ = create_record(s, "");
+                                                       $$ = create_record(s, type);
                                                        free($1->code);
                                                        free($1->name);
                                                        //free($2);
@@ -1045,19 +1048,11 @@ assignable : identifier_ref        {
                                               yyerror("Invalid assignment to array");
                                          }
                                    }
-            | val                  {
-                                        $$ = (identifier_ref_record*) malloc(sizeof(identifier_ref_record));
-                                        $$->code = strdup($1->code);
-                                        $$->type = strdup($1->type);
-                                        $$->dimension = 0;
-                                        $$->ref_code = NULL;
-                                        $$->setter_code = NULL;
-                                        free_record($1);
-                                   }
+            
             ;
 
 val : VAL LPAREN target RPAREN     {
-                                        char *s = cat(3, "*(", $3->code, ")");
+                                        char *s = cat(3, "(*", $3->code, ")");
 
                                         char* type = $3->type;
 
@@ -1087,7 +1082,12 @@ assignment_expr : expr                                                          
                 ;
 
 deletion : DELETE LPAREN identifier_ref RPAREN SEMICOLON    {
-                                                                 char * s = cat(5, "free", "(,", $3->code, ")", ";");
+
+                                                                 if(!is_ptr($3->type)) {
+                                                                      yyerror(cat(2, "Invalid type: expected ptr, received ", $3->type));
+                                                                 } 
+
+                                                                 char * s = cat(5, "free", "(", $3->code, ")", ";");
                                                                  free($3->code);
                                                                  free($3->type);
                                                                  $$ = create_record(s, "");
@@ -1095,7 +1095,8 @@ deletion : DELETE LPAREN identifier_ref RPAREN SEMICOLON    {
                                                             }
          ;
 
-identifier_ref : ID                                    {
+identifier_ref : val                                   {$1 = $1; }
+               | ID                                    {
                                                             char* type;
                                                             int dimension = 0;
                                                             if (!exists_scope_parent(stack, $1)) {
