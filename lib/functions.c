@@ -54,6 +54,33 @@ void initial_functions() {
     insert_function("listInit", "void", &fdata);
     new_param(fdata, "list<_>");
     new_param(fdata, "int");
+
+    insert_function("openFile",         "file",  &fdata);
+    new_param(fdata, "string");
+    new_param(fdata, "string");
+
+    insert_function("closeFile",        "int",   &fdata);
+    new_param(fdata, "file");
+
+    insert_function("readCharFile",     "char",  &fdata);
+    new_param(fdata, "file");
+
+    insert_function("readStringFile",  "string", &fdata);
+    new_param(fdata, "string");
+    new_param(fdata, "int");
+    new_param(fdata, "file");
+
+    insert_function("writeCharFile",    "int",   &fdata);
+    new_param(fdata, "char");
+    new_param(fdata, "file");
+
+    insert_function("writeStringFile",  "int",   &fdata);
+    new_param(fdata, "string");
+    new_param(fdata, "file");
+
+    insert_function("isEof",        "int",   &fdata);
+    new_param(fdata, "char");
+
 }
 
 void init_function_table() {

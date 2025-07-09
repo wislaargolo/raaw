@@ -6,8 +6,10 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "list.h"
+
 #include "scan.h"
+#include "list.h"
+#include "file_raaw.h"
 
 typedef bool boolean;
 

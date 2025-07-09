@@ -25,6 +25,8 @@ function_data *current_fd = NULL;
 int const_mode = 0;
 int inside_struct = 0;
 
+char* switch_type = NULL;
+
 Stack* stack = NULL;
 %}
 
@@ -280,8 +282,14 @@ allocation : NEW type LBRACKET expr RBRACKET {
 
 type : PRIM_TYPE    {
                          $$ = (type_record*) malloc(sizeof(type_record));
-                         $$->code = strdup($1);
-                         $$->name = strdup($1);
+                         if (strcmp($1, "file") == 0) {
+                              $$->code = strdup("FILE*");
+                              $$->name = strdup("file");
+                         } else {
+                              /* demais primitivos continuam iguais */
+                              $$->code = strdup($1);
+                              $$->name = strdup($1);
+                         }
                          free($1);
                     }
      | ptr_type     { $$ = $1; }
@@ -871,6 +879,7 @@ switch : SWITCH LPAREN expr RPAREN LBRACE {
                                              push(stack, 0, 1);
                                              ScopeNode* top = stack->top;
                                              top->break_label = cat(2, top->name, "_end");
+                                             switch_type = strdup($3->type);
 
                                         } cases default_opt RBRACE   {
                                              ScopeNode* top = stack->top;
@@ -887,6 +896,8 @@ switch : SWITCH LPAREN expr RPAREN LBRACE {
                                              $$ = create_record(s, "");
                                              free(s);
                                              pop(stack);
+                                             free(switch_type);
+                                             switch_type = NULL;
                                         }
        ;
 
@@ -920,11 +931,14 @@ default : DEFAULT COLON statements {
                                    }
         ;
 
-//verificar o tipo de literal com o tipo global que é definido no witch
-case_item : literal COLON statements       {
-                                             char *s = cat(3, $1->code, ":", $3->code);
+case_item : literal                          {if (strcmp($1->type, switch_type) != 0) {
+                                                  yyerror("Literal type in case does not match switch type");
+                                             }
+                                             
+                                             } COLON statements    {
+                                             char *s = cat(3, $1->code, ":", $4->code);
                                              free_record($1);
-                                             free_record($3);
+                                             free_record($4);
                                              $$ = create_record(s, "");
                                              free(s);
                                         }
