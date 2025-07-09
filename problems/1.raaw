@@ -1,0 +1,8 @@
+void main() {
+    float x = 5.5;
+    float y = 2.3;
+    int c = 10;
+    float resultado = x * x - y + (float) c;
+
+    printLine("x^2 - y + c é = ", resultado);
+}

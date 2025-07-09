@@ -79,7 +79,7 @@ Stack* stack = NULL;
 program : { stack = create_stack(); } declarations subprograms   {
                                                                       if(!has_function("main")) {
                                                                            yyerror("Program must define a ‘main’ function as its entry point");
-                                                                      } 
+                                                                      }
 
                                                                       fprintf(yyout,"#include \"./raaw/header.h\"\n\n%s%s", $2->code, $3->code);
                                                                       free_record($2);
@@ -652,17 +652,39 @@ jump : CONTINUE                                                                 
 
 return : RETURN return_value  {
                                    char *s = cat(2, "return ", $2->code);
+                                   if (current_fd == NULL) {
+                                        yyerror("'return' statement outside a function.");
+                                   } else {
+                                        char* expected_type = current_fd->return_type;
+                                        char* actual_type = $2->type;
+
+                                        if (type_check(expected_type, "void")) {
+                                            if (!type_check(actual_type, "void")) {
+                                                yyerror("Function declared as 'void' should not return a value.");
+                                            }
+                                        } else {
+                                            if (type_check(actual_type, "void")) {
+                                                yyerror(cat(3, "Function returning '", expected_type, "' requires a return value, but none was provided."));
+                                            } else if (!type_check(actual_type, expected_type)) {
+                                                yyerror(cat(5, "Incompatible return type. Expected '", expected_type, "', found '", actual_type, "'."));
+                                            }
+                                        }
+                                   }
                                    free_record($2);
                                    $$ = create_record(s, "");
                                    free(s);
                               }
        ;
 
-return_value :                                                                                      { $$ = create_record("", ""); }
+return_value :                                                                                      { $$ = create_record("", "void"); }
              | expr                                                                                 { $$ = $1; }
              ;
 
-if : IF LPAREN expr RPAREN LBRACE  {
+if : IF LPAREN expr {
+                         if (!type_check($3->type, "boolean")) {
+                              yyerror(cat(3, "Condition 'if' requires boolean type, but '",  $3->type, "' was found."));
+                         }
+                    } RPAREN LBRACE  {
                                         push(stack, 0, 0);
                                         ScopeNode* top = stack->top;
                                         top->if_end_label = cat(2, top->name, "_end");
@@ -670,14 +692,14 @@ if : IF LPAREN expr RPAREN LBRACE  {
 
                                         ScopeNode* top = stack->top;
                                         char* next_else = cat(2, top->name, "_else");
-                                        char* else_chain = cat(2, $9->code, $10->code);
+                                        char* else_chain = cat(2, $10->code, $11->code);
 
                                         char* final_code;
 
                                         if (strlen(else_chain) > 0) {
                                              final_code = cat(17,
                                                   "if (!(", $3->code, ")) goto ", next_else, ";\n",
-                                                  "{", $7->code, "\n}\n",
+                                                  "{", $8->code, "\n}\n",
                                                   "goto ", top->if_end_label, ";\n",
                                                   next_else, ":\n",
                                                   else_chain, "\n",
@@ -686,15 +708,15 @@ if : IF LPAREN expr RPAREN LBRACE  {
                                         } else {
                                              final_code = cat(10,
                                                   "if (!(", $3->code, ")) goto ", top->if_end_label, ";\n",
-                                                   "{", $7->code, "\n}\n",
+                                                   "{", $8->code, "\n}\n",
                                                   top->if_end_label, ":"
                                              );
                                         }
 
                                         free_record($3);
-                                        free_record($7);
-                                        free_record($9);
+                                        free_record($8);
                                         free_record($10);
+                                        free_record($11);
                                         free(next_else);
                                         free(else_chain);
                                         $$ = create_record(final_code, "");
@@ -717,18 +739,23 @@ else_ifs : else_if                                                              
                               }
          ;
 
-else_if : ELSEIF LPAREN expr RPAREN LBRACE { push(stack, 0, 0); } statements RBRACE       {
+else_if : ELSEIF LPAREN expr {
+
+                                   if (!type_check($3->type, "boolean")) {
+                                        yyerror(cat(3, "Condition 'else if' requires boolean type, but '", $3->type, "' was found."));
+                                   }
+                             } RPAREN LBRACE { push(stack, 0, 0); } statements RBRACE       {
                                                                                                ScopeNode* top = stack->top;
                                                                                                char* next_else = cat(2, top->name, "_next");
 
                                                                                                char* s = cat(13,
                                                                                                     "if (!(", $3->code, ")) goto ", next_else, ";\n",
-                                                                                                    "{", $7->code, "\n}\n",
+                                                                                                    "{", $8->code, "\n}\n",
                                                                                                     "goto ", top->if_end_label, ";\n",
                                                                                                     next_else, ":"
                                                                                                );
                                                                                                free_record($3);
-                                                                                               free_record($7);
+                                                                                               free_record($8);
                                                                                                free(next_else);
                                                                                                $$ = create_record(s, "");
                                                                                                free(s);
@@ -748,7 +775,11 @@ else : ELSE LBRACE { push(stack, 0, 0); } statements RBRACE    {
                                         }
      ;
 
-while : WHILE LPAREN expr RPAREN LBRACE {
+while : WHILE LPAREN expr {
+                              if (!type_check($3->type, "boolean")) {
+                                   yyerror(cat(3, "Condition 'while' requires boolean type, but '", $3->type, "' was found."));
+                              }
+                         } RPAREN LBRACE {
                                              push(stack, 1, 0);
                                              ScopeNode* top = stack->top;
                                              top->break_label = cat(2, top->name, "_end");
@@ -760,12 +791,12 @@ while : WHILE LPAREN expr RPAREN LBRACE {
                                              char* s = cat(16,
                                                   "\n", top->name, ":\n",
                                                   "if (!(", $3->code, ")) goto ", top->break_label, ";\n",
-                                                  "{", $7->code, "\n",
+                                                  "{", $8->code, "\n",
                                                   "goto ", top->name, ";\n}\n",
                                                   top->break_label, ":"
                                              );
                                              free_record($3);
-                                             free_record($7);
+                                             free_record($8);
                                              $$ = create_record(s, "");
                                              free(s);
                                              pop(stack);
@@ -778,6 +809,9 @@ do_while : DO LBRACE  {
                          top->break_label = cat(2, top->name, "_end");
                          top->continue_label = strdup(top->name);
                     } statements RBRACE WHILE LPAREN expr RPAREN  {
+                         if (!type_check($8->type, "boolean")) {
+                             yyerror(cat(3, "Condition 'do-while' requires boolean type, but '", $8->type, "' was found."));
+                         }
 
                          ScopeNode* top = stack->top;
                          char *s = cat(13,
@@ -801,24 +835,28 @@ for : FOR LPAREN {
                     top->break_label = cat(2, top->name, "_end");
                     top->continue_label = cat(2, top->name, "_continue");
 
-               } for_init expr SEMICOLON assignment RPAREN LBRACE statements RBRACE  {
+               } for_init expr {
+                    if (!type_check($5->type, "boolean")) {
+                        yyerror(cat(3, "Condition 'for' requires boolean type, but '", $5->type, "' was found."));
+                    }
+               } SEMICOLON assignment RPAREN LBRACE statements RBRACE  {
                     ScopeNode* top = stack->top;
 
                     char* s = cat(20,"\n{\n",
                          $4->code, "\n",
                          top->name, ":\n",
                          "if (!(", $5->code, ")) goto ", top->break_label, ";\n",
-                         $10->code,
+                         $11->code,
                          top->continue_label, ":\n",
-                         $7->code, ";\n",
+                         $8->code, ";\n",
                          "goto ", top->name, ";\n}\n",
                          top->break_label, ":"
                     );
 
                     free_record($4);
                     free_record($5);
-                    free_record($7);
-                    free_record($10);
+                    free_record($8);
+                    free_record($11);
                     $$ = create_record(s, "");
                     free(s);
                     pop(stack);
@@ -1048,7 +1086,7 @@ assignable : identifier_ref        {
                                               yyerror("Invalid assignment to array");
                                          }
                                    }
-            
+
             ;
 
 val : VAL LPAREN target RPAREN     {
@@ -1085,7 +1123,7 @@ deletion : DELETE LPAREN identifier_ref RPAREN SEMICOLON    {
 
                                                                  if(!is_ptr($3->type)) {
                                                                       yyerror(cat(2, "Invalid type: expected ptr, received ", $3->type));
-                                                                 } 
+                                                                 }
 
                                                                  char * s = cat(5, "free", "(", $3->code, ")", ";");
                                                                  free($3->code);
