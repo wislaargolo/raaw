@@ -1,0 +1,59 @@
+
+list<list<int>> readMatriz(int n, int m) {
+  list<list<int>> matriz;
+  listInit(matriz, n);
+  for (int i = 0; i < n; i += 1) {
+    list<int> linha;
+    listInit(linha, m);
+    for (int j = 0; j < m; j += 1) {
+      linha[j] = readInt();
+    }
+    matriz[i] = linha;
+  }
+  return matriz;
+}
+
+void main() {
+  print("Digite o numero de linhas da matriz 1: ");
+  int n1 = readInt();
+  print("Digite o numero de colunas da matriz 1: ");
+  int m1 = readInt();
+  print("Digite o numero de linhas da matriz 2: ");
+  int n2 = readInt();
+  print("Digite o numero de colunas da matriz 2: ");
+  int m2 = readInt();
+
+  printLine("Digite a matriz 1:");
+  list<list<int>> matriz1 = readMatriz(n1, m1);
+  printLine("Digite a matriz 2:");
+  list<list<int>> matriz2 = readMatriz(n2, m2);
+
+  if (n1 != n2 || m1 != m2) {
+    printLine("As matrizes nao podem ser somadas.");
+  } else {
+    printLine("A soma das matrizes:");
+    for (int i = 0; i < n1; i += 1) {
+      for (int j = 0; j < m1; j += 1) {
+        int x = matriz1[i][j] + matriz2[i][j];
+        print(x, " ");
+      }
+      printLine("");
+    }
+  }
+
+  if (m1 != n2) {
+    printLine("As matrizes nao podem ser multiplicadas.");
+  } else {
+    printLine("A multiplicacao das matrizes:");
+    for (int i = 0; i < n1; i += 1) {
+      for (int j = 0; j < m2; j += 1) {
+        int x = 0;
+        for (int k = 0; k < m1; k += 1) {
+          x += matriz1[i][k] * matriz2[k][j];
+        }
+        print(x, " ");
+      }
+      printLine("");
+    }
+  }
+}

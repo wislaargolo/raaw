@@ -132,19 +132,23 @@ int is_list_function(char* name, parameter_record* params) {
      ) && params != NULL && is_list(params->type);
 }
 
+int is_generic_list_function(char* name, parameter_record* params) {
+     return (
+          !strcmp(name, "listInsert") ||
+          !strcmp(name, "listPush")
+     ) && params != NULL && is_list(params->type);
+}
+
 record* build_function_call(char* name, parameter_record* params) {
     char* args = NULL;
 
-    int check_list_function = is_list_function(name, params);
-
-    if (check_list_function) {
+    if (is_list_function(name, params)) {
         char* newCode = cat(2, "&", params->code);
         free(params->code);
         params->code = newCode;
     }
 
     for(parameter_record* param = params; param != NULL; param = param->next) {
-
           char *arg_code = (!strcmp(param->type, "boolean")) ? cat(3, "bool_to_string(", param->code, ")") : strdup(param->code);
 
           char *tmp = args ? cat(3, args, ", ", arg_code) : strdup(arg_code);
@@ -155,7 +159,7 @@ record* build_function_call(char* name, parameter_record* params) {
 
     }
 
-    if (check_list_function) {
+    if (is_generic_list_function(name, params)) {
          char* list_type = get_list_type(params->type);
          char* translated_type = translate_type(list_type);
          free(list_type);

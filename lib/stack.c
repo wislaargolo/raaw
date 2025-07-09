@@ -77,6 +77,7 @@ void push(Stack* stack, int is_loop, int is_switch) {
         node->continue_label = parent->continue_label ? strdup(parent->continue_label) : NULL;
   }
 
+
   node->if_end_label = parent->if_end_label ? strdup(parent->if_end_label) : NULL;
 
   node->name = name;
@@ -86,8 +87,6 @@ void push(Stack* stack, int is_loop, int is_switch) {
   node->parent = parent;
   parent->count++;
   stack->top = node;
-
-  printf("novo elemento: %s\n", name);
 }
 
 void pop(Stack* stack) {
@@ -104,7 +103,7 @@ void pop(Stack* stack) {
   if (top->break_label) free(top->break_label);
   if (top->continue_label) free(top->continue_label);
   if (top->if_end_label) free(top->if_end_label);
-  
+
   stack->top = top->parent;
   free(top);
 }

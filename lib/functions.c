@@ -54,7 +54,6 @@ void initial_functions() {
     insert_function("listInit", "void", &fdata);
     new_param(fdata, "list<_>");
     new_param(fdata, "int");
-    new_param(fdata, "_");
 
     insert_function("openFile",         "file",  &fdata);
     new_param(fdata, "string");

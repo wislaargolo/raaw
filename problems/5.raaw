@@ -1,0 +1,29 @@
+void mdc(int n, int m, ptr<int> r) {
+    if (m % n == 0) {
+        val(r) = n;
+    }
+    else if (n % m == 0) {
+        val(r) = m;
+    }
+    else if (m > n) {
+        mdc(n, m % n, r);
+    }else{
+        mdc(m, n % m, r);
+    }
+}
+
+void main() {
+    int num1 = 48;
+    int num2 = 18;
+    int resultado_mdc;
+
+    mdc(num1, num2, ref(resultado_mdc));
+    printLine("O Maior Divisor Comum (MDC) entre ", num1, " e ", num2, " é: ", resultado_mdc);
+
+    int num3 = 10;
+    int num4 = 4;
+    int resultado_mdc_2;
+
+    mdc(num3, num4, ref(resultado_mdc_2));
+    printLine("O MDC entre ", num3, " e ", num4, " (conforme o algoritmo dado) é: ", resultado_mdc_2);
+}

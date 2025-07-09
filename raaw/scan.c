@@ -8,13 +8,15 @@
 
 int readInt() {
     int v;
-    return scanf("%d", &v);
+    scanf("%d", &v);
+    return v;
 }
 
 
 float readFloat() {
     float v;
-    return scanf("%f", &v);
+    scanf("%f", &v);
+    return v;
 }
 
 char readChar() {
@@ -26,7 +28,7 @@ char readChar() {
     if (c == EOF)
         fprintf(stderr, "Unexpected end of input in readChar");
 
-    return (char)c;      
+    return (char) c;      
 }
 
 char* readString() {
@@ -34,7 +36,7 @@ char* readString() {
     char *buffer = malloc(cap);
     if (!buffer) {
         fprintf(stderr, "Memory allocation failed in readString");
-        return NULL;
+        return strdup("");
     }
 
     size_t len = 0;
@@ -46,11 +48,11 @@ char* readString() {
             if (!new_buffer) {
                 free(buffer);
                 fprintf(stderr, "Memory allocation failed in readString");
-                return NULL;
+                return strdup("");
             }
             buffer = new_buffer;
         }
-        buffer[len++] = (char)ch;
+        buffer[len++] = (char) ch;
     }
 
     if(ch == EOF && len == 0) {
