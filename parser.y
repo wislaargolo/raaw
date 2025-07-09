@@ -1313,7 +1313,7 @@ relational_expr : arithmetic_expr                               { $$ = $1; }
                                                                       free_record($1);
                                                                       free($2);
                                                                       free_record($3);
-                                                                      $$ = create_record(s, "");
+                                                                      $$ = create_record(s, "boolean");
                                                                       free(s);
                                                                  }
                 ;
