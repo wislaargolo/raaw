@@ -4,12 +4,6 @@ void swap(ptr<int> a, ptr<int> b) {
     val(b) = temp;
 }
 
-/*
-  TESTE
-  TEST*E
-  AAAAA
-*/
-
 int partition(ptr<int> arr, int low, int high) {
 
     // Initialize pivot to be the first element
