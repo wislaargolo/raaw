@@ -1,0 +1,117 @@
+type rational_t = struct {
+    int numerador;
+    int denominador;
+};
+
+rational_t make_rational(int a, int b) {
+    rational_t r;
+    r.numerador = a;
+    r.denominador = b;
+    return r;
+}
+
+// a/b == c/d  <=>  a * d == c * b /
+boolean rational_equal(rational_t r1, rational_t r2) {
+    return (r1.numerador * r2.denominador) == (r2.numerador * r1.denominador);
+}
+
+//  (a/b) + (c/d) = (ad + cb) / (bd)
+rational_t rational_add(rational_t r1, rational_t r2) {
+    rational_t r;
+    r.numerador = r1.numerador * r2.denominador + r2.numerador * r1.denominador;
+    r.denominador = r1.denominador * r2.denominador;
+    return r;
+}
+
+// -(a/b) = (-a)/b
+rational_t rational_neg(rational_t r) {
+    r.numerador = -r.numerador;
+    return r;
+}
+
+// r1 - r2 = r1 + (-r2)
+rational_t rational_sub(rational_t r1, rational_t r2) {
+    return rational_add(r1, rational_neg(r2));
+}
+
+// (a/b)(c/d) = (ac)/(b*d)
+rational_t rational_mul(rational_t r1, rational_t r2) {
+    rational_t r;
+    r.numerador   = r1.numerador   * r2.numerador;
+    r.denominador = r1.denominador * r2.denominador;
+    return r;
+}
+
+// (a/b)^(-1) = (b/a), a != 0
+rational_t rational_inv(rational_t r) {
+    rational_t inv;
+    inv.numerador = r.denominador;
+    inv.denominador = r.numerador;
+    return inv;
+}
+
+// (a/b)/(c/d) = (a/b)*(d/c)
+rational_t rational_div(rational_t r1, rational_t r2) {
+    return rational_mul(r1, rational_inv(r2));
+}
+
+void main() {
+    int a, b;
+    rational_t r1, r2;
+
+    printLine("Digite o numerador e o denominador da primeira fração: ");
+
+    a = readInt();
+    b = readInt();
+
+    if (b == 0) {
+        printLine("O denominador não pode ser 0");
+        return;
+    }
+
+    r1 = make_rational(a, b);
+
+    printLine("Digite o numerador e o denominador da segunda fração: ");
+
+    if (b == 0) {
+        printLine("O denominador não pode ser 0");
+        return;
+    }
+
+    a = readInt();
+    b = readInt();
+    r2 = make_rational(a, b);
+
+    printLine("A fração 1 é: ", r1.numerador, "/", r1.denominador);
+    printLine("A fração 2 é: ", r2.numerador, "/", r2.denominador);
+
+    rational_t r3 = rational_add(r1, r2);
+
+    printLine("A soma das frações é: ", r3.numerador, "/", r3.denominador);
+
+    rational_t r4 = rational_neg(r2);
+    printLine("A negação da fração 2 é: ", r4.numerador, "/", r4.denominador);
+
+    rational_t r5 = rational_sub(r1, r2);
+    printLine("A subtração das frações é: ", r5.numerador, "/", r5.denominador);
+
+    rational_t r6 = rational_mul(r1, r2);
+    printLine("A multiplicação das frações é: ", r6.numerador, "/", r6.denominador);
+
+    if (r1.numerador == 0) {
+        printLine("A fração 1 não possui inverso");
+    } else {
+        rational_t r7 = rational_inv(r1);
+        printLine("O inverso da fração 1 é: ", r7.numerador, "/", r7.denominador);
+    }
+
+    rational_t r8 = rational_div(r1, r2);
+    printLine("A divisão das frações é: ", r8.numerador, "/", r8.denominador);
+
+    if (rational_equal(r1, r2)) {
+        printLine("As frações são iguais");
+    } else {
+        printLine("As frações são diferentes");
+    }
+
+}

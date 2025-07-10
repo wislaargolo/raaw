@@ -107,7 +107,7 @@ declaration : var_declaration                                                   
             ;
 
 var_declaration : type declaration_line SEMICOLON  {
-                                                       char *s = cat(4, $1->code, " ", $2->code, ";\n");
+                                                       char *s = strdup("");
 
                                                        declaration_term_record* decl = $2;
                                                        char* type = strdup($1->name);
@@ -124,12 +124,16 @@ var_declaration : type declaration_line SEMICOLON  {
                                                             }
 
                                                             if(strcmp(stack->top->name, "") == 0 && has_type(decl->name)) {
-                                                                 yyerror(cat(3, "Type ", decl->name, " has already bean declareted."));
+                                                                 yyerror(cat(3, "Type ", decl->name, " has already been declared."));
                                                             }
 
                                                             if(insert_variable(stack, decl->name, type, const_mode, decl->dimension) == 1) {
                                                                  yyerror(cat(4, "Variable '", decl->name, "' already declared in scope ", stack->top->name));
                                                             }
+
+                                                            char* aux = s;
+                                                            s = cat(5, $1->code, " ", decl->code, ";\n", aux);
+                                                            free(aux);
 
                                                             free(decl->name);
                                                             free(decl->code);
@@ -139,7 +143,6 @@ var_declaration : type declaration_line SEMICOLON  {
                                                        $$ = create_record(s, type);
                                                        free($1->code);
                                                        free($1->name);
-                                                       //free($2);
                                                        free(s);
                                                        const_mode = 0;
                                                   }
@@ -175,10 +178,7 @@ type_declaration : TYPE ID    {
 
 declaration_line : declaration_item                         { $$ = $1; }
                  | declaration_line COMMA declaration_item  {
-                                                                 char *s = cat(3, $1->code, ", ", $3->code);
-                                                                 free($3->code);
                                                                  $$ = $3;
-                                                                 $$->code = s;
                                                                  $$->next = $1;
                                                             }
                  ;
@@ -221,9 +221,15 @@ declaration_term : ID                                       {
 
 initialization : expr    {
                               $$ = (dimensional_record*) malloc(sizeof(dimensional_record));
-                              $$->code = strdup($1->code);
                               $$->type = strdup($1->type);
                               $$->dimension = 0;
+
+                              if (strcmp($1->type, "string") == 0) {
+                                   $$->code = cat(3, "strDup(", $1->code, ")");
+                              } else {
+                                   $$->code = strdup($1->code);
+                              }
+
                               free_record($1);
                          }
                | LBRACE initialization_list RBRACE  {
@@ -285,6 +291,9 @@ type : PRIM_TYPE    {
                          if (strcmp($1, "file") == 0) {
                               $$->code = strdup("FILE*");
                               $$->name = strdup("file");
+                         } else if (strcmp($1, "string") == 0) {
+                              $$->code = strdup("char*");
+                              $$->name = strdup("string");
                          } else {
                               /* demais primitivos continuam iguais */
                               $$->code = strdup($1);
@@ -465,11 +474,13 @@ subprograms : subprogram                {
 
 subprogram : type ID LPAREN   {
                                    if(exists_in_scope(stack, $2)) {
-                                        yyerror(cat(3, "Variable ", $2, " has already bean declareted."));
+                                        yyerror(cat(3, "Variable ", $2, " has already been declared."));
                                    } else if(has_type($2)) {
-                                        yyerror(cat(3, "Type ", $2, " has already bean declareted."));
-                                   } else if(insert_function($2, $1->name, &current_fd) == 1) {
-                                        yyerror(cat(3, "Function ", $2, " has already bean declareted."));
+                                        yyerror(cat(3, "Type ", $2, " has already been declared."));
+                                   }
+
+                                   if(insert_function($2, $1->name, &current_fd) == 1) {
+                                        yyerror(cat(3, "Function ", $2, " has already been declared."));
                                    }
                                    push_subprogram(stack, $2);
 
@@ -488,11 +499,13 @@ subprogram : type ID LPAREN   {
                               }
            | VOID ID LPAREN   {
                                    if(exists_in_scope(stack, $2)) {
-                                        yyerror(cat(3, "Variable ", $2, " has already bean declareted."));
+                                        yyerror(cat(3, "Variable ", $2, " has already been declared."));
                                    } else if(has_type($2)) {
-                                        yyerror(cat(3, "Type ", $2, " has already bean declareted."));
-                                   } else if(insert_function($2, strdup("void"), &current_fd) == 1) {
-                                        yyerror(cat(3, "Function ", $2, " has already bean declareted."));
+                                        yyerror(cat(3, "Type ", $2, " has already been declared."));
+                                   }
+
+                                   if(insert_function($2, strdup("void"), &current_fd) == 1) {
+                                        yyerror(cat(3, "Function ", $2, " has already been declared."));
                                    }
                                    push_subprogram(stack, $2);
                               } parameters RPAREN LBRACE statements RBRACE {
@@ -507,11 +520,13 @@ subprogram : type ID LPAREN   {
            | type ID LPAREN   {
 
                               if(exists_in_scope(stack, $2)) {
-                                   yyerror(cat(3, "Variable ", $2, " has already bean declareted."));
+                                   yyerror(cat(3, "Variable ", $2, " has already been declared."));
                               } else if(has_type($2)) {
-                                   yyerror(cat(3, "Type ", $2, " has already bean declareted."));
-                              } else if(insert_function($2, $1->name, &current_fd) == 1) {
-                                   yyerror(cat(3, "Function ", $2, " has already bean declareted."));
+                                   yyerror(cat(3, "Type ", $2, " has already been declared."));
+                              }
+
+                              if(insert_function($2, $1->name, &current_fd) == 1) {
+                                   yyerror(cat(3, "Function ", $2, " has already been declared."));
                               }
 
                               push_subprogram(stack, $2);
@@ -527,11 +542,13 @@ subprogram : type ID LPAREN   {
                               }
            | VOID ID LPAREN   {
                                    if(exists_in_scope(stack, $2)) {
-                                        yyerror(cat(3, "Variable ", $2, " has already bean declareted."));
+                                        yyerror(cat(3, "Variable ", $2, " has already been declared."));
                                    } else if(has_type($2)) {
-                                        yyerror(cat(3, "Type ", $2, " has already bean declareted."));
-                                   } else if(insert_function($2, strdup("void"), &current_fd) == 1) {
-                                        yyerror(cat(3, "Function ", $2, " has already bean declareted."));
+                                        yyerror(cat(3, "Type ", $2, " has already been declared."));
+                                   }
+
+                                   if(insert_function($2, strdup("void"), &current_fd) == 1) {
+                                        yyerror(cat(3, "Function ", $2, " has already been declared."));
                                    }
 
                                    push_subprogram(stack, $2);
@@ -561,7 +578,7 @@ parameter_type : parameter                   { $$ = $1; }
 
 parameter : type ID {
                          if(has_type($2)) {
-                              yyerror(cat(3, "Type ", $2, " has already bean declareted."));
+                              yyerror(cat(3, "Type ", $2, " has already been declared."));
                          }
 
                          if(insert_variable(stack, $2, $1->name, const_mode, 0) == 1) {
@@ -934,7 +951,7 @@ default : DEFAULT COLON statements {
 case_item : literal                          {if (strcmp($1->type, switch_type) != 0) {
                                                   yyerror("Literal type in case does not match switch type");
                                              }
-                                             
+
                                              } COLON statements    {
                                              char *s = cat(3, $1->code, ":", $4->code);
                                              free_record($1);
@@ -1043,7 +1060,7 @@ assignment : assignable assignment_operator assignment_expr  {
                                                                 if (type_check(assigned_type, "string")) {
 
                                                                     if (strcmp($2, " = ") == 0) {
-                                                                      s_code = cat(5, "strCopy(", $1->code, ", ", $3->code, ")");
+                                                                      s_code = cat(5, $1->code, $2, "strDup(", $3->code, ")");
                                                                     }
 
                                                                     else if (strcmp($2, " += ") == 0) {
@@ -1106,14 +1123,14 @@ assignable : identifier_ref        {
 val : VAL LPAREN target RPAREN     {
                                         char *s = cat(3, "(*", $3->code, ")");
 
-                                        char* type = $3->type;
+                                        char* type;
 
-                                        if(!is_ptr(type)) {
-                                             yyerror(cat(2, "Invalid type: expected ptr, received ", type));
+                                        if(!is_ptr($3->type)) {
+                                             yyerror(cat(2, "Invalid type: expected ptr, received ", $3->type));
+                                             type = strdup("_");
                                         } else {
-                                             type = get_ptr_type(type);
+                                             type = get_ptr_type($3->type);
                                         }
-
 
                                         $$ = create_record(s, type);
                                         free_record($3);
@@ -1147,13 +1164,21 @@ deletion : DELETE LPAREN identifier_ref RPAREN SEMICOLON    {
                                                             }
          ;
 
-identifier_ref : val                                   {$1 = $1; }
+identifier_ref : val                                   {
+                                                            $$ = (identifier_ref_record*) malloc(sizeof(identifier_ref_record));
+                                                            $$->code = strdup($1->code);
+                                                            $$->type = strdup($1->type);
+                                                            $$->dimension = 0;
+                                                            $$->ref_code = NULL;
+                                                            $$->setter_code = NULL;
+                                                            free_record($1);
+                                                       }
                | ID                                    {
                                                             char* type;
                                                             int dimension = 0;
                                                             if (!exists_scope_parent(stack, $1)) {
                                                                  yyerror(cat(3, "Variable '", $1, "' is not declared"));
-                                                                 type = strdup("");
+                                                                 type = strdup("_");
                                                             } else {
                                                                  variable_data var = get_variable(stack, $1);
                                                                  type = strdup(var.type);
@@ -1187,6 +1212,8 @@ identifier_ref : val                                   {$1 = $1; }
                                                                  dimension = $1->dimension - 1;
                                                             } else {
                                                                  yyerror(cat(2, "Invalid type: expected ptr or list, received ", $3->type));
+                                                                 type = strdup("_");
+                                                                 dimension = 0;
                                                             }
                                                             $$ = (identifier_ref_record*) malloc(sizeof(identifier_ref_record));
                                                             $$->code = s;
@@ -1205,10 +1232,10 @@ identifier_ref : val                                   {$1 = $1; }
 
                                              if(!is_struct($1->type)) {
                                                   yyerror(cat(2, "Invalid type: expected struct, received ", $1->type));
-                                                  type = strdup("");
+                                                  type = strdup("_");
                                              } else if(!struct_has_attr($1->type, $3)) {
                                                   yyerror(cat(2, "Invalid: struct does not have the attribute ", $1->type));
-                                                  type = strdup("");
+                                                  type = strdup("_");
                                              } else {
                                                   struct_attr attr = get_struct_attr($1->type, $3);
                                                   type = strdup(attr.type);
@@ -1284,11 +1311,11 @@ eq_expr : relational_expr                                                       
                                                         if (type_check($1->type, "string")) {
 
                                                             if (strcmp($2, " == ") == 0) {
-                                                                s = cat(4, "isEquals(", $1->code, ", ", $3->code, ")");
+                                                                s = cat(5, "isEquals(", $1->code, ", ", $3->code, ")");
                                                                 $$ = create_record(s, "boolean");
 
                                                             } else if (strcmp($2, " != ") == 0) {
-                                                                s = cat(5, "!", "isEquals(", $1->code, ", ", $3->code, ")");
+                                                                s = cat(6, "!", "isEquals(", $1->code, ", ", $3->code, ")");
                                                                 $$ = create_record(s, "boolean");
 
                                                             }
@@ -1344,17 +1371,17 @@ arithmetic_expr : term                                                          
                                                         char * result_type = strdup($1->type);
 
                                                         if (type_check($1->type, "string") && strcmp($2, " + ") == 0) {
-                                                            s_code = cat(4, "strConcat(", $1->code, ", ", $3->code, ")");
+                                                            s_code = cat(5, "strConcat(", $1->code, ", ", $3->code, ")");
                                                         } else if (type_check($1->type, "int") || type_check($1->type, "float")) {
                                                             s_code = cat(3, $1->code, $2, $3->code);
                                                         } else {
                                                             yyerror(cat(2, "Invalid type: expected int or float, received ", $1->type));
-                                                            s_code = strdup("");
+                                                            s_code = strdup("_");
                                                         }
 
                                                         if (!type_check($1->type, $3->type)) {
                                                             yyerror(cat(4, "Invalid type: expected ", $1->type , " , received ", $3->type));
-                                                            s_code = strdup("");
+                                                            s_code = strdup("_");
                                                         }
 
                                                         $$ = create_record(s_code, result_type);
@@ -1452,11 +1479,11 @@ cast : LPAREN PRIM_TYPE RPAREN postfix_expr  {
                                                        } else {
                                                             yyerror(cat(3, "Invalid cast from ", $4->type, " to float"));
                                                        }
-                                                  } else if (type_check($2, $4->type)) {
-                                                       $$ = create_record($4->code, $4->type);
-                                                  } else{
+                                                  } else {
                                                        yyerror(cat(2, "Invalid cast to ", $2));
                                                   }
+
+                                                  $$ = create_record($4->code, $4->type);
 
                                                   free($2);
                                                   free_record($4);
@@ -1489,7 +1516,7 @@ base : ID                     {
                                         free(type);
                                    } else if (!exists_scope_parent(stack, $1)) {
                                         yyerror(cat(3, "Variable '", $1, "' is not declared"));
-                                        $$ = create_record($1, "");
+                                        $$ = create_record($1, "_");
                                    } else {
                                         char* type = get_variable_type(stack, $1);
 
@@ -1504,8 +1531,8 @@ base : ID                     {
                               }
      | LPAREN expr RPAREN     {
                                    char * s = cat(3,"(", $2->code,")");
-                                   free_record($2);
                                    $$ = create_record(s, $2->type);
+                                   free_record($2);
                                    free(s);
                               }
      ;

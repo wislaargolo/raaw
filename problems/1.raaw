@@ -1,8 +1,20 @@
 void main() {
-    float x = 5.5;
-    float y = 2.3;
-    int c = 10;
+    float x;
+    float y;
+    int c;
+
+    printLine("=== Calculadora: x^2 - y + c ===");
+
+    print("Digite o valor de x (float): ");
+    x = readFloat();
+
+    print("Digite o valor de y (float): ");
+    y = readFloat();
+
+    print("Digite o valor de c (int): ");
+    c = readInt();
+
     float resultado = x * x - y + (float) c;
 
-    printLine("x^2 - y + c é = ", resultado);
+    printLine("Resultado da expressao x^2 - y + c: ", resultado);
 }

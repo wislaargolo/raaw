@@ -1,0 +1,25 @@
+void main() {
+  int intervals[4] = {0, 0, 0, 0};
+
+  printLine("Digite os numeros: (negativo para terminar)");
+
+  int n = readInt();
+
+  while (n >= 0) {
+    if (n >= 0 && n <= 25) {
+      intervals[0] += 1;
+    } else if (n >= 26 && n <= 50) {
+      intervals[1] += 1;
+    } else if (n >= 51 && n <= 75) {
+      intervals[2] += 1;
+    } else if (n >= 76 && n <= 100) {
+      intervals[3] += 1;
+    }
+    n = readInt();
+  }
+
+  printLine("Intervalo [0, 25]: ", intervals[0]);
+  printLine("Intervalo [26, 50]: ", intervals[1]);
+  printLine("Intervalo [51, 75]: ", intervals[2]);
+  printLine("Intervalo [76, 100]: ", intervals[3]);
+}

@@ -7,23 +7,33 @@ void mdc(int n, int m, ptr<int> r) {
     }
     else if (m > n) {
         mdc(n, m % n, r);
-    }else{
+    } else {
         mdc(m, n % m, r);
     }
 }
 
 void main() {
-    int num1 = 48;
-    int num2 = 18;
-    int resultado_mdc;
+    char resposta = 's';
+    printLine("=== Cálculo do MDC (Maior Divisor Comum) ===");
 
-    mdc(num1, num2, ref(resultado_mdc));
-    printLine("O Maior Divisor Comum (MDC) entre ", num1, " e ", num2, " é: ", resultado_mdc);
+    while (resposta == 's' || resposta == 'S') {
+        int num1;
+        int num2;
+        int resultado;
 
-    int num3 = 10;
-    int num4 = 4;
-    int resultado_mdc_2;
+        print("Digite o primeiro número inteiro: ");
+        num1 = readInt();
 
-    mdc(num3, num4, ref(resultado_mdc_2));
-    printLine("O MDC entre ", num3, " e ", num4, " (conforme o algoritmo dado) é: ", resultado_mdc_2);
+        print("Digite o segundo número inteiro: ");
+        num2 = readInt();
+
+        mdc(num1, num2, ref(resultado));
+
+        printLine("O MDC entre ", num1, " e ", num2, " é: ", resultado);
+
+        print("\nDeseja calcular outro MDC? (s/n): ");
+        resposta = readChar();
+    }
+
+    printLine("\nFim!!! >.<");
 }

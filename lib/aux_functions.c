@@ -60,6 +60,8 @@ char* translate_type(char* t) {
           return cat(2, translate_type(get_ptr_type(t)), "*");
      } else if (strcmp(t, "string") == 0) {
           return strdup("char*");
+     } else if (strcmp(t, "file") == 0) {
+          return strdup("FILE*");
      } else {
           return strdup(t);
      }

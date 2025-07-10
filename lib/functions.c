@@ -10,6 +10,8 @@ int yyerror(char *msg);
 hash_table* functions_table;
 
 void initial_functions() {
+    function_data* fdata;
+
     insert_function("print", "void", NULL);
     insert_function("printLine", "void", NULL);
     insert_function("readInt", "int", NULL);
@@ -17,17 +19,38 @@ void initial_functions() {
     insert_function("readChar", "char", NULL);
     insert_function("readString", "string", NULL);
     insert_function("readBoolean", "boolean", NULL);
-    insert_function("strCopy", "void", NULL);
-    insert_function("strConcat", "void", NULL);
-    insert_function("strCompSize", "void", NULL);
-    insert_function("strNCopy", "void", NULL);
-    insert_function("strDup", "void", NULL);
-    insert_function("toUpper", "void", NULL);
-    insert_function("toLower", "void", NULL);
-    insert_function("freeString", "void", NULL);
-    insert_function("isEquals", "void", NULL);
 
-    function_data* fdata;
+    insert_function("strLen", "int", &fdata);
+    new_param(fdata, "string");
+
+    insert_function("strCopy", "string", &fdata);
+    new_param(fdata, "string");
+    new_param(fdata, "string");
+
+    insert_function("strConcat", "string", &fdata);
+    new_param(fdata, "string");
+    new_param(fdata, "string");
+
+    insert_function("strNCopy", "string", &fdata);
+    new_param(fdata, "string");
+    new_param(fdata, "string");
+    new_param(fdata, "int");
+
+    insert_function("strDup", "string", &fdata);
+    new_param(fdata, "string");
+
+    insert_function("toUpper", "char", &fdata);
+    new_param(fdata, "char");
+
+    insert_function("toLower", "char", &fdata);
+    new_param(fdata, "char");
+
+    insert_function("freeString", "void", &fdata);
+    new_param(fdata, "string");
+
+    insert_function("isEquals", "boolean", &fdata);
+    new_param(fdata, "string");
+    new_param(fdata, "string");
 
     insert_function("listPush", "void", &fdata);
     new_param(fdata, "list<_>");
@@ -78,7 +101,7 @@ void initial_functions() {
     new_param(fdata, "string");
     new_param(fdata, "file");
 
-    insert_function("isEof",        "int",   &fdata);
+    insert_function("isEof",        "boolean",   &fdata);
     new_param(fdata, "char");
 
 }

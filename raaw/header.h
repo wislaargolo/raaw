@@ -10,6 +10,7 @@
 #include "scan.h"
 #include "list.h"
 #include "file_raaw.h"
+#include "string.h"
 
 typedef bool boolean;
 

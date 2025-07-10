@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-#define INIT_CAP  64      
+#define INIT_CAP  64
 
 int readInt() {
     int v;
@@ -21,14 +21,14 @@ float readFloat() {
 
 char readChar() {
     int c;
-    do {                           
-        c = getchar();             
-    } while (isspace(c) && c != EOF);  
+    do {
+        c = getchar();
+    } while (isspace(c) && c != EOF);
 
     if (c == EOF)
         fprintf(stderr, "Unexpected end of input in readChar");
 
-    return (char) c;      
+    return (char) c;
 }
 
 char* readString() {
@@ -58,7 +58,7 @@ char* readString() {
     if(ch == EOF && len == 0) {
         free(buffer);
         fprintf(stderr, "Unexpected end of input in readString");
-        return strdup(""); 
+        return strdup("");
     }
 
     buffer[len] = '\0';
