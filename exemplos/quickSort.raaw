@@ -1,0 +1,74 @@
+void swap(ptr<int> a, ptr<int> b) {
+    int temp = val(a);
+    val(a) = val(b);
+    val(b) = temp;
+}
+
+/*
+  TESTE
+  TEST*E
+  AAAAA
+*/
+
+int partition(ptr<int> arr, int low, int high) {
+
+    // Initialize pivot to be the first element
+    int p = arr[low];
+    int i = low;
+    int j = high;
+    while (i < j) {
+
+        // Find the first element greater than
+        // the pivot (from starting)
+        while (arr[i] <= p and i <= high - 1) {
+            i = i + 1;
+        }
+
+        // Find the first element smaller than
+        // the pivot (from last)
+        while (arr[j] > p and j >= low + 1) {
+            j = j - 1;
+        }
+        if (i < j) {
+            swap(ref(arr[i]), ref(arr[j]));
+        }
+    }
+    swap(ref(arr[low]), ref(arr[j]));
+    return j;
+}
+
+void quickSort(ptr<int> arr, int low, int high) {
+    if (low < high) {
+
+        int pi = partition(arr, low, high);
+
+        quickSort(arr, low, pi - 1);
+        quickSort(arr, pi + 1, high);
+    }
+}
+
+void main() {
+    printLine("Insira o tamanho da lista: ");
+
+    const int n = readInt();
+
+    ptr<int> arr = new int[n];
+
+    printLine("Insira os numeros da lista: ");
+
+    for (int i = 0; i < n; i += 1) {
+      arr[i] = readInt();
+    }
+
+    // calling quickSort() to sort the given array
+    quickSort(arr, 0, n - 1);
+
+    for (int i = 0; i < n; i += 1) {
+      print(arr[i]);
+      print(" ");
+    }
+
+    printLine("");
+
+    delete(arr);
+}
