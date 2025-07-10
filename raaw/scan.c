@@ -8,15 +8,19 @@
 
 int readInt() {
     int v;
-    scanf("%d", &v);
-    return v;
+    if (scanf("%d", &v) == 1) {       
+        return v;
+    }
+    return 0;
 }
 
 
 float readFloat() {
     float v;
-    scanf("%f", &v);
-    return v;
+    if(scanf("%f", &v) == 1) {
+        return v;
+    }
+    return 0;
 }
 
 char readChar() {

@@ -144,6 +144,7 @@ void main() {
     }
 
     ptr<Node> root = buildBST(values, number);
+    printLine();
 
     printLine("Árvore (nível a nível): ");
     printLevelOrder(root);
