@@ -119,7 +119,7 @@ KeyLevel findMax(ptr<Node> root) {
     return result;
 }
 
-int main() {
+void main() {
 
     list<int> values;
 
