@@ -40,15 +40,11 @@ int is_struct(char* name) {
   return data.discriminator == STRUCT_TYPE;
 }
 
-void insert_struct_attr(char* struct_name, char* name, char* type, int dimension) {
+void insert_struct_attr(char* struct_name, char* name, char* type) {
   if(has_type(struct_name)) {
     type_data data = get_type_data(struct_name);
 
-    struct_attr attr;
-    attr.type = type;
-    attr.dimension = dimension;
-
-    hash_insert_t(data.info.struct_attrs, name, attr, struct_attr);
+    hash_insert_t(data.info.struct_attrs, name, strdup(type), char*);
   }
 }
 
@@ -60,12 +56,14 @@ int struct_has_attr(char* struct_name, char* name) {
   return hash_has(data.info.struct_attrs, name);
 }
 
-struct_attr get_struct_attr(char* struct_name, char* name) {
-  if(!has_type(struct_name)) return (struct_attr) {strdup(""), 0};
+char* get_struct_attr_type(char* struct_name, char* name) {
+  if(!has_type(struct_name)) return strdup("");
 
   type_data data = get_type_data(struct_name);
 
-  return hash_get_t(data.info.struct_attrs, name, struct_attr);
+  char* type = hash_get_t(data.info.struct_attrs, name, char*);
+
+  return strdup(type);
 }
 
 int is_of_type(char* name, char* type) {
@@ -98,6 +96,17 @@ int is_list(char* name) {
 
 char* get_list_type(char* name) {
   return get_inner_type(name, "list");
+}
+
+int is_array(char* name) {
+  return name[strlen(name) - 1] == ']' && name[strlen(name) - 2] == '[';
+}
+
+char* get_array_type(char* name) {
+  char* result = malloc(strlen(name) - 2);
+  strncpy(result, name, strlen(name) - 2);
+  result[strlen(name) - 2] = '\0';
+  return result;
 }
 
 int is_ptr(char* name) {

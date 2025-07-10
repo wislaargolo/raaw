@@ -1,16 +1,15 @@
 #ifndef VARIABLES
-#define VARIABLES   
+#define VARIABLES
 
 struct variable_data {
-    char* type;  
+    char* type;
     int is_const;
-    int dimension;
 };
 
 typedef struct variable_data variable_data;
 
 void init_variables_table();
-int insert_variable(Stack* stack, char* name, char* type, int is_const, int dimension);
+int insert_variable(Stack* stack, char* name, char* type, int is_const);
 char* make_key(char* name, char* scope);
 int exists_in_scope(Stack* stack, char* name);
 int exists_scope_parent(Stack* stack, char* name);

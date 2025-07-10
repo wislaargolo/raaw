@@ -1,11 +1,11 @@
-%option yylineno    
+%option yylineno
 %option noyywrap
 
 %{
   #include <stdio.h>
   #include "y.tab.h"
 
-  extern int yyerror (char *msg);  
+  extern int yyerror (char *msg);
 %}
 
 %%
@@ -40,7 +40,6 @@ int|float|boolean|char|string|file { yylval.sValue = strdup(yytext); return (PRI
 "enum"                              { return(ENUM); }
 "ptr"                               { return(PTR); }
 "list"                              { return(LIST); }
-"map"                               { return(MAP); }
 "type"                              { return(TYPE); }
 
 "("                                 { return(LPAREN); }

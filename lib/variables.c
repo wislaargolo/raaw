@@ -9,26 +9,25 @@
 
 hash_table* variables_table;
 
-void init_variables_table() {  
+void init_variables_table() {
     variables_table = create_hash_table();
 }
 
-int insert_variable(Stack* stack, char* name, char* type, int is_const, int dimension) {
-    
+int insert_variable(Stack* stack, char* name, char* type, int is_const) {
+
     if (stack == NULL || stack->top == NULL) {
         fprintf(stderr, "Stack is empty or not initialized\n");
-        return -1; 
+        return -1;
     }
 
     if(exists_in_scope(stack, name)) return 1;
-    
+
     char* scope = stack->top->name;
     char* key = make_key(name, scope);
-    
+
     variable_data* data = malloc(sizeof(variable_data));
     data->type = strdup(type);
     data->is_const = is_const;
-    data->dimension = dimension;
 
     hash_insert(variables_table, key, data);
     if(key) free(key);
@@ -49,63 +48,63 @@ char* make_key(char* name, char* scope) {
 }
 
 int exists_in_scope(Stack* stack, char* name) {
-    if (stack == NULL || stack->top == NULL) return -1; 
+    if (stack == NULL || stack->top == NULL) return -1;
 
     char* scope = stack->top->name;
     char* key = make_key(name, scope);
-    
+
     int exists = hash_has(variables_table, key);
     free(key);
-    
+
     return exists;
 }
 
 int exists_scope_parent(Stack* stack, char* name) {
-    if (stack == NULL || stack->top == NULL) return -1; 
+    if (stack == NULL || stack->top == NULL) return -1;
 
     ScopeNode* node = stack->top;
     while (node != NULL) {
         char* key = make_key(name, node->name);
         if (hash_has(variables_table, key)) {
             free(key);
-            return 1; 
+            return 1;
         }
         free(key);
         node = node->parent;
     }
-    
-    return 0; 
+
+    return 0;
 }
 
 
 variable_data get_variable(Stack* stack, char* name) {
     if (!stack || !stack->top || name == NULL) {
         fprintf(stderr, "Invalid stack or variable name\n");
-        return (variable_data){NULL, 0, 0};
+        return (variable_data){NULL, 0};
     }
 
-    ScopeNode *node = stack->top;              
-    while (node != NULL) {                           
-        char *key = make_key(name, node->name);   
+    ScopeNode *node = stack->top;
+    while (node != NULL) {
+        char *key = make_key(name, node->name);
 
-        if (hash_has(variables_table, key)) { 
+        if (hash_has(variables_table, key)) {
             variable_data data = hash_get_t(variables_table, key, variable_data);
 
             free(key);
-            return data;                         
+            return data;
         }
 
-        free(key);                             
+        free(key);
         node = node->parent;
     }
 
-    return (variable_data){NULL, 0, 0};
+    return (variable_data){NULL, 0};
 }
 
 char* get_variable_type(Stack* stack, char* name) {
     variable_data data = get_variable(stack, name);
     if (data.type == NULL) return NULL;
-    return strdup(data.type); 
+    return strdup(data.type);
 }
 
 
@@ -113,7 +112,7 @@ void print_variable_table() {
 
     printf("\n[ESTADO ATUAL DA TABELA DE VARIÁVEIS]\n");
     printf("Capacidade: %d | Elementos: %d\n", variables_table->capacity, variables_table->num_elements);
-    
+
     for (int i = 0; i < variables_table->capacity; i++) {
         hash_node* node = variables_table->nodes[i];
         printf("Bucket %d: ", i);
@@ -137,8 +136,8 @@ void free_variables_table() {
         while (node != NULL) {
             variable_data* data = (variable_data*) node->value;
 
-            if (data) free(data->type);   
-            hash_delete(variables_table, node->key); 
+            if (data) free(data->type);
+            hash_delete(variables_table, node->key);
 
             node = node->next;
         }
@@ -155,14 +154,14 @@ int remove_scope_variables(Stack* stack) {
         hash_node* node = variables_table->nodes[i];
 
         while(node != NULL) {
-            hash_node* next = node->next; 
+            hash_node* next = node->next;
             if (strncmp(node->key, scope, strlen(scope)) == 0 && node->key[strlen(scope)] == '#') {
                 variable_data* data = (variable_data*) node->value;
                 if (data) free(data->type);
 
                 hash_delete(variables_table, node->key);
-                
-            } 
+
+            }
             node = next;
         }
     }

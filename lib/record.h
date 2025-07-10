@@ -44,7 +44,6 @@ typedef struct dimensional_record dimensional_record;
 struct identifier_ref_record {
   char* code;
   char* type;
-  int dimension;
 	char* setter_code;
 	char* ref_code;
 };
