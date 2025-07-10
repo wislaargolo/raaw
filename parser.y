@@ -25,6 +25,8 @@ function_data *current_fd = NULL;
 int const_mode = 0;
 int inside_struct = 0;
 
+int is_main = 0;
+
 char* switch_type = NULL;
 
 Stack* stack = NULL;
@@ -479,6 +481,8 @@ subprogram : type ID LPAREN   {
                                    }
                                    push_subprogram(stack, $2);
 
+                                   if(strcmp($2, "main") == 0) is_main = 1;
+
                               } parameters RPAREN LBRACE statements RBRACE {
 
                                    char *s = cat(8, $1->code, " ", $2, "(", $5->code, ") {\n", $8->code, "\n}\n");
@@ -491,6 +495,7 @@ subprogram : type ID LPAREN   {
                                    $$ = create_record(s, "");
                                    free(s);
                                    pop(stack);
+                                   is_main = 0;
                               }
            | VOID ID LPAREN   {
                                    if(exists_in_scope(stack, $2)) {
@@ -505,6 +510,8 @@ subprogram : type ID LPAREN   {
                                         yyerror("Main function must not have parameters");
                                    }
                                    push_subprogram(stack, $2);
+
+                                   if(strcmp($2, "main") == 0) is_main = 1;
                               } parameters RPAREN LBRACE statements RBRACE {
                                    char *s = cat(7, "void ", $2, "(", $5->code, ") {\n", $8->code, "\n}\n");
                                    free($2);
@@ -513,6 +520,7 @@ subprogram : type ID LPAREN   {
                                    $$ = create_record(s, "");
                                    free(s);
                                    pop(stack);
+                                   is_main = 0;
                               }
            | type ID LPAREN   {
 
@@ -529,6 +537,7 @@ subprogram : type ID LPAREN   {
                               }
 
                               push_subprogram(stack, $2);
+                              if(strcmp($2, "main") == 0) is_main = 1;
                               } RPAREN LBRACE statements RBRACE  {
                                    char *s = cat(6, $1->code, " ", $2, "() {\n", $7->code, "\n}\n");
                                    free($1->code);
@@ -538,6 +547,8 @@ subprogram : type ID LPAREN   {
                                    $$ = create_record(s, "");
                                    free(s);
                                    pop(stack);
+
+                                   is_main = 0;
                               }
            | VOID ID LPAREN   {
                                    if(exists_in_scope(stack, $2)) {
@@ -551,6 +562,7 @@ subprogram : type ID LPAREN   {
                                    }
 
                                    push_subprogram(stack, $2);
+                                   if(strcmp($2, "main") == 0) is_main = 1;
                               } RPAREN LBRACE statements RBRACE  {
                                    char *s;
 
@@ -565,6 +577,7 @@ subprogram : type ID LPAREN   {
                                    $$ = create_record(s, "");
                                    free(s);
                                    pop(stack);
+                                   is_main = 0;
                               }
            ;
 
@@ -685,6 +698,8 @@ return : RETURN return_value  {
                                    char *s = cat(2, "return ", $2->code);
                                    if (current_fd == NULL) {
                                         yyerror("'return' statement outside a function.");
+                                   } else if(is_main == 1 & strcmp($2->code, "") == 0) {
+                                        s = strdup("return 0");
                                    } else {
                                         char* expected_type = current_fd->return_type;
                                         char* actual_type = $2->type;
@@ -700,7 +715,8 @@ return : RETURN return_value  {
                                                 yyerror(cat(5, "Incompatible return type. Expected '", expected_type, "', found '", actual_type, "'."));
                                             }
                                         }
-                                   }
+                                   } 
+
                                    free_record($2);
                                    $$ = create_record(s, "");
                                    free(s);
