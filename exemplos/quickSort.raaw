@@ -1,6 +1,0 @@
-void swap(ptr<int> a, ptr<int> b) {
-    int temp = val(a);
-    //val(a) = val(b);
-    //val(b) = temp;
-}
-

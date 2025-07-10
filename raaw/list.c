@@ -52,7 +52,7 @@ void listRemove(list* l, int index) {
   l->size--;
 }
 
-void listClear(list* l) {
+void freeList(list* l) {
   for (int i = 0; i < l->size; i++) {
     if (l->data[i] != NULL) {
       free(l->data[i]);
@@ -62,10 +62,8 @@ void listClear(list* l) {
   if (l->data != NULL) {
     free(l->data);
   }
-  printf("%d\n", l->size);
   l->data = NULL;
   l->size = 0;
-  printf("%d\n", l->size);
   l->capacity = 0;
 }
 
@@ -76,7 +74,7 @@ int listSize(list* l) {
 void* _listGet_void(list* l, int index) {
   if (index < 0 || index >= l->size) {
     printf("List index out of bounds\n");
-    listClear(l);
+    freeList(l);
     exit(1);
   };
   return l->data[index];
@@ -85,7 +83,7 @@ void* _listGet_void(list* l, int index) {
 void _listSet_void(list* l, int index, void* el) {
   if (index < 0 || index >= l->size) {
     printf("List index out of bounds\n");
-    listClear(l);
+    freeList(l);
     exit(1);
   };
   if (l->data[index]) {

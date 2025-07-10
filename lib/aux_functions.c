@@ -128,7 +128,7 @@ int is_list_function(char* name, parameter_record* params) {
           !strcmp(name, "listPop") ||
           !strcmp(name, "listInsert") ||
           !strcmp(name, "listRemove") ||
-          !strcmp(name, "listClear") ||
+          !strcmp(name, "freeList") ||
           !strcmp(name, "listInit") ||
           !strcmp(name, "listSize")
      ) && params != NULL && is_list(params->type);

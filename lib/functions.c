@@ -68,7 +68,7 @@ void initial_functions() {
     new_param(fdata, "list<_>");
     new_param(fdata, "int");
 
-    insert_function("listClear", "void", &fdata);
+    insert_function("freeList", "void", &fdata);
     new_param(fdata, "list<_>");
 
     insert_function("listSize", "int", &fdata);

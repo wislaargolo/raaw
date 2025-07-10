@@ -12,7 +12,7 @@ void _listPush_void(list* l, void* el);
 void listPop(list* l);
 void _listInsert_void(list* l, int index, void* el);
 void listRemove(list* l, int index);
-void listClear(list* l);
+void freeList(list* l);
 int listSize(list* l);
 void* _listGet_void(list* l, int index);
 void _listSet_void(list* l, int index, void* el);

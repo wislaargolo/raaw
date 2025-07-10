@@ -1,0 +1,23 @@
+void main() {
+
+  file outFile = openFile("teste.txt", "w");
+
+  string linha = "Texto para teste de file.\n";
+
+  writeStringFile(linha, outFile);
+  writeCharFile('a', outFile);
+
+  closeFile(outFile);
+
+  file inFile = openFile("teste.txt", "r");
+
+  char ch = readCharFile(inFile);
+  while (isEof(ch)) {
+    print(ch);
+    ch = readCharFile(inFile);
+  }
+
+  closeFile(inFile);
+
+  freeString(linha);
+}
