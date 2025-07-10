@@ -170,28 +170,3 @@ void free_hash(hash_table* ht) {
   free(ht->nodes);
   free(ht);
 }
-
-
-
-void print_hash_table(hash_table* ht) {
-  printf("\n[ESTADO ATUAL DA HASH TABLE]\n");
-  printf("Capacidade: %d | Elementos: %d\n", ht->capacity, ht->num_elements);
-
-  for (int i = 0; i < ht->capacity; i++) {
-    printf("Bucket %d: ", i);
-    hash_node* node = ht->nodes[i];
-    if (node == NULL) {
-        printf("(vazio)\n");
-        continue;
-    }
-
-    while (node != NULL) {
-        printf("['%s' -> %p] -> ", node->key, node->value);
-        node = node->next;
-    }
-    printf("NULL\n");
-  }
-
-  printf("\n");
-}
-

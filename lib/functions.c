@@ -196,38 +196,3 @@ void free_function_table() {
     free_hash(functions_table);
 }
 
-void print_function_table() {
-    printf("\n[ESTADO ATUAL DA TABELA DE FUNÇÕES]\n");
-    printf("Capacidade: %d | Elementos: %d\n", functions_table->capacity, functions_table->num_elements);
-
-    for (int i = 0; i < functions_table->capacity; i++) {
-        printf("Bucket %d: ", i);
-        hash_node *node = functions_table->nodes[i];
-        if (node == NULL) {
-            printf("(vazio)\n");
-            continue;
-        }
-
-        while (node != NULL) {
-
-            function_data fd = *(function_data *)node->value;
-            printf("['%s' -> ret:%s, n=%d", node->key, fd.return_type, fd.num_params);
-            if(fd.num_params > 0) printf(", params: ");
-
-            function_param* param = fd.params;
-            while(param != NULL) {
-                    printf("%s", param->type);
-                    if (param->next != NULL) {
-                        printf(", ");
-                    }
-
-                param = param->next;
-            }
-            printf("] -> ");
-
-            node = node->next;
-        }
-        printf("NULL\n");
-    }
-    printf("\n");
-}

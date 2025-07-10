@@ -23,6 +23,5 @@ int new_param(function_data* function, char* type);
 
 void free_function_table();
 void free_params(function_param* params);
-void print_function_table();
 
 #endif

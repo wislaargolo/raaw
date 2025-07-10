@@ -108,26 +108,6 @@ char* get_variable_type(Stack* stack, char* name) {
 }
 
 
-void print_variable_table() {
-
-    printf("\n[ESTADO ATUAL DA TABELA DE VARIÁVEIS]\n");
-    printf("Capacidade: %d | Elementos: %d\n", variables_table->capacity, variables_table->num_elements);
-
-    for (int i = 0; i < variables_table->capacity; i++) {
-        hash_node* node = variables_table->nodes[i];
-        printf("Bucket %d: ", i);
-        if (node == NULL) {
-            printf("(vazio)\n");
-            continue;
-        }
-        while (node != NULL) {
-            variable_data vd = *(variable_data *)node->value;
-            printf("['%s' -> type: %s, const: %d] -> ", node->key, vd.type, vd.is_const);
-            node = node->next;
-        }
-    }
-}
-
 void free_variables_table() {
     if (variables_table == NULL) return;
 

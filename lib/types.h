@@ -47,6 +47,5 @@ int enum_has_attr(char* enum_name, char* name);
 int is_enum_group(char* name);
 char* get_enum_group_name(char* name);
 int type_check(char* t1, char* t2);
-void print_types_table();
 
 #endif

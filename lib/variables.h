@@ -15,7 +15,6 @@ int exists_in_scope(Stack* stack, char* name);
 int exists_scope_parent(Stack* stack, char* name);
 variable_data get_variable(Stack* stack, char* name);
 char* get_variable_type(Stack* stack, char* name);
-void print_variable_table();
 void free_variables_table();
 int remove_scope_variables(Stack* stack);
 int is_const_variable(Stack* stack, char* name);
