@@ -119,6 +119,15 @@ KeyLevel findMax(ptr<Node> root) {
     return result;
 }
 
+void freeTree(ptr<Node> node) {
+    if (node == null) {
+        return;
+    }
+    freeTree(val(node).left);
+    freeTree(val(node).right);
+    delete(node);
+}
+
 void main() {
 
     list<int> values;
@@ -147,6 +156,5 @@ void main() {
     printLine("Mínimo: [", min.level, "] -> [", min.key, "]");
     printLine("Máximo: [", max.level, "] -> [", max.key, "]");
 
-    
-    return 0;
+    freeTree(root);
 }
