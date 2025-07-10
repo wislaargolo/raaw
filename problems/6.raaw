@@ -1,0 +1,152 @@
+type Node = struct {
+    int key;
+    ptr<Node> left;
+    ptr<Node> right;
+};
+
+type KeyLevel = struct {
+    int key;
+    int level;
+};
+
+ptr<Node> newNode (int key) {
+    ptr<Node> temp  = new Node[1];    
+    val(temp).key   = key;
+    val(temp).left  = null;
+    val(temp).right = null;
+    return temp;
+}
+
+ptr<Node> insert(ptr<Node> node, int key) {
+    if (node == null) {
+        return newNode(key);
+    }
+
+    int currKey = val(node).key;
+
+    if (key < currKey) {
+        val(node).left  = insert(val(node).left,  key);
+    } else if (key > currKey) {
+        val(node).right = insert(val(node).right, key);
+    }
+    return node;
+}
+
+ptr<Node> buildBST(list<int> values, int len) {
+    ptr<Node> root = null;
+    for (int i = 0; i < len; i += 1) {
+        root = insert(root, values[i]);
+    }
+    return root;
+}
+
+int height(ptr<Node> node) {
+    if (node == null) {
+        return -1;
+    }
+    int hL = height(val(node).left);
+    int hR = height(val(node).right);
+
+    
+    if (hL > hR) {          
+        return hL + 1;
+    } else {
+        return hR + 1;
+    }
+}
+
+void printLevel(ptr<Node> node, int level) {
+    if (node == null) { return; }
+
+    if (level == 0) {
+        print(val(node).key, " ");
+    } else {
+        printLevel(val(node).left,  level - 1);
+        printLevel(val(node).right, level - 1);
+    }
+}
+
+void printLevelOrder(ptr<Node> root) {
+    if (root == null) {
+        printLine("(árvore vazia)");
+        return;
+    }
+    int h = height(root);
+    for (int lvl = 0; lvl <= h; lvl += 1) {
+        printLevel(root, lvl);
+        printLine();               
+    }
+}
+
+KeyLevel findMin(ptr<Node> root) {
+    KeyLevel result;
+    result.key = -1;
+    result.level = -1;
+
+    ptr<Node> curr = root;
+    int level = 0;
+
+    while (curr != null && val(curr).left != null) {
+        curr = val(curr).left;
+        level += 1;
+    }
+
+    if (curr != null) {
+        result.key   = val(curr).key;
+        result.level = level;
+    }
+
+    return result;
+}
+
+KeyLevel findMax(ptr<Node> root) {
+    KeyLevel result;
+    result.key = -1;
+    result.level = -1;
+
+    ptr<Node> curr = root;
+    int level = 0;
+
+    while (curr != null && val(curr).right != null) {
+        curr = val(curr).right;
+        level += 1;
+    }
+
+    if (curr != null) {
+        result.key   = val(curr).key;
+        result.level = level;
+    }
+    return result;
+}
+
+int main() {
+
+    list<int> values;
+
+    print("Digite a quantidade de chaves esperadas na árvore: ");
+    int number = readInt();
+
+    listInit(values, number);
+
+    for(int i = 0; i < number; i += 1) {
+        print("Chave ", i + 1, ": ");
+        int value = readInt();
+        values[i] = value;
+    }
+
+    ptr<Node> root = buildBST(values, number);
+
+    printLine("Árvore (nível a nível): ");
+    printLevelOrder(root);
+
+    KeyLevel min = findMin(root);
+    KeyLevel max = findMax(root);
+
+    printLine();
+
+    printLine("Mínimo: [", min.level, "] -> [", min.key, "]");
+    printLine("Máximo: [", max.level, "] -> [", max.key, "]");
+
+    
+    return 0;
+}
