@@ -715,7 +715,7 @@ return : RETURN return_value  {
                                                 yyerror(cat(5, "Incompatible return type. Expected '", expected_type, "', found '", actual_type, "'."));
                                             }
                                         }
-                                   } 
+                                   }
 
                                    free_record($2);
                                    $$ = create_record(s, "");
@@ -988,7 +988,7 @@ function_call : ID LPAREN RPAREN   {
                                         if(!has_function($1)) {
                                              char *s = cat(2, $1, "()");
                                              yyerror(cat(3, "Invalid call: ", $1, " is not declared"));
-                                             $$ = create_record(s, "");
+                                             $$ = create_record(s, "_");
                                              free(s);
                                         } else {
                                              if (!strcmp($1,"print") || !strcmp($1,"printLine")) {
