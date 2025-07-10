@@ -9,9 +9,13 @@ lex.yy.c: lex.l
 y.tab.c: parser.y
 	bison parser.y -d -v -o y.tab.c
 
-run:
+generate:
 	./compiler $(INPUT) $(OUTPUT)
-	gcc -o out $(OUTPUT) ./raaw/string.c ./raaw/scan.c ./raaw/file_raaw.c ./raaw/list.c 
+
+build:
+	gcc -o out $(OUTPUT) ./raaw/string.c ./raaw/scan.c ./raaw/file_raaw.c ./raaw/list.c
+
+run: generate build
 
 clean:
 	rm -rf lex.yy.c y.tab.* compiler output.txt y.output

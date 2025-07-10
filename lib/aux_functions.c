@@ -151,8 +151,7 @@ record* build_function_call(char* name, parameter_record* params) {
     }
 
     for(parameter_record* param = params; param != NULL; param = param->next) {
-          char *arg_code = (!strcmp(param->type, "boolean")) ? cat(3, "bool_to_string(", param->code, ")") : strdup(param->code);
-
+          char *arg_code = strdup(param->code);
           char *tmp = args ? cat(3, args, ", ", arg_code) : strdup(arg_code);
 
           free(args);
